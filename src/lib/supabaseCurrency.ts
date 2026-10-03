@@ -1,20 +1,31 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
+import { authRequired, toDataError } from '@/lib/dataError';
 import { UserCurrencySettings, ExchangeRate, DEFAULT_USER_SETTINGS, getDefaultRate } from './currency';
+
+// Every function below either resolves with real data or throws a DataError.
+// "No row" (e.g. a new user without settings) is a valid result, not an error.
+
+async function requireUserId(supabase: ReturnType<typeof createClient>): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw toDataError(error);
+  if (!user) throw authRequired();
+  return user.id;
+}
 
 // ─── User Settings ─────────────────────────────────────────────────────────────
 
 export const userSettingsService = {
   async get(): Promise<UserCurrencySettings> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return DEFAULT_USER_SETTINGS;
-    const { data } = await supabase
+    const userId = await requireUserId(supabase);
+    const { data, error } = await supabase
       .from('user_settings')
       .select('*')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw toDataError(error);
     if (!data) return DEFAULT_USER_SETTINGS;
     return {
       baseCurrencyCode: data.base_currency_code || 'PEN',
@@ -25,13 +36,13 @@ export const userSettingsService = {
 
   async upsert(settings: Partial<UserCurrencySettings>): Promise<void> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const updates: Record<string, unknown> = { user_id: user.id, updated_at: new Date().toISOString() };
+    const userId = await requireUserId(supabase);
+    const updates: Record<string, unknown> = { user_id: userId, updated_at: new Date().toISOString() };
     if (settings.baseCurrencyCode !== undefined) updates.base_currency_code = settings.baseCurrencyCode;
     if (settings.exchangeRateMode !== undefined) updates.exchange_rate_mode = settings.exchangeRateMode;
     if (settings.showEquivalents !== undefined) updates.show_equivalents = settings.showEquivalents;
-    await supabase.from('user_settings').upsert(updates, { onConflict: 'user_id' });
+    const { error } = await supabase.from('user_settings').upsert(updates, { onConflict: 'user_id' });
+    if (error) throw toDataError(error);
   },
 };
 
@@ -40,12 +51,12 @@ export const userSettingsService = {
 export const exchangeRatesService = {
   async getAll(): Promise<ExchangeRate[]> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
-    const { data } = await supabase
+    const userId = await requireUserId(supabase);
+    const { data, error } = await supabase
       .from('exchange_rates')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
+    if (error) throw toDataError(error);
     return (data || []).map(r => ({
       id: r.id,
       fromCurrency: r.from_currency,
@@ -67,11 +78,10 @@ export const exchangeRatesService = {
 
   async upsert(from: string, to: string, rate: number): Promise<void> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const userId = await requireUserId(supabase);
     const today = new Date().toISOString().split('T')[0];
-    await supabase.from('exchange_rates').upsert({
-      user_id: user.id,
+    const { error } = await supabase.from('exchange_rates').upsert({
+      user_id: userId,
       from_currency: from,
       to_currency: to,
       rate,
@@ -79,29 +89,31 @@ export const exchangeRatesService = {
       source: 'manual',
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,from_currency,to_currency' });
+    if (error) throw toDataError(error);
   },
 
   async getRate(from: string, to: string): Promise<number> {
     if (from === to) return 1;
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return getDefaultRate(from, to);
-    const { data } = await supabase
+    const userId = await requireUserId(supabase);
+    const { data, error } = await supabase
       .from('exchange_rates')
       .select('rate')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('from_currency', from)
       .eq('to_currency', to)
-      .single();
+      .maybeSingle();
+    if (error) throw toDataError(error);
     if (data) return data.rate;
     // Try reverse
-    const { data: rev } = await supabase
+    const { data: rev, error: revError } = await supabase
       .from('exchange_rates')
       .select('rate')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('from_currency', to)
       .eq('to_currency', from)
-      .single();
+      .maybeSingle();
+    if (revError) throw toDataError(revError);
     if (rev) return 1 / rev.rate;
     return getDefaultRate(from, to);
   },
@@ -126,13 +138,13 @@ export interface CurrencyExchange {
 export const currencyExchangesService = {
   async getAll(): Promise<CurrencyExchange[]> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
-    const { data } = await supabase
+    const userId = await requireUserId(supabase);
+    const { data, error } = await supabase
       .from('currency_exchanges')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
+    if (error) throw toDataError(error);
     return (data || []).map(r => ({
       id: r.id,
       fromAccountId: r.from_account_id,
@@ -148,14 +160,13 @@ export const currencyExchangesService = {
     }));
   },
 
-  async create(exchange: Omit<CurrencyExchange, 'id' | 'createdAt'>): Promise<CurrencyExchange | null> {
+  async create(exchange: Omit<CurrencyExchange, 'id' | 'createdAt'>): Promise<CurrencyExchange> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    const userId = await requireUserId(supabase);
     const { data, error } = await supabase
       .from('currency_exchanges')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         from_account_id: exchange.fromAccountId,
         to_account_id: exchange.toAccountId,
         from_currency: exchange.fromCurrency,
@@ -168,7 +179,7 @@ export const currencyExchangesService = {
       })
       .select()
       .single();
-    if (error) { console.error(error); return null; }
+    if (error) throw toDataError(error);
     return {
       id: data.id,
       fromAccountId: data.from_account_id,

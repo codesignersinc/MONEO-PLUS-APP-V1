@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import type { Notification, CreateNotificationParams } from '@/types/notifications';
+import { authRequired, toDataError } from '@/lib/dataError';
 
 // ── Row → camelCase ──────────────────────────────────────────────────────────
 function rowToNotification(row: Record<string, unknown>): Notification {
@@ -22,10 +23,12 @@ function rowToNotification(row: Record<string, unknown>): Notification {
 }
 
 // ── Fetch notifications ──────────────────────────────────────────────────────
+// Throws a DataError when the request fails; [] only means "no notifications".
 export async function fetchNotifications(limit = 30): Promise<Notification[]> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw toDataError(authError);
+  if (!user) throw authRequired();
 
   const { data, error } = await supabase
     .from('notifications')
@@ -34,10 +37,7 @@ export async function fetchNotifications(limit = 30): Promise<Notification[]> {
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  if (error) {
-    console.error('fetchNotifications error:', error.message);
-    return [];
-  }
+  if (error) throw toDataError(error);
   return (data ?? []).map(rowToNotification);
 }
 
@@ -92,17 +92,19 @@ export async function markNotificationRead(notificationId: string): Promise<bool
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('notifications')
     .update({ is_read: true, read_at: new Date().toISOString() })
     .eq('id', notificationId)
-    .eq('user_id', user.id);
+    .eq('user_id', user.id)
+    .select('id');
 
   if (error) {
     console.error('markNotificationRead error:', error.message);
     return false;
   }
-  return true;
+  // Zero rows means RLS blocked the update or the notification no longer exists.
+  return (data?.length ?? 0) > 0;
 }
 
 // ── Mark all notifications as read ──────────────────────────────────────────

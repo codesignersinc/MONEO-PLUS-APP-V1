@@ -1,6 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
+import { assertAffected, toDataError } from '@/lib/dataError';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -211,14 +212,17 @@ export const juntasService = {
     return (data || []).map(r => mapJunta(r as Record<string, unknown>));
   },
 
+  // Resolves null when the junta does not exist (or is not visible to the user);
+  // throws a DataError when the request itself fails.
   async getById(id: string): Promise<Junta | null> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('juntas')
       .select('*')
       .eq('id', id)
-      .single();
-    if (error) return null;
+      .maybeSingle();
+    if (error) throw toDataError(error);
+    if (!data) return null;
     return mapJunta(data as Record<string, unknown>);
   },
 
@@ -257,8 +261,9 @@ export const juntasService = {
     if (updates.contributionAmount !== undefined) payload.contribution_amount = updates.contributionAmount;
     if (updates.status !== undefined) payload.status = updates.status;
     if (updates.maxParticipants !== undefined) payload.max_participants = updates.maxParticipants;
-    const { error } = await supabase.from('juntas').update(payload).eq('id', id);
-    if (error) throw error;
+    const { data, error } = await supabase.from('juntas').update(payload).eq('id', id).select('id');
+    if (error) throw toDataError(error);
+    assertAffected(data);
   },
 };
 
@@ -301,8 +306,9 @@ export const juntaMembersService = {
     if (updates.status !== undefined) payload.status = updates.status;
     if (updates.displayName !== undefined) payload.display_name = updates.displayName;
     if (updates.joinedAt !== undefined) payload.joined_at = updates.joinedAt;
-    const { error } = await supabase.from('junta_members').update(payload).eq('id', id);
-    if (error) throw error;
+    const { data, error } = await supabase.from('junta_members').update(payload).eq('id', id).select('id');
+    if (error) throw toDataError(error);
+    assertAffected(data);
   },
 };
 
@@ -344,7 +350,7 @@ export const juntaCyclesService = {
 
   async performDraw(cycleId: string, winnerMemberId: string, seed: string): Promise<void> {
     const supabase = createClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('junta_cycles')
       .update({
         draw_winner_member_id: winnerMemberId,
@@ -352,8 +358,10 @@ export const juntaCyclesService = {
         draw_seed: seed,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', cycleId);
-    if (error) throw error;
+      .eq('id', cycleId)
+      .select('id');
+    if (error) throw toDataError(error);
+    assertAffected(data);
   },
 };
 

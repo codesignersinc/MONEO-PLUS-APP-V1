@@ -22,11 +22,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // If reading the session fails, treat the user as signed out instead of
+    // leaving the app stuck on "Cargando..." forever.
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      })
+      .catch((err) => {
+        console.error('getSession error:', err);
+        setSession(null);
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
 
     // Listen for auth changes
     const {
