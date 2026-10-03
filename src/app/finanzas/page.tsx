@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap, groupAccountsByCurrency } from '@/lib/currency';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import LoadError from '@/components/ui/LoadError';
+import { getErrorMessage } from '@/lib/dataError';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -142,6 +144,7 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
     date: new Date().toISOString().split('T')[0], notes: '',
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   if (!type) return null;
 
@@ -158,6 +161,7 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setSaveError('');
     transactionsService.create({
       name: form.name, category: form.category, categoryIcon: form.categoryIcon,
       account: form.account, accountId: form.accountId,
@@ -166,10 +170,15 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
       time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
       type: type === 'gasto' ? 'gasto' : 'ingreso', notes: form.notes,
     }).then(newTx => {
-      if (newTx) onSave({ ...data, transactions: [newTx, ...data.transactions] });
+      onSave({ ...data, transactions: [newTx, ...data.transactions] });
       setSaving(false);
       onClose();
-    }).catch(() => setSaving(false));
+    }).catch((err) => {
+      // Keep the modal open with the user's data so they can retry.
+      console.error(err);
+      setSaveError(getErrorMessage(err));
+      setSaving(false);
+    });
   }
 
   const isGasto = type === 'gasto';
@@ -244,6 +253,7 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
               )}
             </div>
           </div>
+          {saveError && <p role="alert" className="text-sm font-bold text-red-600">{saveError}</p>}
           <button
             type="submit"
             disabled={saving || (data.accounts.length === 0)}
@@ -266,11 +276,13 @@ export default function DashboardPage() {
   const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
   const [showDesglose, setShowDesglose] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
 
   const [viewMonth] = useState(new Date().getMonth());
   const [viewYear] = useState(new Date().getFullYear());
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoadError(null);
     Promise.all([
       loadFinanceData(),
       userSettingsService.get(),
@@ -279,12 +291,25 @@ export default function DashboardPage() {
       setData(d);
       setBaseCurrency(settings.baseCurrencyCode);
       setRatesMap(rates);
-    }).catch(console.error);
+    }).catch((err) => {
+      console.error(err);
+      setLoadError(err);
+    });
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleSave = useCallback(async (newData: FinanceData) => {
     setData(newData);
   }, []);
+
+  if (loadError) return (
+    <div className="px-4 lg:px-8 py-10 max-w-md mx-auto">
+      <LoadError what="tus finanzas" error={loadError} onRetry={load} />
+    </div>
+  );
 
   if (!data) return (
     <div className="flex items-center justify-center min-h-[80vh]">

@@ -1,6 +1,8 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { transactionsService, subscriptionsService } from '@/lib/supabaseFinance';
+import LoadError from '@/components/ui/LoadError';
+import { toDataError } from '@/lib/dataError';
 import { Transaction, Subscription } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
@@ -40,9 +42,12 @@ export default function ReportesPage() {
   const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
   const [showCurrencyBreakdown, setShowCurrencyBreakdown] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     const supabase = createClient();
+    setLoading(true);
+    setLoadError(null);
     Promise.all([
       transactionsService.getAll(),
       supabase.from('pagos').select('*').order('payment_date', { ascending: true }),
@@ -51,6 +56,8 @@ export default function ReportesPage() {
       userSettingsService.get(),
       exchangeRatesService.getRatesMap(),
     ]).then(([txs, pagosRes, subs, incomesRes, settings, rates]) => {
+      if (pagosRes.error) throw toDataError(pagosRes.error);
+      if (incomesRes.error) throw toDataError(incomesRes.error);
       setTransactions(txs);
       setPagos((pagosRes.data || []).map((r: any) => ({
         id: r.id,
@@ -73,8 +80,12 @@ export default function ReportesPage() {
       })));
       setBaseCurrency(settings.baseCurrencyCode);
       setRatesMap(rates);
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const monthTxs = transactions.filter(tx => {
     const d = new Date(tx.date);
@@ -178,6 +189,14 @@ export default function ReportesPage() {
         <div className="rounded-2xl border-[3px] border-black p-6 bg-[#FFD43B] shadow-[4px_4px_0px_#000]">
           <p className="font-black text-black uppercase tracking-widest text-sm animate-pulse">CARGANDO...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <LoadError what="tus reportes" error={loadError} onRetry={load} />
       </div>
     );
   }

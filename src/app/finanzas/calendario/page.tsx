@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { transactionsService, subscriptionsService } from '@/lib/supabaseFinance';
 import type { Transaction, Subscription } from '@/lib/financeStore';
+import LoadError from '@/components/ui/LoadError';
+import { toDataError } from '@/lib/dataError';
 
 const DAYS_HEADER = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
@@ -58,12 +60,14 @@ export default function CalendarioPage() {
   const [eventMap, setEventMap] = useState<EventMap>({});
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>('todos');
+  const [loadError, setLoadError] = useState<unknown>(null);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
 
   const loadAllData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const supabase = createClient();
 
@@ -73,6 +77,8 @@ export default function CalendarioPage() {
         supabase.from('pagos').select('id,name,amount,category_icon,payment_date,status').order('payment_date'),
         supabase.from('savings_goals').select('id,name,icon,target_date,target_amount,current_amount'),
       ]);
+      if (pagosRes.error) throw toDataError(pagosRes.error);
+      if (savingsRes.error) throw toDataError(savingsRes.error);
 
       const pagos: PagoEntry[] = (pagosRes.data || []).map((r: any) => ({
         id: r.id, name: r.name, amount: r.amount,
@@ -147,6 +153,8 @@ export default function CalendarioPage() {
       setEventMap(map);
     } catch (e) {
       console.error(e);
+      setEventMap({});
+      setLoadError(e);
     } finally {
       setLoading(false);
     }
@@ -188,6 +196,18 @@ export default function CalendarioPage() {
     { key: 'pago', label: 'Pagos', emoji: '📋' },
     { key: 'meta', label: 'Metas', emoji: '🎯' },
   ];
+
+  // A failed load must not render an empty calendar ("Sin eventos este día").
+  if (loadError) {
+    return (
+      <div className="px-3 lg:px-8 py-5 max-w-2xl mx-auto">
+        <h1 className="text-3xl font-black text-black uppercase tracking-tight mb-5" style={{ fontFamily: 'monospace' }}>
+          📅 CALENDARIO
+        </h1>
+        <LoadError what="tu calendario" error={loadError} onRetry={loadAllData} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-3 lg:px-8 py-5 max-w-2xl mx-auto">

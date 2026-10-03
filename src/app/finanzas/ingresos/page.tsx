@@ -1,6 +1,9 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { assertAffected, authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
 import { Plus, X, Pencil, Trash2, Clock, CheckCircle2, Calendar } from 'lucide-react';
 
 interface IncomeEntry {
@@ -45,13 +48,16 @@ const defaultForm: IncomeForm = {
   status: 'pendiente',
 };
 
+const SYNC_WARNING = 'El ingreso se guardó, pero no se pudo registrar en Movimientos.';
+
+// All helpers throw a DataError on failure; [] only means "no income entries".
 async function getAll(): Promise<IncomeEntry[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('income_entries')
     .select('*')
     .order('collection_date', { ascending: true });
-  if (error) return [];
+  if (error) throw toDataError(error);
   return (data || []).map((r) => ({
     id: r.id,
     name: r.name,
@@ -64,10 +70,15 @@ async function getAll(): Promise<IncomeEntry[]> {
   }));
 }
 
-async function createEntry(entry: Omit<IncomeEntry, 'id'>): Promise<IncomeEntry | null> {
+// Resolves with the saved entry plus whether the follow-up sync to `transactions`
+// failed (the entry itself is saved either way).
+async function createEntry(
+  entry: Omit<IncomeEntry, 'id'>
+): Promise<{ entry: IncomeEntry; syncFailed: boolean }> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw toDataError(authError);
+  if (!user) throw authRequired();
   const { data, error } = await supabase
     .from('income_entries')
     .insert({
@@ -82,12 +93,12 @@ async function createEntry(entry: Omit<IncomeEntry, 'id'>): Promise<IncomeEntry 
     })
     .select()
     .single();
-  if (error) return null;
+  if (error) throw toDataError(error);
 
   // Only sync to transactions (movimientos) if already cobrado
+  let syncFailed = false;
   if (entry.status === 'cobrado') {
-    try {
-      await supabase.from('transactions').insert({
+    const { error: syncError } = await supabase.from('transactions').insert({
         user_id: user.id,
         name: entry.name,
         category: entry.category,
@@ -98,13 +109,17 @@ async function createEntry(entry: Omit<IncomeEntry, 'id'>): Promise<IncomeEntry 
         transaction_time: new Date().toTimeString().slice(0, 5),
         transaction_type: 'ingreso',
         notes: entry.notes || '',
-      });
-    } catch (_) {
-      // Non-blocking
+    });
+    if (syncError) {
+      console.error('income → transactions sync failed:', syncError);
+      syncFailed = true;
     }
   }
 
-  return { id: data.id, name: data.name, amount: data.amount, category: data.category, categoryIcon: data.category_icon, collectionDate: data.collection_date, notes: data.notes, status: data.status };
+  return {
+    entry: { id: data.id, name: data.name, amount: data.amount, category: data.category, categoryIcon: data.category_icon, collectionDate: data.collection_date, notes: data.notes, status: data.status },
+    syncFailed,
+  };
 }
 
 async function updateEntry(id: string, entry: Partial<IncomeEntry>): Promise<void> {
@@ -117,12 +132,16 @@ async function updateEntry(id: string, entry: Partial<IncomeEntry>): Promise<voi
   if (entry.collectionDate !== undefined) updates.collection_date = entry.collectionDate;
   if (entry.notes !== undefined) updates.notes = entry.notes;
   if (entry.status !== undefined) updates.status = entry.status;
-  await supabase.from('income_entries').update(updates).eq('id', id);
+  const { data, error } = await supabase.from('income_entries').update(updates).eq('id', id).select('id');
+  if (error) throw toDataError(error);
+  assertAffected(data);
 }
 
 async function deleteEntry(id: string): Promise<void> {
   const supabase = createClient();
-  await supabase.from('income_entries').delete().eq('id', id);
+  const { data, error } = await supabase.from('income_entries').delete().eq('id', id).select('id');
+  if (error) throw toDataError(error);
+  assertAffected(data);
 }
 
 export default function IngresosPage() {
@@ -133,10 +152,19 @@ export default function IngresosPage() {
   const [editingEntry, setEditingEntry] = useState<IncomeEntry | null>(null);
   const [filterStatus, setFilterStatus] = useState<'todos' | 'pendiente' | 'cobrado'>('todos');
   const [form, setForm] = useState<IncomeForm>(defaultForm);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
+
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
+    getAll().then(setEntries).catch(setLoadError).finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
-    getAll().then(setEntries).catch(console.error).finally(() => setLoading(false));
-  }, []);
+    load();
+  }, [load]);
 
   const filtered = entries.filter((e) => filterStatus === 'todos' || e.status === filterStatus);
 
@@ -146,6 +174,7 @@ export default function IngresosPage() {
   const openAdd = () => {
     setEditingEntry(null);
     setForm(defaultForm);
+    setFormError('');
     setShowForm(true);
   };
 
@@ -160,6 +189,7 @@ export default function IngresosPage() {
       notes: entry.notes,
       status: entry.status,
     });
+    setFormError('');
     setShowForm(true);
   };
 
@@ -171,6 +201,7 @@ export default function IngresosPage() {
   const handleSave = async () => {
     if (!form.name || !form.amount) return;
     setSaving(true);
+    setFormError('');
     try {
       const entryData: Omit<IncomeEntry, 'id'> = {
         name: form.name,
@@ -185,36 +216,52 @@ export default function IngresosPage() {
         await updateEntry(editingEntry.id, entryData);
         setEntries((prev) => prev.map((e) => (e.id === editingEntry.id ? { ...e, ...entryData } : e)));
       } else {
-        const created = await createEntry(entryData);
-        if (created) setEntries((prev) => [...prev, created]);
+        const { entry: created, syncFailed } = await createEntry(entryData);
+        setEntries((prev) => [...prev, created]);
+        if (syncFailed) toast.showError(SYNC_WARNING);
       }
       setShowForm(false);
     } catch (err) {
       console.error(err);
+      setFormError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    await deleteEntry(id);
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    try {
+      await deleteEntry(id);
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      toast.showError(err);
+    }
   };
 
   const handleMarkCobrado = async (entry: IncomeEntry) => {
     const newStatus = entry.status === 'cobrado' ? 'pendiente' : 'cobrado';
-    await updateEntry(entry.id, { status: newStatus });
+    try {
+      await updateEntry(entry.id, { status: newStatus });
+    } catch (err) {
+      toast.showError(err);
+      return;
+    }
     setEntries((prev) => prev.map((e) => (e.id === entry.id ? { ...e, status: newStatus } : e)));
 
     // Create or delete transaction as needed
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
+    const syncWarning =
+      newStatus === 'cobrado'
+        ? SYNC_WARNING
+        : 'El ingreso volvió a pendiente, pero no se pudo actualizar Movimientos.';
     try {
+      const supabase = createClient();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw toDataError(authError);
+      if (!user) throw authRequired();
+
       if (newStatus === 'cobrado') {
         // Create transaction
-        await supabase.from('transactions').insert({
+        const { error } = await supabase.from('transactions').insert({
           user_id: user.id,
           name: entry.name,
           category: entry.category,
@@ -226,9 +273,11 @@ export default function IngresosPage() {
           transaction_type: 'ingreso',
           notes: entry.notes || '',
         });
+        if (error) throw toDataError(error);
       } else {
         // Delete transaction by matching name+amount+type
-        await supabase
+        // NOTE: known data-loss bug (audit C-08) — fixed separately, unchanged here.
+        const { error } = await supabase
           .from('transactions')
           .delete()
           .match({
@@ -236,9 +285,11 @@ export default function IngresosPage() {
             amount: Math.abs(entry.amount),
             transaction_type: 'ingreso',
           });
+        if (error) throw toDataError(error);
       }
-    } catch (_) {
-      // Non-blocking
+    } catch (err) {
+      console.error(err);
+      toast.showError(syncWarning);
     }
   };
 
@@ -254,6 +305,15 @@ export default function IngresosPage() {
     const today = new Date().toISOString().split('T')[0];
     return dateStr < today;
   };
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Ingresos</h1>
+        <LoadError what="tus ingresos" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
@@ -500,6 +560,10 @@ export default function IngresosPage() {
                 />
               </div>
             </div>
+
+            {formError && (
+              <p role="alert" className="px-6 pb-3 text-sm font-semibold text-red-600">{formError}</p>
+            )}
 
             <div className="px-6 pb-6 flex gap-3">
               <button

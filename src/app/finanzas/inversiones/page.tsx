@@ -1,7 +1,10 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { investmentsService, Investment } from '@/lib/supabaseFinance';
 import { Plus, X, Pencil, Trash2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 
 const INVESTMENT_TYPES = ['Acciones', 'ETF', 'Fondo mutuo', 'Cripto', 'Bonos', 'Otro'];
 
@@ -11,11 +14,20 @@ export default function InversionesPage() {
   const [editingInv, setEditingInv] = useState<Investment | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
   const [form, setForm] = useState({ name: '', ticker: '', type: 'Acciones', shares: '', price: '', cost: '', icon: '📈', color: '#16A34A' });
 
-  useEffect(() => {
-    investmentsService.getAll().then(setInvestments).catch(console.error).finally(() => setLoading(false));
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
+    investmentsService.getAll().then(setInvestments).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const totalValue = investments.reduce((s, i) => s + (i.shares * i.price), 0);
   const totalCost = investments.reduce((s, i) => s + i.cost, 0);
@@ -25,18 +37,21 @@ export default function InversionesPage() {
   const openAdd = () => {
     setEditingInv(null);
     setForm({ name: '', ticker: '', type: 'Acciones', shares: '', price: '', cost: '', icon: '📈', color: '#16A34A' });
+    setFormError('');
     setShowForm(true);
   };
 
   const openEdit = (inv: Investment) => {
     setEditingInv(inv);
     setForm({ name: inv.name, ticker: inv.ticker, type: inv.type, shares: String(inv.shares), price: String(inv.price), cost: String(inv.cost), icon: inv.icon, color: inv.color });
+    setFormError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.name) return;
     setSaving(true);
+    setFormError('');
     try {
       const typeIcons: Record<string, string> = { 'Acciones': '📈', 'ETF': '📊', 'Fondo mutuo': '🏛️', 'Cripto': '₿', 'Bonos': '📋', 'Otro': '💼' };
       const invData: Omit<Investment, 'id'> = {
@@ -49,18 +64,38 @@ export default function InversionesPage() {
         setInvestments(prev => prev.map(i => i.id === editingInv.id ? { ...i, ...invData } : i));
       } else {
         const created = await investmentsService.create(invData);
-        if (created) setInvestments(prev => [...prev, created]);
+        setInvestments(prev => [...prev, created]);
       }
       setShowForm(false);
-    } catch (err) { console.error(err); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setFormError(getErrorMessage(err));
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await investmentsService.delete(id);
       setInvestments(prev => prev.filter(i => i.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-10 h-10 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Inversiones</h1>
+        <LoadError what="tus inversiones" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
@@ -190,9 +225,10 @@ export default function InversionesPage() {
                     placeholder="0" className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text outline-none focus:border-fin-green transition-colors" />
                 </div>
               </div>
-              <button onClick={handleSave} disabled={!form.name}
+              {formError && <p role="alert" className="text-sm font-semibold text-red-600">{formError}</p>}
+              <button onClick={handleSave} disabled={!form.name || saving}
                 className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed">
-                {editingInv ? 'Guardar cambios' : 'Agregar inversión'}
+                {saving ? 'Guardando...' : editingInv ? 'Guardar cambios' : 'Agregar inversión'}
               </button>
             </div>
           </div>

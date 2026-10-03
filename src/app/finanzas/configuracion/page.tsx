@@ -1,6 +1,9 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage, toDataError } from '@/lib/dataError';
 import { useRouter } from 'next/navigation';
 import { LogOut, Mail, Calendar, Shield, Bell, Database, Info, ChevronRight, Check, Globe } from 'lucide-react';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
@@ -27,12 +30,17 @@ export default function ConfiguracionPage() {
   const [editingRate, setEditingRate] = useState<string | null>(null);
   const [rateInput, setRateInput] = useState('');
   const [usedCurrencies, setUsedCurrencies] = useState<string[]>([]);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [settingsError, setSettingsError] = useState('');
+  const [rateError, setRateError] = useState('');
+  const toast = useToast();
 
-  useEffect(() => {
+  const fetchAll = useCallback(async () => {
     if (!user) return;
-
-    async function fetchAll() {
-      try {
+    setLoadingStats(true);
+    setLoadingSettings(true);
+    setLoadError(null);
+    try {
         const [settings, rates, txRes, payRes, subRes, goalRes, accsRes] = await Promise.all([
           userSettingsService.get(),
           exchangeRatesService.getRatesMap(),
@@ -42,6 +50,9 @@ export default function ConfiguracionPage() {
           supabase.from('savings_goals').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
           supabase.from('accounts').select('currency').eq('user_id', user!.id),
         ]);
+        for (const res of [txRes, payRes, subRes, goalRes, accsRes]) {
+          if (res.error) throw toDataError(res.error);
+        }
         setBaseCurrency(settings.baseCurrencyCode);
         setExchangeRateMode(settings.exchangeRateMode);
         setShowEquivalents(settings.showEquivalents);
@@ -55,17 +66,22 @@ export default function ConfiguracionPage() {
         // Get unique currencies from accounts
         const currencies = [...new Set((accsRes.data || []).map((a: any) => a.currency || 'PEN'))];
         setUsedCurrencies(currencies as string[]);
-      } catch (e) {
-        console.error(e);
-      }
-      setLoadingStats(false);
-      setLoadingSettings(false);
+    } catch (e) {
+      console.error(e);
+      setLoadError(e);
     }
-    fetchAll();
+    setLoadingStats(false);
+    setLoadingSettings(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   async function handleSaveSettings() {
     setSavingSettings(true);
+    setSettingsError('');
     try {
       await userSettingsService.upsert({
         baseCurrencyCode: baseCurrency,
@@ -76,6 +92,7 @@ export default function ConfiguracionPage() {
       setTimeout(() => setSavedFeedback(false), 2000);
     } catch (e) {
       console.error(e);
+      setSettingsError(getErrorMessage(e));
     }
     setSavingSettings(false);
   }
@@ -83,13 +100,16 @@ export default function ConfiguracionPage() {
   async function handleSaveRate(from: string, to: string) {
     const rate = parseFloat(rateInput);
     if (!rate || rate <= 0) return;
+    setRateError('');
     try {
       await exchangeRatesService.upsert(from, to, rate);
       setRatesMap(prev => ({ ...prev, [`${from}_${to}`]: rate }));
       setEditingRate(null);
       setRateInput('');
     } catch (e) {
+      // Keep the editor open so the user can retry.
       console.error(e);
+      setRateError(getErrorMessage(e));
     }
   }
 
@@ -97,7 +117,9 @@ export default function ConfiguracionPage() {
     try {
       await signOut();
       router.replace('/login');
-    } catch {}
+    } catch (e) {
+      toast.showError(e);
+    }
   }
 
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : 'U';
@@ -158,10 +180,11 @@ export default function ConfiguracionPage() {
       {/* Stats Row */}
       <div className="grid grid-cols-4 gap-3 mb-5">
         {[
-          { label: 'Movimientos', value: loadingStats ? '…' : stats.transactions, color: 'bg-[#DBEAFE]' },
-          { label: 'Pagos', value: loadingStats ? '…' : stats.payments, color: 'bg-[#FEE2E2]' },
-          { label: 'Suscripciones', value: loadingStats ? '…' : stats.subscriptions, color: 'bg-[#F3E8FF]' },
-          { label: 'Metas', value: loadingStats ? '…' : stats.goals, color: 'bg-[#FEF9C3]' },
+          // "—" (not 0) when loading failed: a failed count is not "no data".
+          { label: 'Movimientos', value: loadingStats ? '…' : loadError ? '—' : stats.transactions, color: 'bg-[#DBEAFE]' },
+          { label: 'Pagos', value: loadingStats ? '…' : loadError ? '—' : stats.payments, color: 'bg-[#FEE2E2]' },
+          { label: 'Suscripciones', value: loadingStats ? '…' : loadError ? '—' : stats.subscriptions, color: 'bg-[#F3E8FF]' },
+          { label: 'Metas', value: loadingStats ? '…' : loadError ? '—' : stats.goals, color: 'bg-[#FEF9C3]' },
         ].map((s) => (
           <div key={s.label} className={`${s.color} border-[3px] border-black rounded-2xl p-3 shadow-[4px_4px_0px_#000] text-center`}>
             <p className="text-xl font-black text-black">{s.value}</p>
@@ -184,6 +207,9 @@ export default function ConfiguracionPage() {
             <div className="h-10 bg-gray-100 rounded-xl" />
             <div className="h-10 bg-gray-100 rounded-xl" />
           </div>
+        ) : loadError ? (
+          // Hide the form: saving the defaults shown here would overwrite the real settings.
+          <LoadError what="tu configuración" error={loadError} onRetry={fetchAll} />
         ) : (
           <div className="space-y-5">
             {/* Moneda principal */}
@@ -293,6 +319,7 @@ export default function ConfiguracionPage() {
                       </div>
                     );
                   })}
+                  {rateError && <p role="alert" className="text-xs font-bold text-red-600">{rateError}</p>}
                 </div>
               ) : (
                 <div className="px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl">
@@ -311,6 +338,8 @@ export default function ConfiguracionPage() {
               </div>
               <Toggle value={showEquivalents} onChange={() => setShowEquivalents(!showEquivalents)} />
             </div>
+
+            {settingsError && <p role="alert" className="text-xs font-bold text-red-600">{settingsError}</p>}
 
             {/* Save button */}
             <button

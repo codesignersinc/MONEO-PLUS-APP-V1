@@ -1,6 +1,9 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { subscriptionsService, Subscription } from '@/lib/supabaseFinance';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 import { Plus, X, Pencil, Trash2, RefreshCcw, ToggleLeft, ToggleRight, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import SubscriptionServicePicker from '@/components/finance/SubscriptionServicePicker';
 
@@ -32,16 +35,25 @@ export default function SuscripcionesPage() {
     name: '', category: 'Entretenimiento', amount: '',
     nextPaymentDate: '', active: true, icon: '🎬', color: '#DC2626',
   });
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
     subscriptionsService.getAll().then(data => {
       const updated = data.map(s => ({
         ...s,
         paymentStatus: s.paymentStatus === 'paid' ? 'paid' : computeStatus(s.nextPaymentDate),
       }));
       setSubs(updated as Subscription[]);
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const activeSubs = subs.filter(s => s.active);
   const monthlyTotal = activeSubs.reduce((s, sub) => s + sub.amount, 0);
@@ -55,7 +67,7 @@ export default function SuscripcionesPage() {
     try {
       await subscriptionsService.update(id, { active: !sub.active });
       setSubs(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
 
   const handleMarkPaid = async (sub: Subscription) => {
@@ -65,12 +77,13 @@ export default function SuscripcionesPage() {
       setSubs(prev => prev.map(s => s.id === sub.id
         ? { ...s, paymentStatus: 'pending', nextPaymentDate: nextDateStr }
         : s));
-    } catch (err) { console.error(err); } finally { setMarkingPaid(null); }
+    } catch (err) { toast.showError(err); } finally { setMarkingPaid(null); }
   };
 
   const openAdd = () => {
     setEditingSub(null);
     setForm({ name: '', category: 'Entretenimiento', amount: '', nextPaymentDate: '', active: true, icon: '🎬', color: '#DC2626' });
+    setFormError('');
     setShowForm(true);
   };
 
@@ -80,12 +93,14 @@ export default function SuscripcionesPage() {
       name: sub.name, category: sub.category, amount: String(sub.amount),
       nextPaymentDate: sub.nextPaymentDate ?? '', active: sub.active, icon: sub.icon, color: sub.color,
     });
+    setFormError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.name || !form.amount || !form.nextPaymentDate) return;
     setSaving(true);
+    setFormError('');
     try {
       const paymentDay = new Date(form.nextPaymentDate + 'T00:00:00').getDate();
       const status = computeStatus(form.nextPaymentDate);
@@ -105,17 +120,20 @@ export default function SuscripcionesPage() {
         setSubs(prev => prev.map(s => s.id === editingSub.id ? { ...s, ...subData } : s));
       } else {
         const created = await subscriptionsService.create(subData);
-        if (created) setSubs(prev => [...prev, { ...created, paymentStatus: status }]);
+        setSubs(prev => [...prev, { ...created, paymentStatus: status }]);
       }
       setShowForm(false);
-    } catch (err) { console.error(err); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setFormError(getErrorMessage(err));
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await subscriptionsService.delete(id);
       setSubs(prev => prev.filter(s => s.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
 
   const statusBadge = (sub: Subscription) => {
@@ -143,6 +161,23 @@ export default function SuscripcionesPage() {
       </span>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-10 h-10 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Suscripciones</h1>
+        <LoadError what="tus suscripciones" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
@@ -318,6 +353,8 @@ export default function SuscripcionesPage() {
                 />
                 <p className="text-xs font-medium text-gray-500 mt-1">El día del mes se usará para los cobros recurrentes</p>
               </div>
+
+              {formError && <p role="alert" className="text-sm font-semibold text-red-600">{formError}</p>}
 
               {/* Save button */}
               <button

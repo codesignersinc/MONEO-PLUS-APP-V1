@@ -1,8 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { budgetService, BudgetCategory, transactionsService } from '@/lib/supabaseFinance';
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
 import { Plus, X, Pencil, Trash2, Wallet, BarChart3 } from 'lucide-react';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 
 export default function PresupuestoPage() {
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
@@ -11,6 +14,9 @@ export default function PresupuestoPage() {
   const [editingCat, setEditingCat] = useState<BudgetCategory | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
   const [form, setForm] = useState({ name: 'Comida', icon: '🍽️', budget: '', color: '#D97706', bgColor: '#FEF3C7' });
   const [month] = useState(() => {
     const now = new Date();
@@ -18,8 +24,10 @@ export default function PresupuestoPage() {
     return `${months[now.getMonth()]} ${now.getFullYear()}`;
   });
 
-  useEffect(() => {
+  const load = useCallback(() => {
     const now = new Date();
+    setLoading(true);
+    setLoadError(null);
     Promise.all([
       budgetService.getAll(),
       transactionsService.getAll(),
@@ -29,8 +37,12 @@ export default function PresupuestoPage() {
         const txDate = new Date(tx.date);
         return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear() && tx.type === 'gasto';
       }).map(tx => ({ type: tx.type, amount: Math.abs(tx.amount), category: tx.category })));
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const getSpent = (catName: string) => transactions.filter(t => t.category === catName).reduce((s, t) => s + t.amount, 0);
 
@@ -41,18 +53,21 @@ export default function PresupuestoPage() {
   const openAdd = () => {
     setEditingCat(null);
     setForm({ name: 'Comida', icon: '🍽️', budget: '', color: '#D97706', bgColor: '#FEF3C7' });
+    setFormError('');
     setShowForm(true);
   };
 
   const openEdit = (cat: BudgetCategory) => {
     setEditingCat(cat);
     setForm({ name: cat.name, icon: cat.icon, budget: String(cat.budget), color: cat.color, bgColor: cat.bgColor });
+    setFormError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.name || !form.budget) return;
     setSaving(true);
+    setFormError('');
     try {
       const catData = { ...form, budget: parseFloat(form.budget) };
       if (editingCat) {
@@ -60,23 +75,43 @@ export default function PresupuestoPage() {
         setCategories(prev => prev.map(c => c.id === editingCat.id ? { ...c, ...catData } : c));
       } else {
         const created = await budgetService.create(catData);
-        if (created) setCategories(prev => [...prev, created]);
+        setCategories(prev => [...prev, created]);
       }
       setShowForm(false);
-    } catch (err) { console.error(err); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setFormError(getErrorMessage(err));
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await budgetService.delete(id);
       setCategories(prev => prev.filter(c => c.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
 
   const handleCategoryPreset = (label: string) => {
     const preset = CATEGORY_PRESETS.find(c => c.label === label);
     if (preset) setForm(f => ({ ...f, name: preset.label, icon: preset.icon, color: preset.color, bgColor: preset.color + '20' }));
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-10 h-10 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Presupuesto</h1>
+        <LoadError what="tu presupuesto" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
@@ -205,9 +240,10 @@ export default function PresupuestoPage() {
                 <input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
                   placeholder="Presupuesto mensual" className="flex-1 bg-transparent text-sm font-semibold text-fin-text outline-none" />
               </div>
-              <button onClick={handleSave} disabled={!form.name || !form.budget}
+              {formError && <p role="alert" className="text-sm font-semibold text-red-600">{formError}</p>}
+              <button onClick={handleSave} disabled={!form.name || !form.budget || saving}
                 className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed">
-                {editingCat ? 'Guardar cambios' : 'Agregar categoría'}
+                {saving ? 'Guardando...' : editingCat ? 'Guardar cambios' : 'Agregar categoría'}
               </button>
             </div>
           </div>

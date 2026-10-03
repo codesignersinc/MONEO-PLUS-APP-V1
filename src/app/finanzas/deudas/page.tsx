@@ -1,7 +1,10 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { debtsService, Debt } from '@/lib/supabaseFinance';
 import { Plus, X, Pencil, Trash2, CreditCard, AlertCircle } from 'lucide-react';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 
 const DEBT_TYPES = ['Tarjeta de crédito', 'Préstamo personal', 'Préstamo hipotecario', 'Préstamo vehicular', 'Otro'];
 
@@ -11,11 +14,20 @@ export default function DeudasPage() {
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
   const [form, setForm] = useState({ name: '', institution: '', icon: '💳', balance: '', limit: '', monthlyPayment: '', dueDate: '', type: 'Tarjeta de crédito', color: '#DC2626', interestRate: '' });
 
-  useEffect(() => {
-    debtsService.getAll().then(setDebts).catch(console.error).finally(() => setLoading(false));
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
+    debtsService.getAll().then(setDebts).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const totalDebt = debts.reduce((s, d) => s + d.balance, 0);
   const nextPayment = debts.filter(d => d.balance > 0 && d.dueDate).sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
@@ -23,18 +35,21 @@ export default function DeudasPage() {
   const openAdd = () => {
     setEditingDebt(null);
     setForm({ name: '', institution: '', icon: '💳', balance: '', limit: '', monthlyPayment: '', dueDate: '', type: 'Tarjeta de crédito', color: '#DC2626', interestRate: '' });
+    setFormError('');
     setShowForm(true);
   };
 
   const openEdit = (debt: Debt) => {
     setEditingDebt(debt);
     setForm({ name: debt.name, institution: debt.institution, icon: debt.icon, balance: String(debt.balance), limit: String(debt.limit), monthlyPayment: String(debt.monthlyPayment), dueDate: debt.dueDate, type: debt.type, color: debt.color, interestRate: String(debt.interestRate) });
+    setFormError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.name) return;
     setSaving(true);
+    setFormError('');
     try {
       const debtData: Omit<Debt, 'id'> = {
         name: form.name, institution: form.institution,
@@ -48,18 +63,38 @@ export default function DeudasPage() {
         setDebts(prev => prev.map(d => d.id === editingDebt.id ? { ...d, ...debtData } : d));
       } else {
         const created = await debtsService.create(debtData);
-        if (created) setDebts(prev => [...prev, created]);
+        setDebts(prev => [...prev, created]);
       }
       setShowForm(false);
-    } catch (err) { console.error(err); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setFormError(getErrorMessage(err));
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await debtsService.delete(id);
       setDebts(prev => prev.filter(d => d.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-10 h-10 border-4 border-fin-red border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Deudas</h1>
+        <LoadError what="tus deudas" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
@@ -199,9 +234,10 @@ export default function DeudasPage() {
                   placeholder="Vencimiento (ej: 25 oct)"
                   className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text placeholder-gray-400 outline-none focus:border-fin-green transition-colors" />
               </div>
-              <button onClick={handleSave} disabled={!form.name}
+              {formError && <p role="alert" className="text-sm font-semibold text-red-600">{formError}</p>}
+              <button onClick={handleSave} disabled={!form.name || saving}
                 className="w-full py-3.5 bg-fin-red text-white font-manrope font-700 rounded-xl hover:bg-red-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed">
-                {editingDebt ? 'Guardar cambios' : 'Agregar deuda'}
+                {saving ? 'Guardando...' : editingDebt ? 'Guardar cambios' : 'Agregar deuda'}
               </button>
             </div>
           </div>

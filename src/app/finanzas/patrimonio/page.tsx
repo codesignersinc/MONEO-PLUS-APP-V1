@@ -1,6 +1,7 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { accountsService, savingsService, investmentsService, debtsService } from '@/lib/supabaseFinance';
+import LoadError from '@/components/ui/LoadError';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap, groupAccountsByCurrency } from '@/lib/currency';
 
@@ -12,8 +13,11 @@ export default function PatrimonioPage() {
   const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
     Promise.all([
       accountsService.getAll(),
       savingsService.getAll(),
@@ -28,8 +32,12 @@ export default function PatrimonioPage() {
       setDebts(dbs);
       setBaseCurrency(settings.baseCurrencyCode);
       setRatesMap(rates);
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (loading) {
     return (
@@ -37,6 +45,16 @@ export default function PatrimonioPage() {
         <div className="rounded-2xl border-[3px] border-black p-6 bg-[#FFD43B] shadow-[4px_4px_0px_#000]">
           <p className="font-black text-black uppercase tracking-widest text-sm animate-pulse">CARGANDO...</p>
         </div>
+      </div>
+    );
+  }
+
+  // A failed load must never fall through to the "Sin datos de patrimonio" empty state.
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Patrimonio neto</h1>
+        <LoadError what="tu patrimonio" error={loadError} onRetry={load} />
       </div>
     );
   }

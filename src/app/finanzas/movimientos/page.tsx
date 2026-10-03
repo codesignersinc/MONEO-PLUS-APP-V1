@@ -1,5 +1,8 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
 import { transactionsService, accountsService, Transaction } from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
@@ -40,6 +43,30 @@ interface AccountOption {
   balance: number;
 }
 
+// Throws a DataError on failure; [] only means "no pending incomes".
+async function fetchPendingIncomes(): Promise<PendingIncome[]> {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw toDataError(authError);
+  if (!user) throw authRequired();
+  const { data, error } = await supabase
+    .from('income_entries')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'pendiente')
+    .order('collection_date', { ascending: true });
+  if (error) throw toDataError(error);
+  return (data || []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    amount: r.amount,
+    category: r.category,
+    categoryIcon: r.category_icon,
+    collectionDate: r.collection_date,
+    notes: r.notes || '',
+  }));
+}
+
 export default function MovimientosPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [pendingIncomes, setPendingIncomes] = useState<PendingIncome[]>([]);
@@ -63,31 +90,19 @@ export default function MovimientosPage() {
     time: new Date().toTimeString().slice(0, 5),
   });
 
-  useEffect(() => {
-    const supabase = createClient();
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
+
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
     Promise.all([
       transactionsService.getAll(),
       accountsService.getAll(),
       userSettingsService.get(),
       exchangeRatesService.getRatesMap(),
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (!user) return [];
-        return supabase
-          .from('income_entries')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('status', 'pendiente')
-          .order('collection_date', { ascending: true })
-          .then(({ data }) => (data || []).map((r) => ({
-            id: r.id,
-            name: r.name,
-            amount: r.amount,
-            category: r.category,
-            categoryIcon: r.category_icon,
-            collectionDate: r.collection_date,
-            notes: r.notes || '',
-          })));
-      }),
+      fetchPendingIncomes(),
     ]).then(([txs, accs, settings, rates, pending]) => {
       const pendingList = pending as PendingIncome[];
       const filteredTxs = (txs as Transaction[]).filter(tx => {
@@ -103,8 +118,12 @@ export default function MovimientosPage() {
       if (accs.length > 0) {
         setForm(f => ({ ...f, accountId: accs[0].id, account: accs[0].name }));
       }
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Get unique currencies from transactions
   const usedCurrencies = [...new Set(transactions.map(tx => (tx as any).currencyCode || 'PEN'))].filter(Boolean);
@@ -165,6 +184,7 @@ export default function MovimientosPage() {
       notes: '', date: new Date().toISOString().split('T')[0],
       time: new Date().toTimeString().slice(0, 5),
     });
+    setFormError('');
     setShowForm(true);
   };
 
@@ -176,12 +196,20 @@ export default function MovimientosPage() {
       accountId: tx.accountId, account: tx.account, notes: tx.notes || '',
       date: tx.date.split('T')[0], time: tx.time,
     });
+    setFormError('');
     setShowForm(true);
+  };
+
+  const onSaveError = (err: unknown) => {
+    // Keep the form open with the user's data so they can retry.
+    console.error(err);
+    setFormError(getErrorMessage(err));
   };
 
   const handleSave = () => {
     if (!form.name || !form.amount) return;
     setSaving(true);
+    setFormError('');
     const amt = parseFloat(form.amount);
     const selectedAcc = accounts.find(a => a.id === form.accountId);
     const accCurrency = selectedAcc?.currency || 'PEN';
@@ -200,7 +228,7 @@ export default function MovimientosPage() {
           account: form.account, notes: form.notes, date: form.date, time: form.time,
         } : t));
         setShowForm(false);
-      }).catch(console.error).finally(() => setSaving(false));
+      }).catch(onSaveError).finally(() => setSaving(false));
     } else {
       transactionsService.create({
         name: form.name, type: form.type,
@@ -215,19 +243,28 @@ export default function MovimientosPage() {
         exchangeRate: rate,
         exchangeRateDate: form.date,
       } as any).then((newTx) => {
-        if (newTx) setTransactions(prev => [newTx, ...prev]);
+        setTransactions(prev => [newTx, ...prev]);
         setShowForm(false);
-      }).catch(console.error).finally(() => setSaving(false));
+      }).catch(onSaveError).finally(() => setSaving(false));
     }
   };
 
   const handleDelete = (id: string) => {
     transactionsService.delete(id).then(() => {
       setTransactions(prev => prev.filter(t => t.id !== id));
-    }).catch(console.error);
+    }).catch((err) => toast.showError(err));
   };
 
   const baseCurrInfo = getCurrencyInfo(baseCurrency);
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Movimientos</h1>
+        <LoadError what="tus movimientos" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-3xl mx-auto">
@@ -394,7 +431,11 @@ export default function MovimientosPage() {
       )}
 
       {/* Transaction groups */}
-      {Object.keys(grouped).length === 0 && filteredPending.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-6 h-6 border-2 border-fin-green border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : Object.keys(grouped).length === 0 && filteredPending.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-4xl mb-3">📋</p>
           <p className="text-fin-muted font-medium mb-1">Sin movimientos</p>
@@ -555,6 +596,7 @@ export default function MovimientosPage() {
               <input type="text" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Nota (opcional)"
                 className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors" />
+              {formError && <p role="alert" className="text-sm font-semibold text-red-600">{formError}</p>}
               <button onClick={handleSave} disabled={!form.name || !form.amount || saving}
                 className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed">
                 {saving ? 'Guardando...' : editingTx ? 'Guardar cambios' : 'Guardar'}

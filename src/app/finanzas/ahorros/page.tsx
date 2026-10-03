@@ -1,7 +1,10 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { savingsService, SavingsGoal } from '@/lib/supabaseFinance';
 import { Plus, X, Pencil, Trash2, PiggyBank } from 'lucide-react';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 
 const GOAL_ICONS = ['🛡️', '✈️', '🚗', '💻', '🏠', '📱', '🎓', '💍', '🐷', '🌟'];
 
@@ -18,29 +21,41 @@ export default function AhorrosPage() {
   const [addAmount, setAddAmount] = useState<{ id: string; value: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
   const [form, setForm] = useState({ name: '', icon: '🐷', current: '0', target: '', color: '#16A34A', targetDate: '' });
 
-  useEffect(() => {
-    savingsService.getAll().then(setGoals).catch(console.error).finally(() => setLoading(false));
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
+    savingsService.getAll().then(setGoals).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const totalSaved = goals.reduce((s, g) => s + g.current, 0);
 
   const openAdd = () => {
     setEditingGoal(null);
     setForm({ name: '', icon: '🐷', current: '0', target: '', color: '#16A34A', targetDate: '' });
+    setFormError('');
     setShowForm(true);
   };
 
   const openEdit = (goal: SavingsGoal) => {
     setEditingGoal(goal);
     setForm({ name: goal.name, icon: goal.icon, current: String(goal.current), target: String(goal.target), color: goal.color, targetDate: goal.targetDate });
+    setFormError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.name || !form.target) return;
     setSaving(true);
+    setFormError('');
     try {
       const goalData = { ...form, current: parseFloat(form.current) || 0, target: parseFloat(form.target) };
       if (editingGoal) {
@@ -48,17 +63,20 @@ export default function AhorrosPage() {
         setGoals(prev => prev.map(g => g.id === editingGoal.id ? { ...g, ...goalData } : g));
       } else {
         const created = await savingsService.create(goalData);
-        if (created) setGoals(prev => [...prev, created]);
+        setGoals(prev => [...prev, created]);
       }
       setShowForm(false);
-    } catch (err) { console.error(err); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setFormError(getErrorMessage(err));
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await savingsService.delete(id);
       setGoals(prev => prev.filter(g => g.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
 
   const handleAddAmount = async (id: string) => {
@@ -70,7 +88,7 @@ export default function AhorrosPage() {
       await savingsService.update(id, { current: newCurrent });
       setGoals(prev => prev.map(g => g.id === id ? { ...g, current: newCurrent } : g));
       setAddAmount(null);
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
 
   if (loading) {
@@ -79,6 +97,17 @@ export default function AhorrosPage() {
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#FFD43B] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-sm font-bold text-gray-500">Cargando metas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF8]">
+        <div className="px-4 py-5 max-w-2xl mx-auto">
+          <h1 className="text-3xl font-black text-black leading-tight mb-5">Metas de Ahorro</h1>
+          <LoadError what="tus metas de ahorro" error={loadError} onRetry={load} />
         </div>
       </div>
     );
@@ -330,6 +359,8 @@ export default function AhorrosPage() {
                 />
                 <p className="text-xs font-medium text-gray-500 mt-1">¿Cuándo quieres alcanzar esta meta?</p>
               </div>
+
+              {formError && <p role="alert" className="text-sm font-bold text-red-600">{formError}</p>}
 
               {/* Save button */}
               <button

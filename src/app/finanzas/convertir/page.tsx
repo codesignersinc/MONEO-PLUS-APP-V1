@@ -1,6 +1,8 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import LoadError from '@/components/ui/LoadError';
+import { getErrorMessage } from '@/lib/dataError';
 import { accountsService } from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService, currencyExchangesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
@@ -27,8 +29,11 @@ export default function ConvertirDineroPage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState<unknown>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
     Promise.all([
       accountsService.getAll(),
       userSettingsService.get(),
@@ -51,8 +56,12 @@ export default function ConvertirDineroPage() {
       } else if (opts.length === 1) {
         setFromAccountId(opts[0].id);
       }
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const fromAccount = accounts.find(a => a.id === fromAccountId);
   const toAccount = accounts.find(a => a.id === toAccountId);
@@ -93,12 +102,13 @@ export default function ConvertirDineroPage() {
         exchangeDate: today,
         notes,
       });
+      // Only reached when the insert really succeeded (the service throws otherwise).
       setSuccess(true);
       setFromAmount('');
       setNotes('');
     } catch (e) {
       console.error(e);
-      setError('Error al registrar la conversión. Intenta de nuevo.');
+      setError(`No se pudo registrar la conversión. ${getErrorMessage(e)}`);
     }
     setSaving(false);
   };
@@ -109,6 +119,14 @@ export default function ConvertirDineroPage() {
         <div className="rounded-2xl border-[3px] border-black p-6 bg-[#FFD43B] shadow-[4px_4px_0px_#000]">
           <p className="font-black text-black uppercase tracking-widest text-sm animate-pulse">CARGANDO...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-md mx-auto">
+        <LoadError what="tus cuentas" error={loadError} onRetry={load} />
       </div>
     );
   }

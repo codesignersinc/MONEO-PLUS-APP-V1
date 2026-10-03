@@ -1,6 +1,9 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import LoadError from '@/components/ui/LoadError';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 import { accountsService, Account } from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, CURRENCIES, formatCurrency, getRateFromMap, groupAccountsByCurrency } from '@/lib/currency';
@@ -57,12 +60,17 @@ export default function CuentasPage() {
   const [saving, setSaving] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [formError, setFormError] = useState('');
+  const toast = useToast();
   const [form, setForm] = useState<AccountForm>({
     name: '', type: 'banco', institution: '', balance: '0',
     currency: 'PEN', icon: '🏦', color: '#16A34A', bgColor: '#DCFCE7',
   });
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
     Promise.all([
       accountsService.getAll(),
       userSettingsService.get(),
@@ -71,8 +79,12 @@ export default function CuentasPage() {
       setAccounts(accs);
       setBaseCurrency(settings.baseCurrencyCode);
       setRatesMap(rates);
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(setLoadError).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const positiveAccounts = accounts.filter(a => a.balance >= 0);
   const totalInBase = positiveAccounts.reduce((s, a) => {
@@ -92,6 +104,7 @@ export default function CuentasPage() {
     setEditingAcc(null);
     setFormStep('tipo');
     setForm({ name: '', type: 'banco', institution: '', balance: '0', currency: 'PEN', icon: '🏦', color: '#16A34A', bgColor: '#DCFCE7' });
+    setFormError('');
     setShowForm(true);
   };
 
@@ -99,12 +112,14 @@ export default function CuentasPage() {
     setEditingAcc(acc);
     setFormStep('cuenta');
     setForm({ name: acc.name, type: acc.type, institution: acc.institution, balance: String(acc.balance), currency: acc.currency || 'PEN', icon: acc.icon, color: acc.color, bgColor: acc.bgColor });
+    setFormError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.name) return;
     setSaving(true);
+    setFormError('');
     try {
       const accountData = { ...form, balance: parseFloat(form.balance) || 0 };
       if (editingAcc) {
@@ -112,17 +127,20 @@ export default function CuentasPage() {
         setAccounts(prev => prev.map(a => a.id === editingAcc.id ? { ...a, ...accountData } : a));
       } else {
         const created = await accountsService.create(accountData);
-        if (created) setAccounts(prev => [...prev, created]);
+        setAccounts(prev => [...prev, created]);
       }
       setShowForm(false);
-    } catch (err) { console.error(err); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setFormError(getErrorMessage(err));
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await accountsService.delete(id);
       setAccounts(prev => prev.filter(a => a.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { toast.showError(err); }
   };
 
   const handleTypeChange = (type: Account['type']) => {
@@ -156,6 +174,23 @@ export default function CuentasPage() {
     : ['tipo', 'cuenta', 'moneda', 'saldo'];
 
   const currentStepIndex = allSteps.indexOf(formStep);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-10 h-10 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Cuentas</h1>
+        <LoadError what="tus cuentas" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
@@ -445,6 +480,7 @@ export default function CuentasPage() {
               )}
 
               {/* Save button */}
+              {formError && <p role="alert" className="text-sm font-semibold text-red-600">{formError}</p>}
               {(formStep === 'saldo' || editingAcc) && (
                 <button onClick={handleSave} disabled={!form.name || saving}
                   className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed">
