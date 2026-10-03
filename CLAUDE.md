@@ -46,6 +46,6 @@ cada pull request (`.github/workflows/ci.yml`). Para `build` local sin `.env.loc
   `AddTransactionModal`.
 - Quedan ~65 warnings de ESLint (sobre todo `no-explicit-any` y variables sin usar).
 - No hay pruebas automatizadas.
-- Los previews de Vercel de commits con autor `Claude <noreply@anthropic.com>` fallan al
-  instante sin compilar (causa probable: el autor no es miembro del equipo de Vercel). El job
-  `check` de GitHub Actions es la verificación de referencia.
+- `next build` falla al prerenderizar si faltan `NEXT_PUBLIC_SUPABASE_URL` /
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` (el cliente de Supabase se crea durante el render). En
+  Vercel deben estar definidas también para el entorno **Preview**, no solo Production.
