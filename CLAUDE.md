@@ -5,7 +5,7 @@ Guía para trabajar en este repositorio. Ver `README.md` para la estructura comp
 ## Proyecto
 
 MONEO+: app de finanzas personales en Next.js 15 (App Router) + React 19 + TypeScript +
-Tailwind, con Supabase como backend y Netlify como hosting. La UI está en español (Perú,
+Tailwind, con Supabase como backend y Vercel como hosting. La UI está en español (Perú,
 moneda base PEN).
 
 ## Comandos
@@ -46,3 +46,6 @@ cada pull request (`.github/workflows/ci.yml`). Para `build` local sin `.env.loc
   `AddTransactionModal`.
 - Quedan ~65 warnings de ESLint (sobre todo `no-explicit-any` y variables sin usar).
 - No hay pruebas automatizadas.
+- Los previews de Vercel de commits con autor `Claude <noreply@anthropic.com>` fallan al
+  instante sin compilar (causa probable: el autor no es miembro del equipo de Vercel). El job
+  `check` de GitHub Actions es la verificación de referencia.

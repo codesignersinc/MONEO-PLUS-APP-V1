@@ -4,7 +4,7 @@ App de finanzas personales: movimientos, cuentas, presupuesto, ahorros, deudas, 
 suscripciones, pagos programados, juntas (ahorro grupal), reportes y multimoneda.
 
 **Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Supabase (base de
-datos + autenticación) · Netlify (despliegue).
+datos + autenticación) · Vercel (despliegue).
 
 ## Puesta en marcha
 
@@ -67,4 +67,4 @@ prefijo de fecha (`YYYYMMDDHHMMSS_descripcion.sql`); no se editan migraciones ya
 1. Crea una rama desde `main`.
 2. Antes de subir: `npm run format && npm run lint && npm run type-check`.
 3. Abre un pull request. CI (GitHub Actions) ejecuta formato, lint, tipos y build.
-4. Al fusionar en `main`, Netlify despliega.
+4. Al fusionar en `main`, Vercel despliega a producción (cada PR genera un preview).
