@@ -22,7 +22,11 @@ interface AccountOption {
   balance: number;
 }
 
-export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTransactionModalProps) {
+export default function AddTransactionModal({
+  isOpen,
+  onClose,
+  onSaved,
+}: AddTransactionModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('gasto');
   const [amount, setAmount] = useState('');
   const [name, setName] = useState('');
@@ -53,31 +57,33 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
         accountsService.getAll(),
         userSettingsService.get(),
         exchangeRatesService.getRatesMap(),
-      ]).then(([accs, settings, rates]) => {
-        const opts: AccountOption[] = accs.map(a => ({
-          id: a.id,
-          name: a.name,
-          icon: a.icon,
-          currency: a.currency || 'PEN',
-          balance: a.balance,
-        }));
-        setAccounts(opts);
-        setBaseCurrency(settings.baseCurrencyCode);
-        setRatesMap(rates);
-        if (opts.length > 0 && !selectedAccount) {
-          setSelectedAccount(opts[0]);
-        }
-      }).catch((err) => {
-        // Not the same as "no accounts": tell the user loading failed.
-        console.error(err);
-        setLoadError(`No pudimos cargar tus cuentas. ${getErrorMessage(err)}`);
-      });
+      ])
+        .then(([accs, settings, rates]) => {
+          const opts: AccountOption[] = accs.map((a) => ({
+            id: a.id,
+            name: a.name,
+            icon: a.icon,
+            currency: a.currency || 'PEN',
+            balance: a.balance,
+          }));
+          setAccounts(opts);
+          setBaseCurrency(settings.baseCurrencyCode);
+          setRatesMap(rates);
+          if (opts.length > 0 && !selectedAccount) {
+            setSelectedAccount(opts[0]);
+          }
+        })
+        .catch((err) => {
+          // Not the same as "no accounts": tell the user loading failed.
+          console.error(err);
+          setLoadError(`No pudimos cargar tus cuentas. ${getErrorMessage(err)}`);
+        });
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const selectedCat = CATEGORY_PRESETS.find(c => c.id === selectedCategory);
+  const selectedCat = CATEGORY_PRESETS.find((c) => c.id === selectedCategory);
   const accountCurrency = selectedAccount?.currency || 'PEN';
   const currInfo = getCurrencyInfo(accountCurrency);
   const amountNum = parseFloat(amount) || 0;
@@ -136,9 +142,19 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-fin-border">
           <h2 className="font-manrope font-700 text-black text-lg">Agregar movimiento</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-black transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-black transition-colors"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="w-5 h-5"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
@@ -146,9 +162,12 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
         <div className="px-5 py-4 space-y-4 max-h-[80vh] overflow-y-auto">
           {/* Tabs */}
           <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
-            {(['gasto', 'ingreso', 'transferencia'] as TabType[]).map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${activeTab === tab ? 'bg-white shadow-sm text-black' : 'text-black'}`}>
+            {(['gasto', 'ingreso', 'transferencia'] as TabType[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${activeTab === tab ? 'bg-white shadow-sm text-black' : 'text-black'}`}
+              >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
@@ -157,9 +176,16 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
           {/* Amount with currency */}
           <div className="flex items-center justify-center gap-2 py-2">
             <span className="text-3xl font-manrope font-700 text-black">{currInfo.symbol}</span>
-            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
-              className="text-4xl font-manrope font-800 text-black bg-transparent border-none outline-none w-40 text-center placeholder-gray-300" />
-            <span className="text-sm font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{accountCurrency}</span>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              className="text-4xl font-manrope font-800 text-black bg-transparent border-none outline-none w-40 text-center placeholder-gray-300"
+            />
+            <span className="text-sm font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+              {accountCurrency}
+            </span>
           </div>
 
           {/* Equivalent in base currency */}
@@ -178,24 +204,50 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
           )}
 
           {/* Name */}
-          <input type="text" value={name} onChange={e => setName(e.target.value)}
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Descripción (ej: Almuerzo, Sueldo...)"
-            className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors" />
+            className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+          />
 
           {/* Category */}
           <div className="relative">
-            <button onClick={() => { setShowCategoryPicker(!showCategoryPicker); setShowAccountPicker(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border hover:border-fin-green transition-colors">
+            <button
+              onClick={() => {
+                setShowCategoryPicker(!showCategoryPicker);
+                setShowAccountPicker(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border hover:border-fin-green transition-colors"
+            >
               <span className="text-xl">{selectedCat?.icon}</span>
-              <span className="flex-1 text-left text-sm font-medium text-black">{selectedCat?.label}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-black"><polyline points="6 9 12 15 18 9"/></svg>
+              <span className="flex-1 text-left text-sm font-medium text-black">
+                {selectedCat?.label}
+              </span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="w-4 h-4 text-black"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             {showCategoryPicker && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-fin-border rounded-xl shadow-lg z-10 p-2 grid grid-cols-2 gap-1 max-h-48 overflow-y-auto">
-                {CATEGORY_PRESETS.map(cat => (
-                  <button key={cat.id} onClick={() => { setSelectedCategory(cat.id); setShowCategoryPicker(false); }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.id ? 'bg-fin-green-light text-fin-green font-semibold' : 'hover:bg-gray-50 text-black'}`}>
-                    <span>{cat.icon}</span><span>{cat.label}</span>
+                {CATEGORY_PRESETS.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setShowCategoryPicker(false);
+                    }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.id ? 'bg-fin-green-light text-fin-green font-semibold' : 'hover:bg-gray-50 text-black'}`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.label}</span>
                   </button>
                 ))}
               </div>
@@ -205,28 +257,54 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
           {/* Account */}
           {accounts.length > 0 ? (
             <div className="relative">
-              <button onClick={() => { setShowAccountPicker(!showAccountPicker); setShowCategoryPicker(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border hover:border-fin-green transition-colors">
+              <button
+                onClick={() => {
+                  setShowAccountPicker(!showAccountPicker);
+                  setShowCategoryPicker(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border hover:border-fin-green transition-colors"
+              >
                 <span className="text-xl">{selectedAccount?.icon || '🏦'}</span>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-black">{selectedAccount?.name || 'Seleccionar cuenta'}</p>
+                  <p className="text-sm font-medium text-black">
+                    {selectedAccount?.name || 'Seleccionar cuenta'}
+                  </p>
                   {selectedAccount && (
-                    <p className="text-xs text-gray-500">{getCurrencyInfo(selectedAccount.currency).flag} {selectedAccount.currency} · {formatCurrency(selectedAccount.balance, selectedAccount.currency)}</p>
+                    <p className="text-xs text-gray-500">
+                      {getCurrencyInfo(selectedAccount.currency).flag} {selectedAccount.currency} ·{' '}
+                      {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
+                    </p>
                   )}
                 </div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-black"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="w-4 h-4 text-black"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
               </button>
               {showAccountPicker && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-fin-border rounded-xl shadow-lg z-10 p-2 space-y-1 max-h-48 overflow-y-auto">
-                  {accounts.map(acc => {
+                  {accounts.map((acc) => {
                     const ci = getCurrencyInfo(acc.currency);
                     return (
-                      <button key={acc.id} onClick={() => { setSelectedAccount(acc); setShowAccountPicker(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${selectedAccount?.id === acc.id ? 'bg-fin-green-light text-fin-green font-semibold' : 'hover:bg-gray-50 text-black'}`}>
+                      <button
+                        key={acc.id}
+                        onClick={() => {
+                          setSelectedAccount(acc);
+                          setShowAccountPicker(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${selectedAccount?.id === acc.id ? 'bg-fin-green-light text-fin-green font-semibold' : 'hover:bg-gray-50 text-black'}`}
+                      >
                         <span>{acc.icon}</span>
                         <div className="flex-1 text-left">
                           <p className="font-medium">{acc.name}</p>
-                          <p className="text-xs text-gray-500">{ci.flag} {acc.currency}</p>
+                          <p className="text-xs text-gray-500">
+                            {ci.flag} {acc.currency}
+                          </p>
                         </div>
                       </button>
                     );
@@ -241,19 +319,39 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
           )}
 
           {/* Date */}
-          <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors" />
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
+          />
 
           {/* Note */}
-          <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="Nota (opcional)"
-            className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors" />
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Nota (opcional)"
+            className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+          />
 
-          {loadError && <p role="alert" className="text-sm font-semibold text-red-600">{loadError}</p>}
-          {saveError && <p role="alert" className="text-sm font-semibold text-red-600">{saveError}</p>}
+          {loadError && (
+            <p role="alert" className="text-sm font-semibold text-red-600">
+              {loadError}
+            </p>
+          )}
+          {saveError && (
+            <p role="alert" className="text-sm font-semibold text-red-600">
+              {saveError}
+            </p>
+          )}
 
           {/* Save */}
-          <button onClick={handleSave} disabled={!amount || !name || saving}
-            className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 active:scale-98 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed">
+          <button
+            onClick={handleSave}
+            disabled={!amount || !name || saving}
+            className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 active:scale-98 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {saving ? 'Guardando...' : 'Guardar'}
           </button>
         </div>

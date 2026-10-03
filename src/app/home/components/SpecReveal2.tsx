@@ -12,16 +12,96 @@ interface Transaction {
 }
 
 const RAW_TRANSACTIONS: Transaction[] = [
-  { id: 1,  merchant: 'Whole Foods',      category: 'Groceries',  amount: -84.32,  date: 'Feb 26', icon: '🥦', color: '#10B981' },
-  { id: 2,  merchant: 'Netflix',          category: 'Streaming',  amount: -15.49,  date: 'Feb 25', icon: '📺', color: '#7C3AED' },
-  { id: 3,  merchant: 'Uber',             category: 'Transit',    amount: -12.80,  date: 'Feb 25', icon: '🚗', color: '#F59E0B' },
-  { id: 4,  merchant: 'Spotify',          category: 'Streaming',  amount: -10.99,  date: 'Feb 24', icon: '🎵', color: '#7C3AED' },
-  { id: 5,  merchant: 'Trader Joe\'s',    category: 'Groceries',  amount: -61.14,  date: 'Feb 24', icon: '🛒', color: '#10B981' },
-  { id: 6,  merchant: 'MTA Transit',      category: 'Transit',    amount: -33.00,  date: 'Feb 23', icon: '🚇', color: '#F59E0B' },
-  { id: 7,  merchant: 'Adobe CC',         category: 'Streaming',  amount: -54.99,  date: 'Feb 22', icon: '🎨', color: '#7C3AED' },
-  { id: 8,  merchant: 'Chipotle',         category: 'Dining',     amount: -14.75,  date: 'Feb 22', icon: '🌯', color: '#EF4444' },
-  { id: 9,  merchant: 'Amazon Prime',     category: 'Streaming',  amount: -14.99,  date: 'Feb 21', icon: '📦', color: '#7C3AED' },
-  { id: 10, merchant: 'Target',           category: 'Shopping',   amount: -47.83,  date: 'Feb 21', icon: '🎯', color: '#EC4899' },
+  {
+    id: 1,
+    merchant: 'Whole Foods',
+    category: 'Groceries',
+    amount: -84.32,
+    date: 'Feb 26',
+    icon: '🥦',
+    color: '#10B981',
+  },
+  {
+    id: 2,
+    merchant: 'Netflix',
+    category: 'Streaming',
+    amount: -15.49,
+    date: 'Feb 25',
+    icon: '📺',
+    color: '#7C3AED',
+  },
+  {
+    id: 3,
+    merchant: 'Uber',
+    category: 'Transit',
+    amount: -12.8,
+    date: 'Feb 25',
+    icon: '🚗',
+    color: '#F59E0B',
+  },
+  {
+    id: 4,
+    merchant: 'Spotify',
+    category: 'Streaming',
+    amount: -10.99,
+    date: 'Feb 24',
+    icon: '🎵',
+    color: '#7C3AED',
+  },
+  {
+    id: 5,
+    merchant: "Trader Joe's",
+    category: 'Groceries',
+    amount: -61.14,
+    date: 'Feb 24',
+    icon: '🛒',
+    color: '#10B981',
+  },
+  {
+    id: 6,
+    merchant: 'MTA Transit',
+    category: 'Transit',
+    amount: -33.0,
+    date: 'Feb 23',
+    icon: '🚇',
+    color: '#F59E0B',
+  },
+  {
+    id: 7,
+    merchant: 'Adobe CC',
+    category: 'Streaming',
+    amount: -54.99,
+    date: 'Feb 22',
+    icon: '🎨',
+    color: '#7C3AED',
+  },
+  {
+    id: 8,
+    merchant: 'Chipotle',
+    category: 'Dining',
+    amount: -14.75,
+    date: 'Feb 22',
+    icon: '🌯',
+    color: '#EF4444',
+  },
+  {
+    id: 9,
+    merchant: 'Amazon Prime',
+    category: 'Streaming',
+    amount: -14.99,
+    date: 'Feb 21',
+    icon: '📦',
+    color: '#7C3AED',
+  },
+  {
+    id: 10,
+    merchant: 'Target',
+    category: 'Shopping',
+    amount: -47.83,
+    date: 'Feb 21',
+    icon: '🎯',
+    color: '#EC4899',
+  },
 ];
 
 const CATEGORY_ORDER = ['Streaming', 'Groceries', 'Transit', 'Dining', 'Shopping'];
@@ -51,17 +131,22 @@ export default function SpecReveal2() {
     if (!visible) return;
     const t = setTimeout(() => {
       setSorted(true);
-      setItems([...RAW_TRANSACTIONS].sort((a, b) =>
-        CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category)
-      ));
+      setItems(
+        [...RAW_TRANSACTIONS].sort(
+          (a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category)
+        )
+      );
     }, 1200);
     return () => clearTimeout(t);
   }, [visible]);
 
-  const categoryTotals = CATEGORY_ORDER.map(cat => ({
+  const categoryTotals = CATEGORY_ORDER.map((cat) => ({
     cat,
-    total: RAW_TRANSACTIONS.filter(t => t.category === cat).reduce((s, t) => s + Math.abs(t.amount), 0),
-    color: RAW_TRANSACTIONS.find(t => t.category === cat)?.color ?? '#6B7280',
+    total: RAW_TRANSACTIONS.filter((t) => t.category === cat).reduce(
+      (s, t) => s + Math.abs(t.amount),
+      0
+    ),
+    color: RAW_TRANSACTIONS.find((t) => t.category === cat)?.color ?? '#6B7280',
   }));
 
   return (
@@ -70,7 +155,10 @@ export default function SpecReveal2() {
       ref={sectionRef}
       className="relative py-32 px-6 lg:px-8 overflow-hidden"
     >
-      <div className="bg-orb w-[500px] h-[500px] bg-[rgba(124,58,237,0.04)]" style={{ top: '30%', right: '-10%' }} />
+      <div
+        className="bg-orb w-[500px] h-[500px] bg-[rgba(124,58,237,0.04)]"
+        style={{ top: '30%', right: '-10%' }}
+      />
 
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
@@ -81,11 +169,11 @@ export default function SpecReveal2() {
         </div>
         <div className={`reveal ${visible ? 'visible' : ''} reveal-delay-1 mb-12`}>
           <h2 className="font-mono text-3xl md:text-5xl font-bold text-[#EDEEF0] leading-tight">
-            Every dollar,{' '}
-            <span className="text-gradient-violet">sorted in real time.</span>
+            Every dollar, <span className="text-gradient-violet">sorted in real time.</span>
           </h2>
           <p className="font-sans text-[#9CA3AF] mt-4 max-w-xl">
-            Metric reads your transactions and categorizes them automatically — no manual tagging, no spreadsheets, no guessing.
+            Metric reads your transactions and categorizes them automatically — no manual tagging,
+            no spreadsheets, no guessing.
           </p>
         </div>
 
@@ -144,18 +232,24 @@ export default function SpecReveal2() {
           </div>
 
           {/* Category breakdown */}
-          <div className={`reveal ${visible ? 'visible' : ''} reveal-delay-3 lg:col-span-2 flex flex-col gap-4`}>
+          <div
+            className={`reveal ${visible ? 'visible' : ''} reveal-delay-3 lg:col-span-2 flex flex-col gap-4`}
+          >
             <div className="glass-card p-5 flex-1">
-              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-5">Category Breakdown</div>
+              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-5">
+                Category Breakdown
+              </div>
               <div className="space-y-4">
                 {categoryTotals.map(({ cat, total, color }) => {
-                  const max = Math.max(...categoryTotals.map(c => c.total));
+                  const max = Math.max(...categoryTotals.map((c) => c.total));
                   const pct = (total / max) * 100;
                   return (
                     <div key={cat}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="font-sans text-xs text-[#9CA3AF]">{cat}</span>
-                        <span className="font-mono text-xs text-[#EDEEF0]">${total.toFixed(0)}</span>
+                        <span className="font-mono text-xs text-[#EDEEF0]">
+                          ${total.toFixed(0)}
+                        </span>
                       </div>
                       <div className="h-1.5 rounded-full bg-[rgba(237,238,240,0.06)] overflow-hidden">
                         <div
@@ -164,7 +258,7 @@ export default function SpecReveal2() {
                             width: visible ? `${pct}%` : '0%',
                             background: color,
                             boxShadow: `0 0 8px ${color}60`,
-                            transitionDelay: `${0.6 + categoryTotals.findIndex(c => c.cat === cat) * 0.1}s`,
+                            transitionDelay: `${0.6 + categoryTotals.findIndex((c) => c.cat === cat) * 0.1}s`,
                           }}
                         />
                       </div>
@@ -175,8 +269,11 @@ export default function SpecReveal2() {
             </div>
 
             <div className="glass-card p-5">
-              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-3">Month Total</div>
-              <div className="font-mono text-3xl font-bold text-[#EDEEF0]"
+              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-3">
+                Month Total
+              </div>
+              <div
+                className="font-mono text-3xl font-bold text-[#EDEEF0]"
                 style={{ textShadow: '0 0 24px rgba(124,58,237,0.4)' }}
               >
                 $350.30

@@ -15,7 +15,7 @@ export default function HomePage() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('visible');
           }
@@ -24,7 +24,7 @@ export default function HomePage() {
       { threshold: 0.15, rootMargin: '0px 0px -5% 0px' }
     );
 
-    document.querySelectorAll('.reveal')?.forEach(el => observer?.observe(el));
+    document.querySelectorAll('.reveal')?.forEach((el) => observer?.observe(el));
     return () => observer?.disconnect();
   }, []);
 
@@ -39,7 +39,8 @@ export default function HomePage() {
         <div
           className="bg-orb w-[800px] h-[800px] bg-[rgba(124,58,237,0.08)]"
           style={{
-            top: '50%', left: '50%',
+            top: '50%',
+            left: '50%',
             transform: 'translate(-50%, -50%)',
             animation: 'orb-drift 18s ease-in-out infinite',
           }}
@@ -48,7 +49,8 @@ export default function HomePage() {
         <div
           className="bg-orb w-[400px] h-[400px] bg-[rgba(109,40,217,0.06)]"
           style={{
-            top: '20%', left: '-10%',
+            top: '20%',
+            left: '-10%',
             animation: 'orb-drift 14s ease-in-out infinite reverse',
           }}
         />
@@ -56,7 +58,8 @@ export default function HomePage() {
         <div
           className="bg-orb w-[300px] h-[300px] bg-[rgba(167,139,250,0.05)]"
           style={{
-            bottom: '15%', right: '-5%',
+            bottom: '15%',
+            right: '-5%',
             animation: 'orb-drift 16s ease-in-out infinite 2s',
           }}
         />
@@ -69,7 +72,9 @@ export default function HomePage() {
             style={{ animation: 'fadeInUp 0.7s ease-out 0.1s both' }}
           >
             <span className="w-2 h-2 rounded-full bg-[#7C3AED] animate-pulse" />
-            <span className="font-mono text-[11px] text-[#A78BFA] tracking-widest uppercase">Now in private beta</span>
+            <span className="font-mono text-[11px] text-[#A78BFA] tracking-widest uppercase">
+              Now in private beta
+            </span>
             <span className="font-mono text-[11px] text-[#4B5563]">·</span>
             <span className="font-mono text-[11px] text-[#6B7280]">4,200+ on waitlist</span>
           </div>
@@ -111,7 +116,8 @@ export default function HomePage() {
                 animation: 'fadeInUp 0.7s ease-out 3.8s forwards',
               }}
             >
-              Metric surfaces every subscription, categorizes every dollar, and fits it all on one screen you'll actually want to look at.
+              Metric surfaces every subscription, categorizes every dollar, and fits it all on one
+              screen you&apos;ll actually want to look at.
             </p>
           </div>
 
@@ -143,7 +149,16 @@ export default function HomePage() {
               className="font-sans text-sm text-[#6B7280] hover:text-[#A78BFA] transition-colors inline-flex items-center gap-2"
             >
               See the Full Spec Sheet
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M12 5v14M5 12l7 7 7-7" />
               </svg>
             </a>
@@ -155,7 +170,9 @@ export default function HomePage() {
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
           style={{ opacity: 0, animation: 'fadeInUp 0.6s ease-out 5s forwards' }}
         >
-          <span className="font-mono text-[10px] text-[#3F3F46] tracking-widest uppercase">scroll to reveal</span>
+          <span className="font-mono text-[10px] text-[#3F3F46] tracking-widest uppercase">
+            scroll to reveal
+          </span>
           <div className="w-5 h-8 border border-[rgba(237,238,240,0.12)] rounded-full flex items-start justify-center pt-1.5">
             <div className="w-1 h-2 bg-[#7C3AED] rounded-full animate-bounce" />
           </div>
@@ -194,11 +211,11 @@ export default function HomePage() {
             </span>
           </div>
           <h2 className="reveal reveal-delay-1 font-mono text-4xl md:text-5xl font-bold text-[#EDEEF0] mb-6 leading-tight">
-            Your money deserves{' '}
-            <span className="text-gradient-violet">one screen.</span>
+            Your money deserves <span className="text-gradient-violet">one screen.</span>
           </h2>
           <p className="reveal reveal-delay-2 font-sans text-[#9CA3AF] text-lg mb-10 leading-relaxed">
-            Join 4,200+ people who signed up this week. We'll scan every subscription the moment we launch.
+            Join 4,200+ people who signed up this week. We&apos;ll scan every subscription the
+            moment we launch.
           </p>
           <div className="reveal reveal-delay-3 max-w-md mx-auto">
             <WaitlistForm />

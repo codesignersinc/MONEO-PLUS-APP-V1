@@ -2,36 +2,61 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Plus, X, LayoutDashboard, ArrowLeftRight, DollarSign, Receipt, Zap, Wallet, Target, Landmark, CreditCard, TrendingUp, CalendarDays, BarChart3, Settings2, LogOut, ChevronLeft, Users, RefreshCw } from 'lucide-react';
+import {
+  Home,
+  Plus,
+  X,
+  LayoutDashboard,
+  ArrowLeftRight,
+  DollarSign,
+  Receipt,
+  Zap,
+  Wallet,
+  Target,
+  Landmark,
+  CreditCard,
+  TrendingUp,
+  CalendarDays,
+  BarChart3,
+  Settings2,
+  LogOut,
+  ChevronLeft,
+  Users,
+  RefreshCw,
+} from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { transactionsService, accountsService, subscriptionsService, savingsService } from '@/lib/supabaseFinance';
+import {
+  transactionsService,
+  accountsService,
+  subscriptionsService,
+  savingsService,
+} from '@/lib/supabaseFinance';
 import Icon from '@/components/ui/AppIcon';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useToast } from '@/components/ui/Toast';
 import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
-
 
 interface MobileNavProps {
   onFabClick: () => void;
 }
 
 const sideNavItems = [
-  { href: '/finanzas',               label: 'Inicio',        icon: LayoutDashboard },
-  { href: '/finanzas/movimientos',   label: 'Movimientos',   icon: ArrowLeftRight  },
-  { href: '/finanzas/ingresos',      label: 'Ingresos',      icon: DollarSign      },
-  { href: '/finanzas/pagos',         label: 'Pagos',         icon: Receipt         },
-  { href: '/finanzas/suscripciones', label: 'Suscripciones', icon: Zap             },
-  { href: '/finanzas/presupuesto',   label: 'Presupuesto',   icon: Wallet          },
-  { href: '/finanzas/ahorros',       label: 'Metas',         icon: Target          },
-  { href: '/finanzas/cuentas',       label: 'Cuentas',       icon: Landmark        },
-  { href: '/finanzas/convertir',     label: 'Convertir',     icon: RefreshCw       },
-  { href: '/finanzas/deudas',        label: 'Deudas',        icon: CreditCard      },
-  { href: '/finanzas/inversiones',   label: 'Inversiones',   icon: TrendingUp      },
-  { href: '/finanzas/calendario',    label: 'Calendario',    icon: CalendarDays    },
-  { href: '/finanzas/reportes',      label: 'Reportes',      icon: BarChart3       },
-  { href: '/finanzas/configuracion', label: 'Configuración', icon: Settings2       },
+  { href: '/finanzas', label: 'Inicio', icon: LayoutDashboard },
+  { href: '/finanzas/movimientos', label: 'Movimientos', icon: ArrowLeftRight },
+  { href: '/finanzas/ingresos', label: 'Ingresos', icon: DollarSign },
+  { href: '/finanzas/pagos', label: 'Pagos', icon: Receipt },
+  { href: '/finanzas/suscripciones', label: 'Suscripciones', icon: Zap },
+  { href: '/finanzas/presupuesto', label: 'Presupuesto', icon: Wallet },
+  { href: '/finanzas/ahorros', label: 'Metas', icon: Target },
+  { href: '/finanzas/cuentas', label: 'Cuentas', icon: Landmark },
+  { href: '/finanzas/convertir', label: 'Convertir', icon: RefreshCw },
+  { href: '/finanzas/deudas', label: 'Deudas', icon: CreditCard },
+  { href: '/finanzas/inversiones', label: 'Inversiones', icon: TrendingUp },
+  { href: '/finanzas/calendario', label: 'Calendario', icon: CalendarDays },
+  { href: '/finanzas/reportes', label: 'Reportes', icon: BarChart3 },
+  { href: '/finanzas/configuracion', label: 'Configuración', icon: Settings2 },
 ];
 
 const registerOptions = [
@@ -141,13 +166,16 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   const [error, setError] = useState('');
 
   const handleCat = (label: string) => {
-    const c = EXPENSE_CATEGORIES.find(x => x.label === label);
+    const c = EXPENSE_CATEGORIES.find((x) => x.label === label);
     setCategory(label);
     setCategoryIcon(c?.icon || '📦');
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
+    if (!name.trim() || !amount) {
+      setError('Completa nombre y monto.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -165,18 +193,31 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
         time: new Date().toTimeString().slice(0, 5),
       });
       onSuccess();
-    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <FormWrapper title="Nuevo Gasto" emoji="🧾" accentBg="bg-[#fde899]" onClose={onClose}>
       <FormFields
-        name={name} setName={setName}
-        amount={amount} setAmount={setAmount}
-        date={date} setDate={setDate}
-        notes={notes} setNotes={setNotes}
-        categories={EXPENSE_CATEGORIES} category={category} onCategoryChange={handleCat}
-        error={error} saving={saving} onSave={handleSave}
+        name={name}
+        setName={setName}
+        amount={amount}
+        setAmount={setAmount}
+        date={date}
+        setDate={setDate}
+        notes={notes}
+        setNotes={setNotes}
+        categories={EXPENSE_CATEGORIES}
+        category={category}
+        onCategoryChange={handleCat}
+        error={error}
+        saving={saving}
+        onSave={handleSave}
         saveLabel="Registrar gasto"
         saveBg="bg-[#F5C518] text-black"
       />
@@ -197,31 +238,41 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const toast = useToast();
 
   const handleCat = (label: string) => {
-    const c = INCOME_CATEGORIES.find(x => x.label === label);
+    const c = INCOME_CATEGORIES.find((x) => x.label === label);
     setCategory(label);
     setCategoryIcon(c?.icon || '💰');
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
+    if (!name.trim() || !amount) {
+      setError('Completa nombre y monto.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
       const supabase = createClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError) throw toDataError(authError);
       if (!user) throw authRequired();
       const entryDate = collectionDate || new Date().toISOString().split('T')[0];
-      const { data, error: dbErr } = await supabase.from('income_entries').insert({
-        user_id: user.id,
-        name: name.trim(),
-        amount: parseFloat(amount),
-        category,
-        category_icon: categoryIcon,
-        collection_date: entryDate,
-        notes,
-        status,
-      }).select().single();
+      const { data, error: dbErr } = await supabase
+        .from('income_entries')
+        .insert({
+          user_id: user.id,
+          name: name.trim(),
+          amount: parseFloat(amount),
+          category,
+          category_icon: categoryIcon,
+          collection_date: entryDate,
+          notes,
+          status,
+        })
+        .select()
+        .single();
       if (dbErr) throw toDataError(dbErr);
       if (status === 'cobrado' && data) {
         // The income entry is already saved: a sync failure is a warning, not a
@@ -244,7 +295,12 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
         }
       }
       onSuccess();
-    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -252,36 +308,61 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       <div className="space-y-3">
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Sueldo enero"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white" />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ej. Sueldo enero"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+          />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Monto (S/)</label>
-          <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Monto (S/)
+          </label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+          />
         </div>
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Estado</label>
           <div className="mt-1 flex gap-2">
-            {(['cobrado', 'pendiente'] as const).map(s => (
-              <button key={s} onClick={() => setStatus(s)}
-                className={`flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}>
+            {(['cobrado', 'pendiente'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatus(s)}
+                className={`flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}
+              >
                 {s === 'cobrado' ? '✅ Cobrado' : '⏳ Por cobrar'}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Fecha de cobro</label>
-          <input type="date" value={collectionDate} onChange={e => setCollectionDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Fecha de cobro
+          </label>
+          <input
+            type="date"
+            value={collectionDate}
+            onChange={(e) => setCollectionDate(e.target.value)}
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+          />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Categoría</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Categoría
+          </label>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {INCOME_CATEGORIES.map(c => (
-              <button key={c.label} onClick={() => handleCat(c.label)}
-                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}>
+            {INCOME_CATEGORIES.map((c) => (
+              <button
+                key={c.label}
+                onClick={() => handleCat(c.label)}
+                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}
+              >
                 {c.icon} {c.label}
               </button>
             ))}
@@ -289,12 +370,19 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
         </div>
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Notas</label>
-          <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Opcional"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white" />
+          <input
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Opcional"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+          />
         </div>
         {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
-        <button onClick={handleSave} disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#C084FC] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full py-3 rounded-xl border-2 border-black bg-[#C084FC] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+        >
           {saving ? 'Guardando…' : 'Registrar ingreso'}
         </button>
       </div>
@@ -315,18 +403,24 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
   const toast = useToast();
 
   const handleCat = (label: string) => {
-    const c = PAGO_CATEGORIES.find(x => x.label === label);
+    const c = PAGO_CATEGORIES.find((x) => x.label === label);
     setCategory(label);
     setCategoryIcon(c?.icon || '📦');
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
+    if (!name.trim() || !amount) {
+      setError('Completa nombre y monto.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
       const supabase = createClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError) throw toDataError(authError);
       if (!user) throw authRequired();
       const pDate = paymentDate || new Date().toISOString().split('T')[0];
@@ -364,7 +458,12 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
         }
       }
       onSuccess();
-    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -372,36 +471,61 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
       <div className="space-y-3">
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Alquiler"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white" />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ej. Alquiler"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+          />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Monto (S/)</label>
-          <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Monto (S/)
+          </label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+          />
         </div>
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Estado</label>
           <div className="mt-1 flex gap-2">
-            {(['pendiente', 'pagado'] as const).map(s => (
-              <button key={s} onClick={() => setStatus(s)}
-                className={`flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}>
+            {(['pendiente', 'pagado'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatus(s)}
+                className={`flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}
+              >
                 {s === 'pagado' ? '✅ Pagado' : '⏳ Pendiente'}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Fecha de pago</label>
-          <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Fecha de pago
+          </label>
+          <input
+            type="date"
+            value={paymentDate}
+            onChange={(e) => setPaymentDate(e.target.value)}
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+          />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Categoría</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Categoría
+          </label>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {PAGO_CATEGORIES.map(c => (
-              <button key={c.label} onClick={() => handleCat(c.label)}
-                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}>
+            {PAGO_CATEGORIES.map((c) => (
+              <button
+                key={c.label}
+                onClick={() => handleCat(c.label)}
+                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}
+              >
                 {c.icon} {c.label}
               </button>
             ))}
@@ -409,12 +533,19 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
         </div>
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Notas</label>
-          <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Opcional"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white" />
+          <input
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Opcional"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+          />
         </div>
         {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
-        <button onClick={handleSave} disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#F87171] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full py-3 rounded-xl border-2 border-black bg-[#F87171] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+        >
           {saving ? 'Guardando…' : 'Registrar pago'}
         </button>
       </div>
@@ -431,7 +562,10 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (!name.trim() || !amount || !nextPaymentDate) { setError('Completa nombre, monto y fecha.'); return; }
+    if (!name.trim() || !amount || !nextPaymentDate) {
+      setError('Completa nombre, monto y fecha.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -449,7 +583,12 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
         color: '#7C3AED',
       });
       onSuccess();
-    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -457,33 +596,56 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
       <div className="space-y-3">
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Netflix"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white" />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ej. Netflix"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white"
+          />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Monto mensual (S/)</label>
-          <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Monto mensual (S/)
+          </label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white"
+          />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Próximo pago</label>
-          <input type="date" value={nextPaymentDate} onChange={e => setNextPaymentDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Próximo pago
+          </label>
+          <input
+            type="date"
+            value={nextPaymentDate}
+            onChange={(e) => setNextPaymentDate(e.target.value)}
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white"
+          />
         </div>
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ícono</label>
           <div className="mt-1 flex flex-wrap gap-2">
-            {['🎬', '🎵', '📡', '☁️', '📱', '🎮', '📚', '🔄'].map(ic => (
-              <button key={ic} onClick={() => setIcon(ic)}
-                className={`w-9 h-9 rounded-xl border-2 text-lg transition-all ${icon === ic ? 'border-black bg-black' : 'border-gray-200'}`}>
+            {['🎬', '🎵', '📡', '☁️', '📱', '🎮', '📚', '🔄'].map((ic) => (
+              <button
+                key={ic}
+                onClick={() => setIcon(ic)}
+                className={`w-9 h-9 rounded-xl border-2 text-lg transition-all ${icon === ic ? 'border-black bg-black' : 'border-gray-200'}`}
+              >
                 {ic}
               </button>
             ))}
           </div>
         </div>
         {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
-        <button onClick={handleSave} disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#3B82F6] text-white font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full py-3 rounded-xl border-2 border-black bg-[#3B82F6] text-white font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+        >
           {saving ? 'Guardando…' : 'Registrar suscripción'}
         </button>
       </div>
@@ -500,7 +662,10 @@ function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSucc
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
+    if (!name.trim() || !amount) {
+      setError('Completa nombre y monto.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -518,19 +683,31 @@ function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSucc
         time: new Date().toTimeString().slice(0, 5),
       });
       onSuccess();
-    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <FormWrapper title="Nueva Transferencia" emoji="⇄" accentBg="bg-[#fe9a82]" onClose={onClose}>
       <FormFields
-        name={name} setName={setName}
-        amount={amount} setAmount={setAmount}
-        date={date} setDate={setDate}
-        notes={notes} setNotes={setNotes}
+        name={name}
+        setName={setName}
+        amount={amount}
+        setAmount={setAmount}
+        date={date}
+        setDate={setDate}
+        notes={notes}
+        setNotes={setNotes}
         categories={[]}
-        category="" onCategoryChange={() => {}}
-        error={error} saving={saving} onSave={handleSave}
+        category=""
+        onCategoryChange={() => {}}
+        error={error}
+        saving={saving}
+        onSave={handleSave}
         saveLabel="Registrar transferencia"
         saveBg="bg-[#F97316] text-white"
         hideCategories
@@ -549,7 +726,10 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (!name.trim() || !target) { setError('Completa nombre y meta.'); return; }
+    if (!name.trim() || !target) {
+      setError('Completa nombre y meta.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -562,48 +742,85 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
         targetDate,
       });
       onSuccess();
-    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <FormWrapper title="Nueva Meta de Ahorro" emoji="🐷" accentBg="bg-[#BBF7D0]" onClose={onClose}>
       <div className="space-y-3">
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre de la meta</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Fondo de emergencia"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Nombre de la meta
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ej. Fondo de emergencia"
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+          />
         </div>
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Meta (S/)</label>
-            <input type="number" value={target} onChange={e => setTarget(e.target.value)} placeholder="0.00"
-              className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white" />
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+              Meta (S/)
+            </label>
+            <input
+              type="number"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              placeholder="0.00"
+              className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+            />
           </div>
           <div className="flex-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ya tengo (S/)</label>
-            <input type="number" value={current} onChange={e => setCurrent(e.target.value)} placeholder="0.00"
-              className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white" />
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+              Ya tengo (S/)
+            </label>
+            <input
+              type="number"
+              value={current}
+              onChange={(e) => setCurrent(e.target.value)}
+              placeholder="0.00"
+              className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+            />
           </div>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Fecha objetivo</label>
-          <input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white" />
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Fecha objetivo
+          </label>
+          <input
+            type="date"
+            value={targetDate}
+            onChange={(e) => setTargetDate(e.target.value)}
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+          />
         </div>
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ícono</label>
           <div className="mt-1 flex flex-wrap gap-2">
-            {GOAL_ICONS.map(ic => (
-              <button key={ic} onClick={() => setIcon(ic)}
-                className={`w-9 h-9 rounded-xl border-2 text-lg transition-all ${icon === ic ? 'border-black bg-black' : 'border-gray-200'}`}>
+            {GOAL_ICONS.map((ic) => (
+              <button
+                key={ic}
+                onClick={() => setIcon(ic)}
+                className={`w-9 h-9 rounded-xl border-2 text-lg transition-all ${icon === ic ? 'border-black bg-black' : 'border-gray-200'}`}
+              >
                 {ic}
               </button>
             ))}
           </div>
         </div>
         {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
-        <button onClick={handleSave} disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#22C55E] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full py-3 rounded-xl border-2 border-black bg-[#22C55E] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+        >
           {saving ? 'Guardando…' : 'Crear meta de ahorro'}
         </button>
       </div>
@@ -613,18 +830,33 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
 
 // ── Shared sub-components ───────────────────────────────────────────────────
 
-function FormWrapper({ title, emoji, accentBg, onClose, children }: {
-  title: string; emoji: string; accentBg: string; onClose: () => void; children: React.ReactNode;
+function FormWrapper({
+  title,
+  emoji,
+  accentBg,
+  onClose,
+  children,
+}: {
+  title: string;
+  emoji: string;
+  accentBg: string;
+  onClose: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <div className="px-4 pb-8">
       {/* back button */}
-      <button onClick={onClose} className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 mb-4 hover:text-black transition-colors">
+      <button
+        onClick={onClose}
+        className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 mb-4 hover:text-black transition-colors"
+      >
         <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
         Volver
       </button>
       {/* form header */}
-      <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-black mb-5 ${accentBg}`}>
+      <div
+        className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-black mb-5 ${accentBg}`}
+      >
         <span className="text-2xl">{emoji}</span>
         <h3 className="text-lg font-black text-black">{title}</h3>
       </div>
@@ -633,42 +865,87 @@ function FormWrapper({ title, emoji, accentBg, onClose, children }: {
   );
 }
 
-function FormFields({ name, setName, amount, setAmount, date, setDate, notes, setNotes,
-  categories, category, onCategoryChange, error, saving, onSave, saveLabel, saveBg, hideCategories }: {
-  name: string; setName: (v: string) => void;
-  amount: string; setAmount: (v: string) => void;
-  date: string; setDate: (v: string) => void;
-  notes: string; setNotes: (v: string) => void;
+function FormFields({
+  name,
+  setName,
+  amount,
+  setAmount,
+  date,
+  setDate,
+  notes,
+  setNotes,
+  categories,
+  category,
+  onCategoryChange,
+  error,
+  saving,
+  onSave,
+  saveLabel,
+  saveBg,
+  hideCategories,
+}: {
+  name: string;
+  setName: (v: string) => void;
+  amount: string;
+  setAmount: (v: string) => void;
+  date: string;
+  setDate: (v: string) => void;
+  notes: string;
+  setNotes: (v: string) => void;
   categories: { label: string; icon: string }[];
-  category: string; onCategoryChange: (v: string) => void;
-  error: string; saving: boolean; onSave: () => void;
-  saveLabel: string; saveBg: string;
+  category: string;
+  onCategoryChange: (v: string) => void;
+  error: string;
+  saving: boolean;
+  onSave: () => void;
+  saveLabel: string;
+  saveBg: string;
   hideCategories?: boolean;
 }) {
   return (
     <div className="space-y-3">
       <div>
         <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Almuerzo"
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ej. Almuerzo"
+          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
+        />
       </div>
       <div>
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Monto (S/)</label>
-        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white" />
+        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+          Monto (S/)
+        </label>
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.00"
+          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
+        />
       </div>
       <div>
         <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Fecha</label>
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white" />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
+        />
       </div>
       {!hideCategories && categories.length > 0 && (
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Categoría</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Categoría
+          </label>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {categories.map(c => (
-              <button key={c.label} onClick={() => onCategoryChange(c.label)}
-                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}>
+            {categories.map((c) => (
+              <button
+                key={c.label}
+                onClick={() => onCategoryChange(c.label)}
+                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}
+              >
                 {c.icon} {c.label}
               </button>
             ))}
@@ -677,12 +954,19 @@ function FormFields({ name, setName, amount, setAmount, date, setDate, notes, se
       )}
       <div>
         <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Notas</label>
-        <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Opcional"
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white" />
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Opcional"
+          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
+        />
       </div>
       {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
-      <button onClick={onSave} disabled={saving}
-        className={`w-full py-3 rounded-xl border-2 border-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50 ${saveBg}`}>
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className={`w-full py-3 rounded-xl border-2 border-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50 ${saveBg}`}
+      >
         {saving ? 'Guardando…' : saveLabel}
       </button>
     </div>
@@ -707,14 +991,27 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
   };
 
   const moreActive = [
-    '/finanzas/cuentas', '/finanzas/ahorros', '/finanzas/deudas',
-    '/finanzas/inversiones', '/finanzas/suscripciones', '/finanzas/configuracion',
-    '/finanzas/patrimonio', '/finanzas/reportes', '/finanzas/calendario',
-    '/finanzas/ingresos', '/finanzas/pagos', '/finanzas/juntas',
+    '/finanzas/cuentas',
+    '/finanzas/ahorros',
+    '/finanzas/deudas',
+    '/finanzas/inversiones',
+    '/finanzas/suscripciones',
+    '/finanzas/configuracion',
+    '/finanzas/patrimonio',
+    '/finanzas/reportes',
+    '/finanzas/calendario',
+    '/finanzas/ingresos',
+    '/finanzas/pagos',
+    '/finanzas/juntas',
   ].some((h) => pathname.startsWith(h));
 
   async function handleSignOut() {
-    try { await signOut(); router.replace('/login'); } catch (err) { toast.showError(err); }
+    try {
+      await signOut();
+      router.replace('/login');
+    } catch (err) {
+      toast.showError(err);
+    }
     setSidebarOpen(false);
   }
 
@@ -778,13 +1075,16 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 border-2 mb-2 ${
                   isActive('/finanzas/juntas')
-                    ? 'bg-[#FFD43B] text-black border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' :'bg-[#FFD43B] text-black border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
+                    ? 'bg-[#FFD43B] text-black border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                    : 'bg-[#FFD43B] text-black border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
                 }`}
               >
                 <Users className="w-[18px] h-[18px] flex-shrink-0 text-black" strokeWidth={2.5} />
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-black text-sm leading-tight">Juntas</div>
-                  <div className="text-[10px] font-medium text-black/70 leading-tight">Ahorra en grupo</div>
+                  <div className="text-[10px] font-medium text-black/70 leading-tight">
+                    Ahorra en grupo
+                  </div>
                 </div>
                 <span className="px-1.5 py-0.5 bg-black text-[#FFD43B] text-[9px] font-black rounded-full leading-none shrink-0">
                   NUEVO
@@ -836,10 +1136,7 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
 
       {/* ── Bottom Sheet ── */}
       {sheetOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-50 flex items-end"
-          onClick={handleSheetClose}
-        >
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end" onClick={handleSheetClose}>
           <div className="absolute inset-0 bg-black/50" />
           <div
             className="relative w-full bg-[#F5F0E8] rounded-t-3xl border-t-2 border-black max-h-[92vh] overflow-y-auto"
@@ -869,7 +1166,11 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
             {!activeForm && !successMsg && (
               <>
                 <div className="px-5 pt-2 pb-4">
-                  <h2 className="text-2xl font-black text-black leading-tight">¿Qué quieres<br />registrar?</h2>
+                  <h2 className="text-2xl font-black text-black leading-tight">
+                    ¿Qué quieres
+                    <br />
+                    registrar?
+                  </h2>
                   <p className="text-sm text-gray-500 mt-1">Elige una opción para continuar.</p>
                 </div>
                 <div className="px-4 pb-8 space-y-3">
@@ -906,12 +1207,24 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
             )}
 
             {/* ── Step 2: inline form ── */}
-            {activeForm === 'gasto' && <GastoForm onClose={handleFormClose} onSuccess={handleFormSuccess} />}
-            {activeForm === 'ingreso' && <IngresoForm onClose={handleFormClose} onSuccess={handleFormSuccess} />}
-            {activeForm === 'pago' && <PagoForm onClose={handleFormClose} onSuccess={handleFormSuccess} />}
-            {activeForm === 'suscripcion' && <SuscripcionForm onClose={handleFormClose} onSuccess={handleFormSuccess} />}
-            {activeForm === 'transferencia' && <TransferenciaForm onClose={handleFormClose} onSuccess={handleFormSuccess} />}
-            {activeForm === 'ahorro' && <AhorroForm onClose={handleFormClose} onSuccess={handleFormSuccess} />}
+            {activeForm === 'gasto' && (
+              <GastoForm onClose={handleFormClose} onSuccess={handleFormSuccess} />
+            )}
+            {activeForm === 'ingreso' && (
+              <IngresoForm onClose={handleFormClose} onSuccess={handleFormSuccess} />
+            )}
+            {activeForm === 'pago' && (
+              <PagoForm onClose={handleFormClose} onSuccess={handleFormSuccess} />
+            )}
+            {activeForm === 'suscripcion' && (
+              <SuscripcionForm onClose={handleFormClose} onSuccess={handleFormSuccess} />
+            )}
+            {activeForm === 'transferencia' && (
+              <TransferenciaForm onClose={handleFormClose} onSuccess={handleFormSuccess} />
+            )}
+            {activeForm === 'ahorro' && (
+              <AhorroForm onClose={handleFormClose} onSuccess={handleFormSuccess} />
+            )}
           </div>
         </div>
       )}
@@ -919,20 +1232,44 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
       {/* ── Bottom Nav Bar ── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black border-t border-gray-800">
         <div className="flex items-center justify-around px-2 pt-2 pb-4 relative max-w-lg mx-auto">
-
           {/* Inicio */}
-          <Link href="/finanzas" className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]">
-            <Home className={`w-6 h-6 ${isActive('/finanzas') ? 'text-[#FFD93D]' : 'text-gray-400'}`} strokeWidth={2} />
-            <span className={`text-[10px] font-bold ${isActive('/finanzas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}>Inicio</span>
+          <Link
+            href="/finanzas"
+            className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]"
+          >
+            <Home
+              className={`w-6 h-6 ${isActive('/finanzas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              strokeWidth={2}
+            />
+            <span
+              className={`text-[10px] font-bold ${isActive('/finanzas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+            >
+              Inicio
+            </span>
           </Link>
 
           {/* Movimientos */}
-          <Link href="/finanzas/movimientos" className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]">
-            <svg className={`w-6 h-6 ${isActive('/finanzas/movimientos') ? 'text-[#FFD93D]' : 'text-gray-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <Link
+            href="/finanzas/movimientos"
+            className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]"
+          >
+            <svg
+              className={`w-6 h-6 ${isActive('/finanzas/movimientos') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="2" y="5" width="20" height="14" rx="2" />
               <path d="M2 10h20" />
             </svg>
-            <span className={`text-[10px] font-bold ${isActive('/finanzas/movimientos') ? 'text-[#FFD93D]' : 'text-gray-400'}`}>Movimientos</span>
+            <span
+              className={`text-[10px] font-bold ${isActive('/finanzas/movimientos') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+            >
+              Movimientos
+            </span>
           </Link>
 
           {/* FAB */}
@@ -946,13 +1283,28 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
           </div>
 
           {/* Cuentas */}
-          <Link href="/finanzas/cuentas" className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]">
-            <svg className={`w-6 h-6 ${isActive('/finanzas/cuentas') ? 'text-[#FFD93D]' : 'text-gray-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <Link
+            href="/finanzas/cuentas"
+            className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]"
+          >
+            <svg
+              className={`w-6 h-6 ${isActive('/finanzas/cuentas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="18" y1="20" x2="18" y2="10" />
               <line x1="12" y1="20" x2="12" y2="4" />
               <line x1="6" y1="20" x2="6" y2="14" />
             </svg>
-            <span className={`text-[10px] font-bold ${isActive('/finanzas/cuentas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}>Cuentas</span>
+            <span
+              className={`text-[10px] font-bold ${isActive('/finanzas/cuentas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+            >
+              Cuentas
+            </span>
           </Link>
 
           {/* Más */}
@@ -960,15 +1312,26 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
             onClick={() => setSidebarOpen(true)}
             className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]"
           >
-            <svg className={`w-6 h-6 ${moreActive ? 'text-[#FFD93D]' : 'text-gray-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className={`w-6 h-6 ${moreActive ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="3" y="3" width="7" height="7" rx="1" />
               <rect x="14" y="3" width="7" height="7" rx="1" />
               <rect x="3" y="14" width="7" height="7" rx="1" />
               <rect x="14" y="14" width="7" height="7" rx="1" />
             </svg>
-            <span className={`text-[10px] font-bold ${moreActive ? 'text-[#FFD93D]' : 'text-gray-400'}`}>Más</span>
+            <span
+              className={`text-[10px] font-bold ${moreActive ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+            >
+              Más
+            </span>
           </button>
-
         </div>
       </nav>
     </>

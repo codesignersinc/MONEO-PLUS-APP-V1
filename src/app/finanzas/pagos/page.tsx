@@ -82,7 +82,10 @@ async function createPago(
   entry: Omit<PagoEntry, 'id'>
 ): Promise<{ entry: PagoEntry; syncFailed: boolean }> {
   const supabase = createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError) throw toDataError(authError);
   if (!user) throw authRequired();
   const { data, error } = await supabase
@@ -107,16 +110,16 @@ async function createPago(
   let syncFailed = false;
   if (entry.status === 'pagado') {
     const { error: syncError } = await supabase.from('transactions').insert({
-        user_id: user.id,
-        name: entry.name,
-        category: entry.category,
-        category_icon: entry.categoryIcon,
-        account_name: 'Pagos',
-        amount: -Math.abs(entry.amount),
-        transaction_date: entry.paymentDate || new Date().toISOString().split('T')[0],
-        transaction_time: new Date().toTimeString().slice(0, 5),
-        transaction_type: 'gasto',
-        notes: entry.notes || '',
+      user_id: user.id,
+      name: entry.name,
+      category: entry.category,
+      category_icon: entry.categoryIcon,
+      account_name: 'Pagos',
+      amount: -Math.abs(entry.amount),
+      transaction_date: entry.paymentDate || new Date().toISOString().split('T')[0],
+      transaction_time: new Date().toTimeString().slice(0, 5),
+      transaction_type: 'gasto',
+      notes: entry.notes || '',
     });
     if (syncError) {
       console.error('pago → transactions sync failed:', syncError);
@@ -188,17 +191,20 @@ export default function PagosPage() {
   const load = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    getAll().then((data) => {
-      // Auto-detect overdue
-      const today = new Date().toISOString().split('T')[0];
-      const updated = data.map((e) => {
-        if (e.status === 'pendiente' && e.paymentDate && e.paymentDate < today) {
-          return { ...e, status: 'vencido' as const };
-        }
-        return e;
-      });
-      setEntries(updated);
-    }).catch(setLoadError).finally(() => setLoading(false));
+    getAll()
+      .then((data) => {
+        // Auto-detect overdue
+        const today = new Date().toISOString().split('T')[0];
+        const updated = data.map((e) => {
+          if (e.status === 'pendiente' && e.paymentDate && e.paymentDate < today) {
+            return { ...e, status: 'vencido' as const };
+          }
+          return e;
+        });
+        setEntries(updated);
+      })
+      .catch(setLoadError)
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -211,8 +217,12 @@ export default function PagosPage() {
     return e.status === 'pagado';
   });
 
-  const totalPendiente = entries.filter((e) => e.status === 'pendiente' || e.status === 'vencido').reduce((s, e) => s + e.amount, 0);
-  const totalPagado = entries.filter((e) => e.status === 'pagado').reduce((s, e) => s + e.amount, 0);
+  const totalPendiente = entries
+    .filter((e) => e.status === 'pendiente' || e.status === 'vencido')
+    .reduce((s, e) => s + e.amount, 0);
+  const totalPagado = entries
+    .filter((e) => e.status === 'pagado')
+    .reduce((s, e) => s + e.amount, 0);
 
   const openAdd = () => {
     setEditingEntry(null);
@@ -247,9 +257,8 @@ export default function PagosPage() {
     setSaving(true);
     setFormError('');
     try {
-      const payDay = form.isRecurring && form.paymentDate
-        ? parseInt(form.paymentDate.split('-')[2])
-        : null;
+      const payDay =
+        form.isRecurring && form.paymentDate ? parseInt(form.paymentDate.split('-')[2]) : null;
 
       const entryData: Omit<PagoEntry, 'id'> = {
         name: form.name,
@@ -264,7 +273,9 @@ export default function PagosPage() {
       };
       if (editingEntry) {
         await updatePago(editingEntry.id, entryData);
-        setEntries((prev) => prev.map((e) => (e.id === editingEntry.id ? { ...e, ...entryData } : e)));
+        setEntries((prev) =>
+          prev.map((e) => (e.id === editingEntry.id ? { ...e, ...entryData } : e))
+        );
       } else {
         const { entry: created, syncFailed } = await createPago(entryData);
         setEntries((prev) => [...prev, created]);
@@ -297,7 +308,9 @@ export default function PagosPage() {
         toast.showError(err);
         return;
       }
-      setEntries((prev) => prev.map((e) => (e.id === entry.id ? { ...e, status: 'pendiente' } : e)));
+      setEntries((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, status: 'pendiente' } : e))
+      );
       return;
     }
     // Mark as paid
@@ -312,7 +325,10 @@ export default function PagosPage() {
     // Sync to movimientos (transactions table)
     try {
       const supabase = createClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError) throw toDataError(authError);
       if (!user) throw authRequired();
       {
@@ -378,7 +394,20 @@ export default function PagosPage() {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
     const [year, month, day] = dateStr.split('-');
-    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const months = [
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
+    ];
     return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
   };
 
@@ -406,7 +435,10 @@ export default function PagosPage() {
           onClick={openAdd}
           className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
         >
-          <Plus className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90" strokeWidth={2.5} />
+          <Plus
+            className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
+            strokeWidth={2.5}
+          />
           Agregar pago
         </button>
       </div>
@@ -419,7 +451,9 @@ export default function PagosPage() {
             <p className="text-xs text-gray-500 font-medium">Por pagar</p>
           </div>
           <p className="text-xl font-bold text-amber-600">S/ {totalPendiente.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{entries.filter((e) => e.status === 'pendiente' || e.status === 'vencido').length} pagos</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {entries.filter((e) => e.status === 'pendiente' || e.status === 'vencido').length} pagos
+          </p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
@@ -427,7 +461,9 @@ export default function PagosPage() {
             <p className="text-xs text-gray-500 font-medium">Pagado</p>
           </div>
           <p className="text-xl font-bold text-green-700">S/ {totalPagado.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{entries.filter((e) => e.status === 'pagado').length} pagos</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {entries.filter((e) => e.status === 'pagado').length} pagos
+          </p>
         </div>
       </div>
 
@@ -457,7 +493,9 @@ export default function PagosPage() {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-4xl mb-3">💳</p>
           <p className="text-fin-muted font-medium mb-1">Sin pagos registrados</p>
-          <p className="text-xs text-fin-muted mb-4">Registra tus pagos y su fecha de vencimiento</p>
+          <p className="text-xs text-fin-muted mb-4">
+            Registra tus pagos y su fecha de vencimiento
+          </p>
           <button
             onClick={openAdd}
             className="px-5 py-2.5 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
@@ -479,21 +517,29 @@ export default function PagosPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className={`text-sm font-semibold truncate ${entry.status === 'pagado' ? 'text-gray-400 line-through' : 'text-fin-text'}`}>
+                  <p
+                    className={`text-sm font-semibold truncate ${entry.status === 'pagado' ? 'text-gray-400 line-through' : 'text-fin-text'}`}
+                  >
                     {entry.name}
                   </p>
                   {entry.isRecurring && (
                     <RefreshCw className="w-3 h-3 text-blue-400 flex-shrink-0" strokeWidth={2} />
                   )}
                   {entry.status === 'pagado' && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold shrink-0">Pagado</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold shrink-0">
+                      Pagado
+                    </span>
                   )}
                   {isOverdue(entry.paymentDate, entry.status) && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold shrink-0">Vencido</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold shrink-0">
+                      Vencido
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-fin-muted">{entry.category}</span>
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-fin-muted">
+                    {entry.category}
+                  </span>
                   {entry.paymentDate && (
                     <span className="flex items-center gap-1 text-xs text-fin-muted">
                       <Calendar className="w-3 h-3" strokeWidth={1.75} />
@@ -511,14 +557,23 @@ export default function PagosPage() {
                       value={editAmountValue}
                       onChange={(e) => setEditAmountValue(e.target.value)}
                       onBlur={() => handleSaveAmount(entry)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveAmount(entry); if (e.key === 'Escape') { setEditAmountId(null); setEditAmountValue(''); } }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveAmount(entry);
+                        if (e.key === 'Escape') {
+                          setEditAmountId(null);
+                          setEditAmountValue('');
+                        }
+                      }}
                       className="w-20 px-2 py-1 border-[2px] border-black rounded-lg text-sm font-bold text-fin-text outline-none text-right"
                       autoFocus
                     />
                   </div>
                 ) : (
                   <button
-                    onClick={() => { setEditAmountId(entry.id); setEditAmountValue(String(entry.amount)); }}
+                    onClick={() => {
+                      setEditAmountId(entry.id);
+                      setEditAmountValue(String(entry.amount));
+                    }}
                     className="text-sm font-manrope font-700 text-fin-text hover:text-blue-600 transition-colors"
                     title="Clic para editar monto"
                   >
@@ -531,19 +586,28 @@ export default function PagosPage() {
                     title={entry.status === 'pagado' ? 'Marcar pendiente' : 'Marcar pagado'}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 transition-colors"
                   >
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${entry.status === 'pagado' ? 'text-green-500' : 'text-gray-400 hover:text-green-600'}`} strokeWidth={1.75} />
+                    <CheckCircle2
+                      className={`w-3.5 h-3.5 ${entry.status === 'pagado' ? 'text-green-500' : 'text-gray-400 hover:text-green-600'}`}
+                      strokeWidth={1.75}
+                    />
                   </button>
                   <button
                     onClick={() => openEdit(entry)}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 transition-colors"
                   >
-                    <Pencil className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600 transition-colors" strokeWidth={1.75} />
+                    <Pencil
+                      className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600 transition-colors"
+                      strokeWidth={1.75}
+                    />
                   </button>
                   <button
                     onClick={() => handleDelete(entry.id)}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500 transition-colors" strokeWidth={1.75} />
+                    <Trash2
+                      className="w-3.5 h-3.5 text-gray-400 hover:text-red-500 transition-colors"
+                      strokeWidth={1.75}
+                    />
                   </button>
                 </div>
               </div>
@@ -571,7 +635,9 @@ export default function PagosPage() {
             <div className="px-6 py-5 space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Descripción</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Descripción
+                </label>
                 <input
                   type="text"
                   value={form.name}
@@ -583,7 +649,9 @@ export default function PagosPage() {
 
               {/* Amount */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Monto (S/)</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Monto (S/)
+                </label>
                 <input
                   type="number"
                   value={form.amount}
@@ -603,7 +671,9 @@ export default function PagosPage() {
 
               {/* Category */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Categoría</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Categoría
+                </label>
                 <div className="grid grid-cols-4 gap-2">
                   {PAGO_CATEGORIES.map((cat) => (
                     <button
@@ -617,7 +687,9 @@ export default function PagosPage() {
                       }`}
                     >
                       <span className="text-lg">{cat.icon}</span>
-                      <span className="text-[10px] leading-tight text-center text-black">{cat.label}</span>
+                      <span className="text-[10px] leading-tight text-center text-black">
+                        {cat.label}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -638,13 +710,17 @@ export default function PagosPage() {
 
               {/* Recurrente */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Tipo de pago</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Tipo de pago
+                </label>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, isRecurring: false }))}
                     className={`flex-1 py-2.5 rounded-xl border-[2px] text-sm font-semibold transition-all ${
-                      !form.isRecurring ? 'border-black bg-[#FFD93D] text-black' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                      !form.isRecurring
+                        ? 'border-black bg-[#FFD93D] text-black'
+                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                     }`}
                   >
                     💳 Único
@@ -653,7 +729,9 @@ export default function PagosPage() {
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, isRecurring: true }))}
                     className={`flex-1 py-2.5 rounded-xl border-[2px] text-sm font-semibold transition-all ${
-                      form.isRecurring ? 'border-black bg-[#4ADE80] text-black' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                      form.isRecurring
+                        ? 'border-black bg-[#4ADE80] text-black'
+                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                     }`}
                   >
                     🔄 Recurrente
@@ -661,14 +739,17 @@ export default function PagosPage() {
                 </div>
                 {form.isRecurring && (
                   <p className="text-[11px] text-black mt-1.5">
-                    Al marcar como pagado, se generará automáticamente el próximo mes en la misma fecha. Puedes cambiar el monto en cada ocasión.
+                    Al marcar como pagado, se generará automáticamente el próximo mes en la misma
+                    fecha. Puedes cambiar el monto en cada ocasión.
                   </p>
                 )}
               </div>
 
               {/* Status */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Estado</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Estado
+                </label>
                 <div className="flex gap-2">
                   {(['pendiente', 'pagado'] as const).map((s) => (
                     <button
@@ -678,7 +759,9 @@ export default function PagosPage() {
                       className={`flex-1 py-2.5 rounded-xl border-[2px] text-sm font-semibold transition-all ${
                         form.status === s
                           ? s === 'pagado'
-                            ? 'border-black bg-[#4ADE80] text-black' :'border-black bg-[#FFD93D] text-black' :'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                            ? 'border-black bg-[#4ADE80] text-black'
+                            : 'border-black bg-[#FFD93D] text-black'
+                          : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                       }`}
                     >
                       {s === 'pendiente' ? '⏳ Pendiente' : '✅ Pagado'}
@@ -689,7 +772,9 @@ export default function PagosPage() {
 
               {/* Notes */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Notas (opcional)</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Notas (opcional)
+                </label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
@@ -701,7 +786,9 @@ export default function PagosPage() {
             </div>
 
             {formError && (
-              <p role="alert" className="px-6 pb-3 text-sm font-semibold text-red-600">{formError}</p>
+              <p role="alert" className="px-6 pb-3 text-sm font-semibold text-red-600">
+                {formError}
+              </p>
             )}
 
             <div className="px-6 pb-6 flex gap-3">

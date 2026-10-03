@@ -14,14 +14,70 @@ interface Subscription {
 }
 
 const SUBSCRIPTIONS: Subscription[] = [
-  { id: 1, name: 'Netflix',      price: 15.49, renewal: 'Mar 3',  category: 'Entertainment', forgotten: false, icon: '📺', fanRotate: -8,  fanOffset: -20 },
-  { id: 2, name: 'Adobe CC',     price: 54.99, renewal: 'Mar 5',  category: 'Creative',      forgotten: true,  icon: '🎨', fanRotate: -4,  fanOffset: -10 },
-  { id: 3, name: 'Headspace',    price: 12.99, renewal: 'Mar 8',  category: 'Wellness',      forgotten: true,  icon: '🧘', fanRotate: 0,   fanOffset: 0   },
-  { id: 4, name: 'Duolingo Plus',price: 6.99,  renewal: 'Mar 12', category: 'Education',     forgotten: true,  icon: '🦉', fanRotate: 4,   fanOffset: 10  },
-  { id: 5, name: 'Amazon Prime', price: 14.99, renewal: 'Mar 15', category: 'Shopping',      forgotten: false, icon: '📦', fanRotate: 8,   fanOffset: 20  },
+  {
+    id: 1,
+    name: 'Netflix',
+    price: 15.49,
+    renewal: 'Mar 3',
+    category: 'Entertainment',
+    forgotten: false,
+    icon: '📺',
+    fanRotate: -8,
+    fanOffset: -20,
+  },
+  {
+    id: 2,
+    name: 'Adobe CC',
+    price: 54.99,
+    renewal: 'Mar 5',
+    category: 'Creative',
+    forgotten: true,
+    icon: '🎨',
+    fanRotate: -4,
+    fanOffset: -10,
+  },
+  {
+    id: 3,
+    name: 'Headspace',
+    price: 12.99,
+    renewal: 'Mar 8',
+    category: 'Wellness',
+    forgotten: true,
+    icon: '🧘',
+    fanRotate: 0,
+    fanOffset: 0,
+  },
+  {
+    id: 4,
+    name: 'Duolingo Plus',
+    price: 6.99,
+    renewal: 'Mar 12',
+    category: 'Education',
+    forgotten: true,
+    icon: '🦉',
+    fanRotate: 4,
+    fanOffset: 10,
+  },
+  {
+    id: 5,
+    name: 'Amazon Prime',
+    price: 14.99,
+    renewal: 'Mar 15',
+    category: 'Shopping',
+    forgotten: false,
+    icon: '📦',
+    fanRotate: 8,
+    fanOffset: 20,
+  },
 ];
 
-function SubscriptionCard({ sub, index, fanned, onCancel, cancelled }: {
+function SubscriptionCard({
+  sub,
+  index,
+  fanned,
+  onCancel,
+  cancelled,
+}: {
   sub: Subscription;
   index: number;
   fanned: boolean;
@@ -55,7 +111,11 @@ function SubscriptionCard({ sub, index, fanned, onCancel, cancelled }: {
         {/* Front */}
         <div
           className="flip-card-front glass-card p-4 cursor-pointer hover:border-[rgba(124,58,237,0.4)] transition-colors"
-          style={{ border: sub.forgotten ? '1px solid rgba(124,58,237,0.3)' : '1px solid rgba(237,238,240,0.08)' }}
+          style={{
+            border: sub.forgotten
+              ? '1px solid rgba(124,58,237,0.3)'
+              : '1px solid rgba(237,238,240,0.08)',
+          }}
         >
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -81,24 +141,33 @@ function SubscriptionCard({ sub, index, fanned, onCancel, cancelled }: {
         </div>
 
         {/* Back */}
-        <div className="flip-card-back glass-card p-4 flex flex-col justify-between"
+        <div
+          className="flip-card-back glass-card p-4 flex flex-col justify-between"
           style={{ background: 'rgba(30,30,36,0.9)', border: '1px solid rgba(124,58,237,0.3)' }}
         >
           <div>
             <div className="font-mono text-[10px] text-[#6B7280] mb-2">MANAGE SUBSCRIPTION</div>
             <div className="font-sans text-sm font-semibold text-[#EDEEF0]">{sub.name}</div>
-            <div className="font-mono text-xs text-[#A78BFA] mt-1">${sub.price}/mo · Renews {sub.renewal}</div>
+            <div className="font-mono text-xs text-[#A78BFA] mt-1">
+              ${sub.price}/mo · Renews {sub.renewal}
+            </div>
           </div>
           <div className="flex gap-2 mt-3">
             <button
               className="flex-1 py-2 rounded-lg font-sans text-xs font-semibold text-[#EF4444] border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.08)] hover:bg-[rgba(239,68,68,0.15)] transition-colors"
-              onClick={(e) => { e.stopPropagation(); onCancel(sub.id); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel(sub.id);
+              }}
             >
               Cancel
             </button>
             <button
               className="flex-1 py-2 rounded-lg font-sans text-xs font-semibold text-[#9CA3AF] border border-[rgba(237,238,240,0.1)] hover:bg-[rgba(237,238,240,0.05)] transition-colors"
-              onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setFlipped(false);
+              }}
             >
               Keep
             </button>
@@ -136,11 +205,11 @@ export default function SpecReveal3() {
   }, [visible]);
 
   const handleCancel = (id: number) => {
-    setCancelled(prev => new Set([...prev, id]));
+    setCancelled((prev) => new Set([...prev, id]));
   };
 
   const savedPerMonth = Array.from(cancelled).reduce((sum, id) => {
-    const sub = SUBSCRIPTIONS.find(s => s.id === id);
+    const sub = SUBSCRIPTIONS.find((s) => s.id === id);
     return sum + (sub?.price ?? 0);
   }, 0);
 
@@ -150,7 +219,10 @@ export default function SpecReveal3() {
       ref={sectionRef}
       className="relative py-32 px-6 lg:px-8 overflow-hidden"
     >
-      <div className="bg-orb w-[600px] h-[600px] bg-[rgba(124,58,237,0.05)]" style={{ top: '10%', left: '-15%' }} />
+      <div
+        className="bg-orb w-[600px] h-[600px] bg-[rgba(124,58,237,0.05)]"
+        style={{ top: '10%', left: '-15%' }}
+      />
 
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
@@ -161,11 +233,11 @@ export default function SpecReveal3() {
         </div>
         <div className={`reveal ${visible ? 'visible' : ''} reveal-delay-1 mb-16`}>
           <h2 className="font-mono text-3xl md:text-5xl font-bold text-[#EDEEF0] leading-tight">
-            Cancel anything.{' '}
-            <span className="text-gradient-violet">One tap.</span>
+            Cancel anything. <span className="text-gradient-violet">One tap.</span>
           </h2>
           <p className="font-sans text-[#9CA3AF] mt-4 max-w-xl">
-            Metric surfaces every active subscription, shows you the renewal date and cost, and lets you cancel without ever leaving the app.
+            Metric surfaces every active subscription, shows you the renewal date and cost, and lets
+            you cancel without ever leaving the app.
           </p>
         </div>
 
@@ -193,7 +265,9 @@ export default function SpecReveal3() {
           <div className={`reveal ${visible ? 'visible' : ''} reveal-delay-3 flex flex-col gap-4`}>
             {/* Savings counter */}
             <div className="glass-card p-6">
-              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-3">Potential Monthly Savings</div>
+              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-3">
+                Potential Monthly Savings
+              </div>
               <div
                 className="font-mono text-4xl font-bold transition-all duration-500"
                 style={{
@@ -205,17 +279,22 @@ export default function SpecReveal3() {
               </div>
               {savedPerMonth > 0 && (
                 <div className="font-sans text-xs text-[#6B7280] mt-1">
-                  That's ${(savedPerMonth * 12).toFixed(0)} back per year
+                  That&apos;s ${(savedPerMonth * 12).toFixed(0)} back per year
                 </div>
               )}
             </div>
 
             {/* Sub list */}
             <div className="glass-card p-5">
-              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-4">Your Stack</div>
+              <div className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase mb-4">
+                Your Stack
+              </div>
               <div className="space-y-3">
-                {SUBSCRIPTIONS.map(sub => (
-                  <div key={sub.id} className={`flex items-center justify-between transition-all duration-400 ${cancelled.has(sub.id) ? 'opacity-30 line-through' : ''}`}>
+                {SUBSCRIPTIONS.map((sub) => (
+                  <div
+                    key={sub.id}
+                    className={`flex items-center justify-between transition-all duration-400 ${cancelled.has(sub.id) ? 'opacity-30 line-through' : ''}`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{sub.icon}</span>
                       <span className="font-sans text-sm text-[#9CA3AF]">{sub.name}</span>
@@ -227,7 +306,11 @@ export default function SpecReveal3() {
               <div className="border-t border-[rgba(237,238,240,0.06)] mt-4 pt-4 flex items-center justify-between">
                 <span className="font-sans text-xs text-[#6B7280]">Total / month</span>
                 <span className="font-mono text-sm font-bold text-[#EDEEF0]">
-                  ${(SUBSCRIPTIONS.reduce((s, sub) => s + (cancelled.has(sub.id) ? 0 : sub.price), 0)).toFixed(2)}
+                  $
+                  {SUBSCRIPTIONS.reduce(
+                    (s, sub) => s + (cancelled.has(sub.id) ? 0 : sub.price),
+                    0
+                  ).toFixed(2)}
                 </span>
               </div>
             </div>

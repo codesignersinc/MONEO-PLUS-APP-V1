@@ -4,12 +4,29 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, ArrowLeftRight, Wallet, TrendingUp, CreditCard, Landmark, CalendarDays, BarChart3, Settings2, LogOut, Zap, Target, DollarSign, Receipt, ChevronLeft, ChevronRight, Users, RefreshCw } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Wallet,
+  TrendingUp,
+  CreditCard,
+  Landmark,
+  CalendarDays,
+  BarChart3,
+  Settings2,
+  LogOut,
+  Zap,
+  Target,
+  DollarSign,
+  Receipt,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  RefreshCw,
+} from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useToast } from '@/components/ui/Toast';
-
-
 
 interface NavItem {
   href: string;
@@ -19,21 +36,21 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/finanzas',                label: 'Inicio',         icon: LayoutDashboard },
-  { href: '/finanzas/movimientos',    label: 'Movimientos',    icon: ArrowLeftRight  },
-  { href: '/finanzas/ingresos',       label: 'Ingresos',       icon: DollarSign      },
-  { href: '/finanzas/pagos',          label: 'Pagos',          icon: Receipt         },
-  { href: '/finanzas/suscripciones',  label: 'Suscripciones',  icon: Zap             },
-  { href: '/finanzas/presupuesto',    label: 'Presupuesto',    icon: Wallet          },
-  { href: '/finanzas/ahorros',        label: 'Metas',          icon: Target          },
-  { href: '/finanzas/juntas',         label: 'Juntas',         icon: Users,          special: true },
-  { href: '/finanzas/cuentas',        label: 'Cuentas',        icon: Landmark        },
-  { href: '/finanzas/convertir',      label: 'Convertir',      icon: RefreshCw       },
-  { href: '/finanzas/deudas',         label: 'Deudas',         icon: CreditCard      },
-  { href: '/finanzas/inversiones',    label: 'Inversiones',    icon: TrendingUp      },
-  { href: '/finanzas/calendario',     label: 'Calendario',     icon: CalendarDays    },
-  { href: '/finanzas/reportes',       label: 'Reportes',       icon: BarChart3       },
-  { href: '/finanzas/configuracion',  label: 'Configuración',  icon: Settings2       },
+  { href: '/finanzas', label: 'Inicio', icon: LayoutDashboard },
+  { href: '/finanzas/movimientos', label: 'Movimientos', icon: ArrowLeftRight },
+  { href: '/finanzas/ingresos', label: 'Ingresos', icon: DollarSign },
+  { href: '/finanzas/pagos', label: 'Pagos', icon: Receipt },
+  { href: '/finanzas/suscripciones', label: 'Suscripciones', icon: Zap },
+  { href: '/finanzas/presupuesto', label: 'Presupuesto', icon: Wallet },
+  { href: '/finanzas/ahorros', label: 'Metas', icon: Target },
+  { href: '/finanzas/juntas', label: 'Juntas', icon: Users, special: true },
+  { href: '/finanzas/cuentas', label: 'Cuentas', icon: Landmark },
+  { href: '/finanzas/convertir', label: 'Convertir', icon: RefreshCw },
+  { href: '/finanzas/deudas', label: 'Deudas', icon: CreditCard },
+  { href: '/finanzas/inversiones', label: 'Inversiones', icon: TrendingUp },
+  { href: '/finanzas/calendario', label: 'Calendario', icon: CalendarDays },
+  { href: '/finanzas/reportes', label: 'Reportes', icon: BarChart3 },
+  { href: '/finanzas/configuracion', label: 'Configuración', icon: Settings2 },
 ];
 
 interface SidebarProps {
@@ -66,15 +83,15 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
       className={`hidden lg:flex flex-col min-h-screen bg-white border-r-2 border-black fixed left-0 top-0 z-30 transition-all duration-300 ${collapsed ? 'w-[72px]' : 'w-60'}`}
     >
       {/* Logo + notification bell + collapse toggle */}
-      <div className={`flex items-center border-b-2 border-black ${collapsed ? 'justify-center px-3 py-5 flex-col gap-2' : 'gap-2 px-4 py-5'}`}>
+      <div
+        className={`flex items-center border-b-2 border-black ${collapsed ? 'justify-center px-3 py-5 flex-col gap-2' : 'gap-2 px-4 py-5'}`}
+      >
         {!collapsed && (
           <div className="flex items-center gap-1.5 flex-1">
             <MoneoLogo width={100} height={36} />
           </div>
         )}
-        {collapsed && (
-          <Zap className="w-6 h-6 text-[#FFD93D] fill-[#FFD93D]" strokeWidth={2.5} />
-        )}
+        {collapsed && <Zap className="w-6 h-6 text-[#FFD93D] fill-[#FFD93D]" strokeWidth={2.5} />}
         {/* Notification bell */}
         <div className={collapsed ? 'w-full flex justify-center' : ''}>
           <NotificationBell />
@@ -84,10 +101,11 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
           className={`flex items-center justify-center w-7 h-7 rounded-lg border-2 border-black bg-white hover:bg-[#FFD93D] transition-all duration-200 shadow-[1px_1px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-px shrink-0 ${collapsed ? 'mt-0' : ''}`}
         >
-          {collapsed
-            ? <ChevronRight className="w-4 h-4 text-black" strokeWidth={2.5} />
-            : <ChevronLeft className="w-4 h-4 text-black" strokeWidth={2.5} />
-          }
+          {collapsed ? (
+            <ChevronRight className="w-4 h-4 text-black" strokeWidth={2.5} />
+          ) : (
+            <ChevronLeft className="w-4 h-4 text-black" strokeWidth={2.5} />
+          )}
         </button>
       </div>
 
@@ -126,7 +144,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   <div className="flex items-center justify-between flex-1 min-w-0">
                     <div className="min-w-0">
                       <div className="font-black text-black text-sm leading-tight">Juntas</div>
-                      <div className="text-[10px] font-medium text-black/70 leading-tight">Ahorra en grupo</div>
+                      <div className="text-[10px] font-medium text-black/70 leading-tight">
+                        Ahorra en grupo
+                      </div>
                     </div>
                     <span className="ml-1 px-1.5 py-0.5 bg-black text-[#FFD43B] text-[9px] font-black rounded-full leading-none shrink-0">
                       NUEVO
@@ -153,7 +173,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
               <ItemIcon
                 className={`flex-shrink-0 transition-all duration-200 ${collapsed ? 'w-5 h-5' : 'w-[18px] h-[18px]'} ${
                   active
-                    ? 'text-black' : 'text-gray-400 group-hover:text-black group-hover:scale-110'
+                    ? 'text-black'
+                    : 'text-gray-400 group-hover:text-black group-hover:scale-110'
                 }`}
                 strokeWidth={2}
               />
@@ -176,7 +197,10 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
       {/* User + Logout */}
       <div className={`py-4 border-t-2 border-black space-y-2 ${collapsed ? 'px-2' : 'px-4'}`}>
         {user && !collapsed && (
-          <div className="flex items-center gap-2 px-1 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push('/finanzas/configuracion')}>
+          <div
+            className="flex items-center gap-2 px-1 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => router.push('/finanzas/configuracion')}
+          >
             <div className="w-7 h-7 rounded-full bg-[#4ADE80] border-[3px] border-black flex items-center justify-center text-xs font-black text-black shrink-0">
               {user.email?.[0]?.toUpperCase() || 'U'}
             </div>
@@ -184,7 +208,10 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           </div>
         )}
         {user && collapsed && (
-          <div className="flex justify-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push('/finanzas/configuracion')}>
+          <div
+            className="flex justify-center cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => router.push('/finanzas/configuracion')}
+          >
             <div className="w-8 h-8 rounded-full bg-[#4ADE80] border-[3px] border-black flex items-center justify-center text-xs font-black text-black shrink-0">
               {user.email?.[0]?.toUpperCase() || 'U'}
             </div>

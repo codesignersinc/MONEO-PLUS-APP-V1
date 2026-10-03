@@ -33,9 +33,7 @@ export default function NotificationPanel({
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const displayed = filter === 'unread'
-    ? notifications.filter(n => !n.isRead)
-    : notifications;
+  const displayed = filter === 'unread' ? notifications.filter((n) => !n.isRead) : notifications;
 
   function handleNotificationClick(notification: Notification) {
     onMarkRead(notification.id);
@@ -92,7 +90,9 @@ export default function NotificationPanel({
         <div className="flex items-center justify-between px-4 py-3 border-b-[3px] border-black bg-[#FFD43B] flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-lg">🔔</span>
-            <h2 className="font-black text-black text-sm uppercase tracking-wide">Notificaciones</h2>
+            <h2 className="font-black text-black text-sm uppercase tracking-wide">
+              Notificaciones
+            </h2>
             {unreadCount > 0 && (
               <span className="px-1.5 py-0.5 bg-black text-[#FFD43B] text-[10px] font-black rounded-full leading-none">
                 {unreadCount > 99 ? '99+' : unreadCount}
@@ -113,7 +113,13 @@ export default function NotificationPanel({
               className="w-6 h-6 rounded-lg border-2 border-black bg-white flex items-center justify-center hover:bg-gray-100 transition-colors"
               aria-label="Cerrar notificaciones"
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={3}
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -127,9 +133,7 @@ export default function NotificationPanel({
               key={f}
               onClick={() => onFilterChange(f)}
               className={`flex-1 py-2 text-xs font-black uppercase tracking-wide transition-colors ${
-                filter === f
-                  ? 'bg-black text-[#FFD43B]'
-                  : 'bg-white text-gray-500 hover:bg-gray-50'
+                filter === f ? 'bg-black text-[#FFD43B]' : 'bg-white text-gray-500 hover:bg-gray-50'
               }`}
             >
               {f === 'all' ? 'Todas' : 'No leídas'}
@@ -144,7 +148,7 @@ export default function NotificationPanel({
         <div className="flex-1 overflow-y-auto">
           {loading && (
             <div className="p-4 space-y-3">
-              {[1, 2, 3].map(i => (
+              {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-start gap-3 animate-pulse">
                   <div className="w-9 h-9 rounded-xl bg-gray-200 flex-shrink-0" />
                   <div className="flex-1 space-y-2">
@@ -173,18 +177,12 @@ export default function NotificationPanel({
             </div>
           )}
 
-          {!loading && !error && displayed.length === 0 && (
-            <NotificationEmpty />
-          )}
+          {!loading && !error && displayed.length === 0 && <NotificationEmpty />}
 
           {!loading && !error && displayed.length > 0 && (
             <div>
-              {displayed.map(n => (
-                <NotificationItem
-                  key={n.id}
-                  notification={n}
-                  onClick={handleNotificationClick}
-                />
+              {displayed.map((n) => (
+                <NotificationItem key={n.id} notification={n} onClick={handleNotificationClick} />
               ))}
             </div>
           )}

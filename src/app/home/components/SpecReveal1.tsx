@@ -61,9 +61,7 @@ export default function SpecReveal1() {
 
       <div className="max-w-4xl mx-auto text-center relative z-10">
         {/* Label */}
-        <div
-          className={`reveal ${visible ? 'visible' : ''} inline-flex items-center gap-2 mb-8`}
-        >
+        <div className={`reveal ${visible ? 'visible' : ''} inline-flex items-center gap-2 mb-8`}>
           <span className="font-mono text-[11px] text-[#6B7280] tracking-widest uppercase border border-[rgba(124,58,237,0.2)] rounded-full px-4 py-1.5 bg-[rgba(124,58,237,0.04)]">
             Spec 01 / Discovery
           </span>
@@ -75,8 +73,12 @@ export default function SpecReveal1() {
           style={{ transitionDelay: '0.2s' }}
         >
           <div className="flex items-baseline justify-center gap-1">
-            <span className="font-mono font-bold text-[clamp(5rem,16vw,10rem)] leading-none text-[#EDEEF0]"
-              style={{ textShadow: countDone ? '0 0 60px rgba(124,58,237,0.5)' : 'none', transition: 'text-shadow 1s ease' }}
+            <span
+              className="font-mono font-bold text-[clamp(5rem,16vw,10rem)] leading-none text-[#EDEEF0]"
+              style={{
+                textShadow: countDone ? '0 0 60px rgba(124,58,237,0.5)' : 'none',
+                transition: 'text-shadow 1s ease',
+              }}
             >
               ${displayVal}
             </span>
@@ -88,8 +90,8 @@ export default function SpecReveal1() {
         <div className={`reveal ${visible ? 'visible' : ''} reveal-delay-3`}>
           <p className="font-sans text-xl md:text-2xl text-[#9CA3AF] leading-relaxed max-w-xl mx-auto">
             in subscriptions you{' '}
-            <span className="text-gradient-violet font-medium">forgot you signed up for</span>
-            . Metric finds them all.
+            <span className="text-gradient-violet font-medium">forgot you signed up for</span>.
+            Metric finds them all.
           </p>
         </div>
 
@@ -101,10 +103,12 @@ export default function SpecReveal1() {
               className={`reveal ${visible ? 'visible' : ''} glass-card p-6 text-center`}
               style={{ transitionDelay: `${0.4 + i * 0.12}s` }}
             >
-              <div className="font-mono text-3xl font-bold text-[#EDEEF0] mb-2"
+              <div
+                className="font-mono text-3xl font-bold text-[#EDEEF0] mb-2"
                 style={{ textShadow: '0 0 20px rgba(124,58,237,0.3)' }}
               >
-                {stat.value}{stat.suffix}
+                {stat.value}
+                {stat.suffix}
               </div>
               <div className="font-sans text-xs text-[#6B7280] leading-relaxed">{stat.label}</div>
             </div>

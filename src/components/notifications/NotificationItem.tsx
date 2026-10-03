@@ -32,7 +32,9 @@ export default function NotificationItem({ notification, onClick }: Notification
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className={`text-sm leading-tight ${notification.isRead ? 'font-medium text-gray-700' : 'font-black text-black'}`}>
+          <p
+            className={`text-sm leading-tight ${notification.isRead ? 'font-medium text-gray-700' : 'font-black text-black'}`}
+          >
             {notification.title}
           </p>
           {/* Unread dot */}
@@ -41,7 +43,9 @@ export default function NotificationItem({ notification, onClick }: Notification
           )}
         </div>
         {notification.message && (
-          <p className={`text-xs mt-0.5 leading-snug ${notification.isRead ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p
+            className={`text-xs mt-0.5 leading-snug ${notification.isRead ? 'text-gray-400' : 'text-gray-600'}`}
+          >
             {notification.message}
           </p>
         )}
@@ -67,7 +71,9 @@ function NotificationTime({ dateStr, isRead }: { dateStr: string; isRead: boolea
   if (!timeStr) return null;
 
   return (
-    <p className={`text-[10px] mt-1 font-bold uppercase tracking-wide ${isRead ? 'text-gray-300' : 'text-gray-400'}`}>
+    <p
+      className={`text-[10px] mt-1 font-bold uppercase tracking-wide ${isRead ? 'text-gray-300' : 'text-gray-400'}`}
+    >
       {timeStr}
     </p>
   );

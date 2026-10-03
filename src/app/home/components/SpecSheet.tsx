@@ -10,27 +10,97 @@ interface FeatureRow {
 }
 
 const FEATURES: FeatureRow[] = [
-  { feature: 'Subscription detection',       description: 'Auto-finds recurring charges',        metric: 'All accounts',  basic: 'Partial',       manual: false },
-  { feature: 'Real-time categorization',     description: 'Tags every transaction automatically', metric: true,            basic: true,            manual: false },
-  { feature: 'One-tap cancellation',         description: 'Cancel without leaving the app',       metric: true,            basic: false,           manual: false },
-  { feature: 'Renewal alerts',               description: '7-day advance notice',                 metric: '7 days prior',  basic: '1 day prior',   manual: false },
-  { feature: 'Multi-bank sync',              description: 'Connect all accounts at once',         metric: 'Unlimited',     basic: '2 accounts',    manual: false },
-  { feature: 'Spending insights',            description: 'AI-powered monthly analysis',          metric: 'AI-powered',    basic: 'Basic charts',  manual: false },
-  { feature: 'Budget rings',                 description: 'Visual per-category budgets',          metric: true,            basic: false,           manual: false },
-  { feature: 'Partner sharing',              description: 'Shared view for couples',              metric: true,            basic: false,           manual: false },
-  { feature: 'Export & reports',             description: 'CSV, PDF, tax-ready formats',          metric: true,            basic: false,           manual: false },
-  { feature: 'Bank-grade encryption',        description: '256-bit AES, read-only access',        metric: true,            basic: true,            manual: false },
+  {
+    feature: 'Subscription detection',
+    description: 'Auto-finds recurring charges',
+    metric: 'All accounts',
+    basic: 'Partial',
+    manual: false,
+  },
+  {
+    feature: 'Real-time categorization',
+    description: 'Tags every transaction automatically',
+    metric: true,
+    basic: true,
+    manual: false,
+  },
+  {
+    feature: 'One-tap cancellation',
+    description: 'Cancel without leaving the app',
+    metric: true,
+    basic: false,
+    manual: false,
+  },
+  {
+    feature: 'Renewal alerts',
+    description: '7-day advance notice',
+    metric: '7 days prior',
+    basic: '1 day prior',
+    manual: false,
+  },
+  {
+    feature: 'Multi-bank sync',
+    description: 'Connect all accounts at once',
+    metric: 'Unlimited',
+    basic: '2 accounts',
+    manual: false,
+  },
+  {
+    feature: 'Spending insights',
+    description: 'AI-powered monthly analysis',
+    metric: 'AI-powered',
+    basic: 'Basic charts',
+    manual: false,
+  },
+  {
+    feature: 'Budget rings',
+    description: 'Visual per-category budgets',
+    metric: true,
+    basic: false,
+    manual: false,
+  },
+  {
+    feature: 'Partner sharing',
+    description: 'Shared view for couples',
+    metric: true,
+    basic: false,
+    manual: false,
+  },
+  {
+    feature: 'Export & reports',
+    description: 'CSV, PDF, tax-ready formats',
+    metric: true,
+    basic: false,
+    manual: false,
+  },
+  {
+    feature: 'Bank-grade encryption',
+    description: '256-bit AES, read-only access',
+    metric: true,
+    basic: true,
+    manual: false,
+  },
 ];
 
 function Cell({ val }: { val: boolean | string }) {
   if (val === false) return <span className="text-[#3F3F46]">—</span>;
-  if (val === true)  return (
-    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[rgba(124,58,237,0.2)] border border-[rgba(124,58,237,0.4)]">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 6L9 17l-5-5" />
-      </svg>
-    </span>
-  );
+  if (val === true)
+    return (
+      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[rgba(124,58,237,0.2)] border border-[rgba(124,58,237,0.4)]">
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#A78BFA"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      </span>
+    );
   return <span className="font-mono text-[11px] text-[#A78BFA]">{val}</span>;
 }
 
@@ -40,7 +110,12 @@ export default function SpecSheet() {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
       { threshold: 0.2 }
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
@@ -53,7 +128,10 @@ export default function SpecSheet() {
       ref={sectionRef}
       className="relative py-32 px-6 lg:px-8 overflow-hidden"
     >
-      <div className="bg-orb w-[700px] h-[700px] bg-[rgba(124,58,237,0.03)]" style={{ top: '20%', left: '50%', transform: 'translateX(-50%)' }} />
+      <div
+        className="bg-orb w-[700px] h-[700px] bg-[rgba(124,58,237,0.03)]"
+        style={{ top: '20%', left: '50%', transform: 'translateX(-50%)' }}
+      />
 
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
@@ -67,7 +145,8 @@ export default function SpecSheet() {
             The complete breakdown.
           </h2>
           <p className="font-sans text-[#9CA3AF] mt-3 max-w-lg">
-            Everything Metric does, compared to the alternatives. If you need every detail before committing, this is for you.
+            Everything Metric does, compared to the alternatives. If you need every detail before
+            committing, this is for you.
           </p>
         </div>
 
@@ -76,7 +155,9 @@ export default function SpecSheet() {
           <div className="glass-card overflow-hidden">
             {/* Column headers */}
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-0 border-b border-[rgba(237,238,240,0.06)]">
-              <div className="px-6 py-4 font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">Feature</div>
+              <div className="px-6 py-4 font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">
+                Feature
+              </div>
               <div className="px-6 py-4 text-center min-w-[100px]">
                 <div className="font-mono text-xs font-bold text-[#A78BFA]">metric</div>
                 <div className="font-mono text-[9px] text-[#6B7280]">Early Access</div>
@@ -123,7 +204,8 @@ export default function SpecSheet() {
         {/* CTA */}
         <div className={`reveal ${visible ? 'visible' : ''} reveal-delay-4 mt-12 text-center`}>
           <p className="font-sans text-[#6B7280] mb-6">
-            Seen enough? Join the waitlist — we'll scan your subscriptions the moment we launch.
+            Seen enough? Join the waitlist — we&apos;ll scan your subscriptions the moment we
+            launch.
           </p>
           <a
             href="#waitlist"

@@ -24,7 +24,7 @@ export default function NotificationBell() {
   const bellRef = useRef<HTMLDivElement>(null);
   const hasLoaded = useRef(false);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -88,7 +88,7 @@ export default function NotificationBell() {
             readAt: row.read_at as string | undefined,
             metadata: (row.metadata as Record<string, unknown>) ?? {},
           };
-          setNotifications(prev => [newNotif, ...prev]);
+          setNotifications((prev) => [newNotif, ...prev]);
           setNewBadge(true);
           setTimeout(() => setNewBadge(false), 2000);
         }
@@ -104,8 +104,8 @@ export default function NotificationBell() {
   // Optimistic updates are rolled back when the server rejects the change.
   async function handleMarkRead(id: string) {
     const previous = notifications;
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n))
     );
     const ok = await markNotificationRead(id);
     if (!ok) {
@@ -117,7 +117,7 @@ export default function NotificationBell() {
   async function handleMarkAllRead() {
     const previous = notifications;
     const now = new Date().toISOString();
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true, readAt: now })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true, readAt: now })));
     const ok = await markAllNotificationsRead();
     if (!ok) {
       setNotifications(previous);
@@ -126,7 +126,7 @@ export default function NotificationBell() {
   }
 
   function handleToggle() {
-    setOpen(prev => !prev);
+    setOpen((prev) => !prev);
   }
 
   if (!user) return null;

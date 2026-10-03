@@ -12,21 +12,63 @@ export interface ServiceOption {
 
 const POPULAR_SERVICES: ServiceOption[] = [
   // Entretenimiento
-  { name: 'Netflix', category: 'Entretenimiento', icon: '🎬', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg', color: '#E50914' },
-  { name: 'Disney+', category: 'Entretenimiento', icon: '🏰', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg', color: '#113CCF' },
-  { name: 'HBO Max', category: 'Entretenimiento', icon: '🎭', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg', color: '#5822B4' },
-  { name: 'Amazon Prime', category: 'Entretenimiento', icon: '📦', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.svg', color: '#00A8E1' },
-  { name: 'Apple TV+', category: 'Entretenimiento', icon: '🍎', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg', color: '#000000' },
+  {
+    name: 'Netflix',
+    category: 'Entretenimiento',
+    icon: '🎬',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg',
+    color: '#E50914',
+  },
+  {
+    name: 'Disney+',
+    category: 'Entretenimiento',
+    icon: '🏰',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg',
+    color: '#113CCF',
+  },
+  {
+    name: 'HBO Max',
+    category: 'Entretenimiento',
+    icon: '🎭',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg',
+    color: '#5822B4',
+  },
+  {
+    name: 'Amazon Prime',
+    category: 'Entretenimiento',
+    icon: '📦',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.svg',
+    color: '#00A8E1',
+  },
+  {
+    name: 'Apple TV+',
+    category: 'Entretenimiento',
+    icon: '🍎',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg',
+    color: '#000000',
+  },
   { name: 'Paramount+', category: 'Entretenimiento', icon: '⭐', color: '#0064FF' },
   { name: 'Crunchyroll', category: 'Entretenimiento', icon: '🍥', color: '#F47521' },
   // Música
-  { name: 'Spotify', category: 'Música', icon: '🎵', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg', color: '#1DB954' },
+  {
+    name: 'Spotify',
+    category: 'Música',
+    icon: '🎵',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg',
+    color: '#1DB954',
+  },
   { name: 'Apple Music', category: 'Música', icon: '🎶', color: '#FC3C44' },
   { name: 'YouTube Music', category: 'Música', icon: '🎸', color: '#FF0000' },
   { name: 'Deezer', category: 'Música', icon: '🎧', color: '#A238FF' },
   { name: 'Tidal', category: 'Música', icon: '🌊', color: '#000000' },
   // IA
-  { name: 'ChatGPT Plus', category: 'Software', icon: '🤖', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg', color: '#10A37F' },
+  {
+    name: 'ChatGPT Plus',
+    category: 'Software',
+    icon: '🤖',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg',
+    color: '#10A37F',
+  },
   { name: 'Claude Pro', category: 'Software', icon: '🧠', color: '#D97706' },
   { name: 'Gemini Advanced', category: 'Software', icon: '✨', color: '#4285F4' },
   { name: 'Midjourney', category: 'Software', icon: '🎨', color: '#000000' },
@@ -121,10 +163,10 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
   useEffect(() => {
     if (value && value !== query) {
       setQuery(value);
-      const found = POPULAR_SERVICES.find(s => s.name.toLowerCase() === value.toLowerCase());
+      const found = POPULAR_SERVICES.find((s) => s.name.toLowerCase() === value.toLowerCase());
       if (found) setSelected(found);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   useEffect(() => {
@@ -141,13 +183,15 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [query, selected, onChange]);
 
-  const filtered = useMemo(() =>
-    query.trim().length === 0
-      ? POPULAR_SERVICES
-      : POPULAR_SERVICES.filter(s =>
-          s.name.toLowerCase().includes(query.toLowerCase()) ||
-          s.category.toLowerCase().includes(query.toLowerCase())
-        ),
+  const filtered = useMemo(
+    () =>
+      query.trim().length === 0
+        ? POPULAR_SERVICES
+        : POPULAR_SERVICES.filter(
+            (s) =>
+              s.name.toLowerCase().includes(query.toLowerCase()) ||
+              s.category.toLowerCase().includes(query.toLowerCase())
+          ),
     [query]
   );
 
@@ -155,7 +199,12 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
     setSelected(service);
     setQuery(service.name);
     setOpen(false);
-    onChange({ name: service.name, category: service.category, icon: service.icon, color: service.color });
+    onChange({
+      name: service.name,
+      category: service.category,
+      icon: service.icon,
+      color: service.color,
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,7 +234,10 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
   };
 
   const showCreateOption = query.trim().length > 0 && filtered.length === 0;
-  const showCreateSuggestion = query.trim().length > 0 && !selected && !POPULAR_SERVICES.find(s => s.name.toLowerCase() === query.toLowerCase());
+  const showCreateSuggestion =
+    query.trim().length > 0 &&
+    !selected &&
+    !POPULAR_SERVICES.find((s) => s.name.toLowerCase() === query.toLowerCase());
 
   return (
     <div ref={containerRef} className="relative">
@@ -206,7 +258,10 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
       {/* Search input */}
       <div
         className={`flex items-center gap-2 px-3 py-3 bg-white rounded-xl border-[2.5px] border-black focus-within:ring-2 focus-within:ring-[#FFD43B] transition-all cursor-text ${selected ? 'hidden' : ''}`}
-        onClick={() => { setOpen(true); inputRef.current?.focus(); }}
+        onClick={() => {
+          setOpen(true);
+          inputRef.current?.focus();
+        }}
       >
         <Search className="w-4 h-4 text-gray-400 flex-shrink-0" strokeWidth={2} />
         <input
@@ -218,7 +273,10 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
           placeholder="Buscar Netflix, Spotify, ChatGPT..."
           className="flex-1 bg-transparent text-sm font-bold text-black placeholder-gray-400 outline-none"
         />
-        <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} strokeWidth={2} />
+        <ChevronDown
+          className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          strokeWidth={2}
+        />
       </div>
 
       {/* Dropdown */}
@@ -226,7 +284,7 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
         <div className="absolute z-50 w-full mt-1 bg-white rounded-2xl border-[2.5px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] overflow-hidden max-h-64 overflow-y-auto">
           {filtered.length > 0 ? (
             <>
-              {filtered.map(service => (
+              {filtered.map((service) => (
                 <button
                   key={service.name}
                   type="button"
@@ -248,7 +306,9 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
                 >
                   <CustomServiceLogo name={query} size={36} />
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-black text-sm truncate">Crear &ldquo;{query}&rdquo;</p>
+                    <p className="font-bold text-black text-sm truncate">
+                      Crear &ldquo;{query}&rdquo;
+                    </p>
                     <p className="text-xs text-gray-500">Servicio personalizado</p>
                   </div>
                 </button>
@@ -263,7 +323,9 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
               <CustomServiceLogo name={query} size={36} />
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-black text-sm truncate">Crear &ldquo;{query}&rdquo;</p>
-                <p className="text-xs text-gray-500">No encontrado — se creará con logo personalizado</p>
+                <p className="text-xs text-gray-500">
+                  No encontrado — se creará con logo personalizado
+                </p>
               </div>
             </button>
           ) : (

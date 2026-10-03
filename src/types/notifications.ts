@@ -16,7 +16,21 @@ export interface Notification {
 }
 
 export type NotificationType =
-  | 'expense' |'income' |'transfer' |'budget' |'savings' |'goal' |'debt' |'investment' |'subscription' |'account' |'junta' |'reminder' |'achievement' |'system' |'security'
+  | 'expense'
+  | 'income'
+  | 'transfer'
+  | 'budget'
+  | 'savings'
+  | 'goal'
+  | 'debt'
+  | 'investment'
+  | 'subscription'
+  | 'account'
+  | 'junta'
+  | 'reminder'
+  | 'achievement'
+  | 'system'
+  | 'security'
   | string;
 
 export interface CreateNotificationParams {

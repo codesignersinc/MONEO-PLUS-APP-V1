@@ -13,7 +13,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'Finanzas — Control financiero personal',
-  description: 'Controla tus finanzas diarias, presupuesto mensual, ahorros, deudas e inversiones en un solo lugar.',
+  description:
+    'Controla tus finanzas diarias, presupuesto mensual, ahorros, deudas e inversiones en un solo lugar.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -21,12 +22,8 @@ export const metadata: Metadata = {
     title: 'Finanzas',
   },
   icons: {
-    icon: [
-      { url: '/assets/images/app_logo.png', type: 'image/png' }
-    ],
-    apple: [
-      { url: '/assets/images/app_logo.png', sizes: '180x180', type: 'image/png' }
-    ],
+    icon: [{ url: '/assets/images/app_logo.png', type: 'image/png' }],
+    apple: [{ url: '/assets/images/app_logo.png', sizes: '180x180', type: 'image/png' }],
   },
 };
 
@@ -47,7 +44,7 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
         <link rel="apple-touch-icon" href="/assets/images/app_logo.png" />
         <link rel="apple-touch-startup-image" href="/assets/images/app_logo.png" />
-</head>
+      </head>
       <body>
         <AuthProvider>{children}</AuthProvider>
         <script src="/register-sw.js" defer />

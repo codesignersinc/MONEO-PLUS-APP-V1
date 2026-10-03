@@ -24,12 +24,23 @@ export default function AhorrosPage() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
   const toast = useToast();
-  const [form, setForm] = useState({ name: '', icon: '🐷', current: '0', target: '', color: '#16A34A', targetDate: '' });
+  const [form, setForm] = useState({
+    name: '',
+    icon: '🐷',
+    current: '0',
+    target: '',
+    color: '#16A34A',
+    targetDate: '',
+  });
 
   const load = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    savingsService.getAll().then(setGoals).catch(setLoadError).finally(() => setLoading(false));
+    savingsService
+      .getAll()
+      .then(setGoals)
+      .catch(setLoadError)
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -47,7 +58,14 @@ export default function AhorrosPage() {
 
   const openEdit = (goal: SavingsGoal) => {
     setEditingGoal(goal);
-    setForm({ name: goal.name, icon: goal.icon, current: String(goal.current), target: String(goal.target), color: goal.color, targetDate: goal.targetDate });
+    setForm({
+      name: goal.name,
+      icon: goal.icon,
+      current: String(goal.current),
+      target: String(goal.target),
+      color: goal.color,
+      targetDate: goal.targetDate,
+    });
     setFormError('');
     setShowForm(true);
   };
@@ -57,38 +75,48 @@ export default function AhorrosPage() {
     setSaving(true);
     setFormError('');
     try {
-      const goalData = { ...form, current: parseFloat(form.current) || 0, target: parseFloat(form.target) };
+      const goalData = {
+        ...form,
+        current: parseFloat(form.current) || 0,
+        target: parseFloat(form.target),
+      };
       if (editingGoal) {
         await savingsService.update(editingGoal.id, goalData);
-        setGoals(prev => prev.map(g => g.id === editingGoal.id ? { ...g, ...goalData } : g));
+        setGoals((prev) => prev.map((g) => (g.id === editingGoal.id ? { ...g, ...goalData } : g)));
       } else {
         const created = await savingsService.create(goalData);
-        setGoals(prev => [...prev, created]);
+        setGoals((prev) => [...prev, created]);
       }
       setShowForm(false);
     } catch (err) {
       console.error(err);
       setFormError(getErrorMessage(err));
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await savingsService.delete(id);
-      setGoals(prev => prev.filter(g => g.id !== id));
-    } catch (err) { toast.showError(err); }
+      setGoals((prev) => prev.filter((g) => g.id !== id));
+    } catch (err) {
+      toast.showError(err);
+    }
   };
 
   const handleAddAmount = async (id: string) => {
     if (!addAmount?.value) return;
-    const goal = goals.find(g => g.id === id);
+    const goal = goals.find((g) => g.id === id);
     if (!goal) return;
     const newCurrent = goal.current + parseFloat(addAmount.value);
     try {
       await savingsService.update(id, { current: newCurrent });
-      setGoals(prev => prev.map(g => g.id === id ? { ...g, current: newCurrent } : g));
+      setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, current: newCurrent } : g)));
       setAddAmount(null);
-    } catch (err) { toast.showError(err); }
+    } catch (err) {
+      toast.showError(err);
+    }
   };
 
   if (loading) {
@@ -120,7 +148,9 @@ export default function AhorrosPage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="text-3xl font-black text-black leading-tight">Metas de Ahorro</h1>
-            <p className="text-sm text-gray-500 font-medium mt-0.5">Ahorra con propósito, alcanza tus sueños.</p>
+            <p className="text-sm text-gray-500 font-medium mt-0.5">
+              Ahorra con propósito, alcanza tus sueños.
+            </p>
           </div>
           <button
             onClick={openAdd}
@@ -167,7 +197,7 @@ export default function AhorrosPage() {
           <>
             <h2 className="text-lg font-black text-black mb-3">Mis metas</h2>
             <div className="space-y-4">
-              {goals.map(goal => {
+              {goals.map((goal) => {
                 const pct = goal.target > 0 ? Math.round((goal.current / goal.target) * 100) : 0;
                 return (
                   <div
@@ -210,8 +240,12 @@ export default function AhorrosPage() {
                     {/* Progress */}
                     <div className="mb-3">
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="font-black text-black">S/ {goal.current.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
-                        <span className="font-bold text-gray-500">S/ {goal.target.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
+                        <span className="font-black text-black">
+                          S/ {goal.current.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                        </span>
+                        <span className="font-bold text-gray-500">
+                          S/ {goal.target.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                        </span>
                       </div>
                       <div className="h-3 bg-gray-100 border-[2px] border-black rounded-full overflow-hidden">
                         <div
@@ -224,14 +258,17 @@ export default function AhorrosPage() {
                     {/* Footer */}
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold text-gray-500">
-                        Faltan S/ {Math.max(goal.target - goal.current, 0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                        Faltan S/{' '}
+                        {Math.max(goal.target - goal.current, 0).toLocaleString('es-PE', {
+                          minimumFractionDigits: 2,
+                        })}
                       </p>
                       {addAmount?.id === goal.id ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="number"
                             value={addAmount.value}
-                            onChange={e => setAddAmount({ id: goal.id, value: e.target.value })}
+                            onChange={(e) => setAddAmount({ id: goal.id, value: e.target.value })}
                             placeholder="Monto"
                             className="w-24 px-2 py-1.5 text-xs font-bold border-[2px] border-black rounded-lg outline-none focus:ring-2 focus:ring-[#FFD43B]"
                             autoFocus
@@ -268,15 +305,20 @@ export default function AhorrosPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowForm(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={() => setShowForm(false)}
+        >
           <div className="absolute inset-0 bg-black/50" />
           <div
             className="relative bg-[#FAFAF8] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col max-h-[92vh]"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b-[3px] border-black">
-              <h2 className="font-black text-black text-lg">{editingGoal ? 'Editar meta' : 'Nueva meta de ahorro'}</h2>
+              <h2 className="font-black text-black text-lg">
+                {editingGoal ? 'Editar meta' : 'Nueva meta de ahorro'}
+              </h2>
               <button
                 onClick={() => setShowForm(false)}
                 className="w-9 h-9 rounded-xl bg-black flex items-center justify-center text-white hover:bg-gray-800 transition-all"
@@ -288,11 +330,13 @@ export default function AhorrosPage() {
             <div className="px-5 py-4 space-y-3 overflow-y-auto">
               {/* Name */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Nombre de la meta</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Nombre de la meta
+                </label>
                 <input
                   type="text"
                   value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="ej: Fondo de emergencia, Viaje a Europa"
                   className="w-full px-4 py-3 bg-white rounded-xl border-[2.5px] border-black text-sm font-bold text-black placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#FFD43B] transition-all"
                 />
@@ -300,12 +344,14 @@ export default function AhorrosPage() {
 
               {/* Icon */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Ícono</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Ícono
+                </label>
                 <div className="flex flex-wrap gap-2">
-                  {GOAL_ICONS.map(ic => (
+                  {GOAL_ICONS.map((ic) => (
                     <button
                       key={ic}
-                      onClick={() => setForm(f => ({ ...f, icon: ic }))}
+                      onClick={() => setForm((f) => ({ ...f, icon: ic }))}
                       className={`w-11 h-11 rounded-xl text-xl flex items-center justify-center border-[2.5px] transition-all ${
                         form.icon === ic
                           ? 'bg-[#FFD43B] border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]'
@@ -320,13 +366,15 @@ export default function AhorrosPage() {
 
               {/* Target amount */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Monto meta</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Monto meta
+                </label>
                 <div className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl border-[2.5px] border-black focus-within:ring-2 focus-within:ring-[#FFD43B] transition-all">
                   <span className="text-black font-black text-sm">S/</span>
                   <input
                     type="number"
                     value={form.target}
-                    onChange={e => setForm(f => ({ ...f, target: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, target: e.target.value }))}
                     placeholder="0.00"
                     className="flex-1 bg-transparent text-sm font-black text-black outline-none"
                   />
@@ -335,13 +383,15 @@ export default function AhorrosPage() {
 
               {/* Current amount */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Monto actual</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Monto actual
+                </label>
                 <div className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl border-[2.5px] border-black focus-within:ring-2 focus-within:ring-[#FFD43B] transition-all">
                   <span className="text-black font-black text-sm">S/</span>
                   <input
                     type="number"
                     value={form.current}
-                    onChange={e => setForm(f => ({ ...f, current: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, current: e.target.value }))}
                     placeholder="0.00"
                     className="flex-1 bg-transparent text-sm font-black text-black outline-none"
                   />
@@ -350,17 +400,25 @@ export default function AhorrosPage() {
 
               {/* Target date — calendar date picker */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Fecha meta</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Fecha meta
+                </label>
                 <input
                   type="date"
                   value={form.targetDate}
-                  onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, targetDate: e.target.value }))}
                   className="w-full px-4 py-3 bg-white rounded-xl border-[2.5px] border-black text-sm font-bold text-black outline-none focus:ring-2 focus:ring-[#FFD43B] transition-all"
                 />
-                <p className="text-xs font-medium text-gray-500 mt-1">¿Cuándo quieres alcanzar esta meta?</p>
+                <p className="text-xs font-medium text-gray-500 mt-1">
+                  ¿Cuándo quieres alcanzar esta meta?
+                </p>
               </div>
 
-              {formError && <p role="alert" className="text-sm font-bold text-red-600">{formError}</p>}
+              {formError && (
+                <p role="alert" className="text-sm font-bold text-red-600">
+                  {formError}
+                </p>
+              )}
 
               {/* Save button */}
               <button
