@@ -73,10 +73,11 @@ export default function SuscripcionesPage() {
   const handleMarkPaid = async (sub: Subscription) => {
     setMarkingPaid(sub.id);
     try {
-      const nextDateStr = await subscriptionsService.markAsPaid(sub.id, sub.paymentDay);
+      const { nextPaymentDate } = await subscriptionsService.markAsPaid(sub);
       setSubs(prev => prev.map(s => s.id === sub.id
-        ? { ...s, paymentStatus: 'pending', nextPaymentDate: nextDateStr }
+        ? { ...s, paymentStatus: computeStatus(nextPaymentDate), nextPaymentDate, nextDate: nextPaymentDate }
         : s));
+      toast.showSuccess(`Pago de ${sub.name} registrado como gasto`);
     } catch (err) { toast.showError(err); } finally { setMarkingPaid(null); }
   };
 
@@ -261,9 +262,10 @@ export default function SuscripcionesPage() {
                       onClick={() => handleMarkPaid(sub)}
                       disabled={markingPaid === sub.id}
                       title="Marcar como pagado"
+                      aria-label="Marcar como pagado"
                       className="group p-1.5 rounded-lg hover:bg-green-50 transition-all duration-150 disabled:opacity-50"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-gray-400 group-hover:text-green-500 transition-colors" strokeWidth={1.75} />
+                      <CheckCircle2 className={`w-6 h-6 text-gray-400 group-hover:text-green-500 transition-colors ${markingPaid === sub.id ? 'animate-pulse' : ''}`} strokeWidth={1.75} />
                     </button>
                   )}
                   <button onClick={() => toggleSub(sub.id)} className={`group p-1.5 rounded-lg transition-all duration-150 ${sub.active ? 'hover:bg-amber-50' : 'hover:bg-green-50'}`}>

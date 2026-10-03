@@ -373,16 +373,42 @@ export const subscriptionsService = {
     assertAffected(data);
   },
 
-  async markAsPaid(id: string, paymentDay: number): Promise<string> {
-    // Advance next_payment_date by one month keeping the same day
-    const today = new Date();
-    const next = new Date(today.getFullYear(), today.getMonth() + 1, paymentDay);
-    const nextDateStr = next.toISOString().split('T')[0];
-    await subscriptionsService.update(id, {
+  // Records the payment as an expense ("gasto") and advances next_payment_date
+  // by one month from the current due date, keeping the same payment day.
+  async markAsPaid(sub: Subscription): Promise<{ nextPaymentDate: string; transaction: Transaction }> {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+    const base = sub.nextPaymentDate ? new Date(sub.nextPaymentDate + 'T00:00:00') : now;
+    const year = base.getFullYear();
+    const month = base.getMonth() + 1;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const next = new Date(year, month, Math.min(sub.paymentDay || base.getDate(), lastDay));
+    const nextDateStr = `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`;
+
+    const accounts = await accountsService.getAll();
+    const account = accounts[0];
+
+    const transaction = await transactionsService.create({
+      name: sub.name,
+      type: 'gasto',
+      amount: -Math.abs(sub.amount),
+      category: 'Suscripciones',
+      categoryIcon: sub.icon || '📱',
+      accountId: account?.id ?? '',
+      account: account?.name ?? '',
+      notes: `Pago de suscripción${sub.nextPaymentDate ? ` (vencimiento ${sub.nextPaymentDate})` : ''}`,
+      date: new Date(todayStr + 'T12:00:00').toISOString(),
+      time: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
+    });
+
+    await subscriptionsService.update(sub.id, {
       paymentStatus: 'pending',
       nextPaymentDate: nextDateStr,
+      nextDate: nextDateStr,
     });
-    return nextDateStr;
+    return { nextPaymentDate: nextDateStr, transaction };
   },
 
   async delete(id: string): Promise<void> {
