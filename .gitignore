@@ -34,3 +34,10 @@ jest-test-results.json
 
 # Optional: if using TurboRepo or monorepo
 turbo/
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Claude Code local files
+.claude/
