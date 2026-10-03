@@ -1,0 +1,343 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Poppins:wght@700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-void: #09090B;
+  --color-violet: #7C3AED;
+  --color-violet-light: #A78BFA;
+  --color-violet-dim: #4C1D95;
+  --color-graphite: #1E1E24;
+  --color-graphite-light: #2A2A32;
+  --color-phosphor: #EDEEF0;
+  --color-phosphor-muted: #9CA3AF;
+  --color-border: rgba(124, 58, 237, 0.2);
+  --color-border-subtle: rgba(237, 238, 240, 0.08);
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-manrope: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+  /* Finance app tokens */
+  --fin-bg: #F5F6FA;
+  --fin-card: #FFFFFF;
+  --fin-text: #0F172A;
+  --fin-muted: #64748B;
+  --fin-border: #E2E8F0;
+  --fin-green: #16A34A;
+  --fin-red: #DC2626;
+  --fin-amber: #D97706;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-phosphor);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Finance app body override */
+body.fin-app {
+  background-color: var(--fin-bg);
+  color: var(--fin-text);
+  font-family: var(--font-poppins);
+  font-weight: 700;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-void); }
+::-webkit-scrollbar-thumb { background: var(--color-violet-dim); border-radius: 2px; }
+
+/* Finance app scrollbar */
+.fin-scroll::-webkit-scrollbar { width: 4px; }
+.fin-scroll::-webkit-scrollbar-track { background: #F5F6FA; }
+.fin-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+
+/* ─── Grain texture overlay ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.035;
+}
+
+/* ─── Keyframes ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(32px); filter: blur(8px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0);   }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.94); filter: blur(4px); }
+  to   { opacity: 1; transform: scale(1);    filter: blur(0);   }
+}
+
+@keyframes slideInBlur {
+  from { opacity: 0; transform: translateX(-28px); filter: blur(8px); }
+  to   { opacity: 1; transform: translateX(0);     filter: blur(0);   }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(28px); filter: blur(8px); }
+  to   { opacity: 1; transform: translateX(0);    filter: blur(0);   }
+}
+
+@keyframes blurToSharp {
+  0%   { opacity: 0; filter: blur(24px); transform: scale(1.04); }
+  60%  { opacity: 0.8; filter: blur(4px); }
+  100% { opacity: 1; filter: blur(0);    transform: scale(1);    }
+}
+
+@keyframes tickUp {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes ringFill {
+  from { stroke-dashoffset: 502; }
+  to   { stroke-dashoffset: 188; }
+}
+
+@keyframes pulse-violet {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(124, 58, 237, 0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(124, 58, 237, 0.6); }
+  50%       { text-shadow: 0 0 40px rgba(124, 58, 237, 1), 0 0 80px rgba(124, 58, 237, 0.4); }
+}
+
+@keyframes cardFanIn {
+  from { opacity: 0; transform: translateY(60px) rotate(var(--fan-rotate, 0deg)); }
+  to   { opacity: 1; transform: translateY(0)    rotate(var(--fan-rotate, 0deg)); }
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: var(--card-base-transform) translateY(0px); }
+  50%       { transform: var(--card-base-transform) translateY(-6px); }
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes sortSlide {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes stickySlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes orb-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(40px, -30px) scale(1.08); }
+  66%  { transform: translate(-20px, 20px) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─── Utility classes ─── */
+.font-mono { font-family: var(--font-mono); }
+.font-sans  { font-family: var(--font-sans); }
+.font-manrope { font-family: var(--font-manrope); }
+.font-poppins { font-family: var(--font-poppins); }
+
+.glass-card {
+  background: rgba(30, 30, 36, 0.55);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  border-radius: 16px;
+}
+
+.glass-card-subtle {
+  background: rgba(30, 30, 36, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(237, 238, 240, 0.07);
+  border-radius: 12px;
+}
+
+.violet-glow-btn {
+  background: linear-gradient(135deg, #7C3AED, #6D28D9);
+  box-shadow: 0 0 24px rgba(124, 58, 237, 0.45), 0 4px 16px rgba(0,0,0,0.4);
+  transition: box-shadow 0.25s ease, transform 0.15s ease;
+}
+.violet-glow-btn:hover {
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.7), 0 8px 24px rgba(0,0,0,0.5);
+  transform: translateY(-1px);
+}
+.violet-glow-btn:active { transform: scale(0.98); }
+
+.text-gradient-violet {
+  background: linear-gradient(135deg, #A78BFA, #7C3AED);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Finance card */
+.fin-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.fin-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* ─── Scroll reveal ─── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.7s ease;
+  filter: blur(4px);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.45s; }
+.reveal-delay-5 { transition-delay: 0.6s; }
+
+.blur-reveal {
+  opacity: 0;
+  filter: blur(24px);
+  transform: scale(1.04);
+  transition: opacity 1s ease, filter 1s ease, transform 1s ease;
+}
+.blur-reveal.visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+/* ─── Orb background ─── */
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+/* ─── Toggle switch ─── */
+.toggle-track {
+  width: 36px; height: 20px;
+  border-radius: 10px;
+  background: rgba(237,238,240,0.12);
+  position: relative;
+  transition: background 0.25s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-track.on { background: #7C3AED; }
+.toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #EDEEF0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toggle-track.on .toggle-thumb { transform: translateX(16px); }
+
+/* Finance toggle */
+.fin-toggle {
+  width: 44px; height: 24px;
+  border-radius: 12px;
+  background: #E2E8F0;
+  position: relative;
+  transition: background 0.25s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fin-toggle.on { background: #16A34A; }
+.fin-toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fin-toggle.on .fin-toggle-thumb { transform: translateX(20px); }
+
+/* ─── Ring SVG ─── */
+.ring-progress {
+  stroke-dasharray: 502;
+  stroke-dashoffset: 188;
+  stroke-linecap: round;
+  transform-origin: center;
+  transform: rotate(-90deg);
+}
+
+/* Finance progress bar */
+.fin-progress {
+  height: 8px;
+  border-radius: 4px;
+  background: #E2E8F0;
+  overflow: hidden;
+}
+.fin-progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Animate slide up for modals */
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
