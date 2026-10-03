@@ -398,7 +398,7 @@ export default function DashboardPage() {
     .reduce((s, t) => s + Math.abs(t.amount), 0);
 
   // Patrimonio
-  const totalAssets = totalBalance + data.investments.reduce((s, i) => s + (i.currentValue || 0), 0);
+  const totalAssets = totalBalance + data.investments.reduce((s, i) => s + i.shares * i.price, 0);
   const totalDebts = data.debts.reduce((s, d) => s + d.balance, 0);
   const netWorth = totalAssets - totalDebts;
 

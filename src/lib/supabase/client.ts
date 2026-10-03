@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createBrowserClient, type CookieOptions } from '@supabase/ssr';
 
 const PFX = 'sb_';
 
@@ -32,7 +32,7 @@ const fromStorage = () => {
   } catch { return []; }
 };
 
-const setCookie = (name: string, value: string, options?: any) => {
+const setCookie = (name: string, value: string, options?: CookieOptions) => {
   let s = `${name}=${encodeURIComponent(value)}; Path=${options?.path || '/'}; SameSite=None; Secure; Partitioned`;
   if (options?.maxAge) s += `; Max-Age=${options.maxAge}`;
   if (options?.domain) s += `; Domain=${options.domain}`;
@@ -83,7 +83,7 @@ export function createClient() {
     {
       cookies: {
         getAll: () => canUseCookies() ? fromCookies() : fromStorage(),
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           if (typeof document === 'undefined') return;
           if (canUseCookies()) {
             cookiesToSet.forEach(({ name, value, options }) =>

@@ -387,7 +387,7 @@ export default function CuentasPage() {
                               className="text-lg font-black tracking-tight"
                               style={{ color: bank.color }}
                             >
-                              {bank.initial}
+                              {bank.name.charAt(0)}
                             </span>
                           )}
                         </div>
