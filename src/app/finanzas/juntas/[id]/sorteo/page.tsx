@@ -4,16 +4,45 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Shield } from 'lucide-react';
 import { getErrorMessage } from '@/lib/dataError';
 import {
-  juntasService, juntaMembersService, juntaCyclesService, juntaTurnsService, juntaEventsService,
-  type Junta, type JuntaMember, type JuntaCycle, type JuntaTurn
+  juntasService,
+  juntaMembersService,
+  juntaCyclesService,
+  juntaTurnsService,
+  juntaEventsService,
+  type Junta,
+  type JuntaMember,
+  type JuntaCycle,
+  type JuntaTurn,
 } from '@/lib/supabaseJuntas';
 
-const MONTHS_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const MONTHS_FULL = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
 
 const WHEEL_COLORS = [
-  '#FFD43B', '#4ADE80', '#C084FC', '#F87171', '#60A5FA',
-  '#FB923C', '#34D399', '#A78BFA', '#F472B6', '#38BDF8',
-  '#FBBF24', '#86EFAC',
+  '#FFD43B',
+  '#4ADE80',
+  '#C084FC',
+  '#F87171',
+  '#60A5FA',
+  '#FB923C',
+  '#34D399',
+  '#A78BFA',
+  '#F472B6',
+  '#38BDF8',
+  '#FBBF24',
+  '#86EFAC',
 ];
 
 function fmtAmount(n: number) {
@@ -28,7 +57,9 @@ function pickWinnerFromSeed(seed: string, count: number): number {
   return hash % count;
 }
 
-function pad(n: number) { return String(n).padStart(2, '0'); }
+function pad(n: number) {
+  return String(n).padStart(2, '0');
+}
 
 // ── Confetti ─────────────────────────────────────────────────────────────────
 
@@ -37,7 +68,7 @@ function Confetti({ active }: { active: boolean }) {
   if (!active) return null;
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {pieces.map(i => (
+      {pieces.map((i) => (
         <div
           key={i}
           className="absolute w-3 h-3 rounded-sm animate-bounce"
@@ -162,8 +193,11 @@ function LiveCountdown({ targetDateStr, onZero }: { targetDateStr: string; onZer
     }
     calc();
     const id = setInterval(calc, 1000);
-    const pulseId = setInterval(() => setPulse(p => !p), 500);
-    return () => { clearInterval(id); clearInterval(pulseId); };
+    const pulseId = setInterval(() => setPulse((p) => !p), 500);
+    return () => {
+      clearInterval(id);
+      clearInterval(pulseId);
+    };
   }, [targetDateStr, onZero]);
 
   if (timeLeft.total === -1) return null;
@@ -172,47 +206,74 @@ function LiveCountdown({ targetDateStr, onZero }: { targetDateStr: string; onZer
 
   return (
     <div className="w-full text-center mb-6">
-      <p className="text-gray-400 text-xs font-black uppercase tracking-widest mb-4">El sorteo de turnos empieza en</p>
+      <p className="text-gray-400 text-xs font-black uppercase tracking-widest mb-4">
+        El sorteo de turnos empieza en
+      </p>
       <div className="flex items-center justify-center gap-3">
         {/* Hours */}
         <div className="flex flex-col items-center">
-          <div className={`w-20 h-20 rounded-2xl border-[3px] border-white/30 flex items-center justify-center transition-all ${
-            isUrgent ? 'bg-red-500 border-red-400 animate-pulse' : 'bg-white/10'
-          }`}>
+          <div
+            className={`w-20 h-20 rounded-2xl border-[3px] border-white/30 flex items-center justify-center transition-all ${
+              isUrgent ? 'bg-red-500 border-red-400 animate-pulse' : 'bg-white/10'
+            }`}
+          >
             <span className="text-4xl font-black text-white tabular-nums">{pad(timeLeft.h)}</span>
           </div>
-          <span className="text-[10px] font-black text-gray-500 mt-1 uppercase tracking-wider">Horas</span>
+          <span className="text-[10px] font-black text-gray-500 mt-1 uppercase tracking-wider">
+            Horas
+          </span>
         </div>
 
-        <span className={`text-4xl font-black mb-5 transition-opacity ${pulse ? 'opacity-100' : 'opacity-20'} ${isUrgent ? 'text-red-400' : 'text-white'}`}>:</span>
+        <span
+          className={`text-4xl font-black mb-5 transition-opacity ${pulse ? 'opacity-100' : 'opacity-20'} ${isUrgent ? 'text-red-400' : 'text-white'}`}
+        >
+          :
+        </span>
 
         {/* Minutes */}
         <div className="flex flex-col items-center">
-          <div className={`w-20 h-20 rounded-2xl border-[3px] border-white/30 flex items-center justify-center transition-all ${
-            isUrgent ? 'bg-red-500 border-red-400 animate-pulse' : 'bg-white/10'
-          }`}>
+          <div
+            className={`w-20 h-20 rounded-2xl border-[3px] border-white/30 flex items-center justify-center transition-all ${
+              isUrgent ? 'bg-red-500 border-red-400 animate-pulse' : 'bg-white/10'
+            }`}
+          >
             <span className="text-4xl font-black text-white tabular-nums">{pad(timeLeft.m)}</span>
           </div>
-          <span className="text-[10px] font-black text-gray-500 mt-1 uppercase tracking-wider">Min</span>
+          <span className="text-[10px] font-black text-gray-500 mt-1 uppercase tracking-wider">
+            Min
+          </span>
         </div>
 
-        <span className={`text-4xl font-black mb-5 transition-opacity ${pulse ? 'opacity-100' : 'opacity-20'} ${isUrgent ? 'text-red-400' : 'text-white'}`}>:</span>
+        <span
+          className={`text-4xl font-black mb-5 transition-opacity ${pulse ? 'opacity-100' : 'opacity-20'} ${isUrgent ? 'text-red-400' : 'text-white'}`}
+        >
+          :
+        </span>
 
         {/* Seconds */}
         <div className="flex flex-col items-center">
-          <div className={`w-20 h-20 rounded-2xl border-[3px] flex items-center justify-center transition-all ${
-            isUrgent
-              ? 'bg-red-600 border-red-400 animate-pulse' :'bg-[#FFD43B] border-[#FFD43B]'
-          }`}>
-            <span className={`text-4xl font-black tabular-nums ${isUrgent ? 'text-white' : 'text-black'}`}>{pad(timeLeft.s)}</span>
+          <div
+            className={`w-20 h-20 rounded-2xl border-[3px] flex items-center justify-center transition-all ${
+              isUrgent ? 'bg-red-600 border-red-400 animate-pulse' : 'bg-[#FFD43B] border-[#FFD43B]'
+            }`}
+          >
+            <span
+              className={`text-4xl font-black tabular-nums ${isUrgent ? 'text-white' : 'text-black'}`}
+            >
+              {pad(timeLeft.s)}
+            </span>
           </div>
-          <span className="text-[10px] font-black text-gray-500 mt-1 uppercase tracking-wider">Seg</span>
+          <span className="text-[10px] font-black text-gray-500 mt-1 uppercase tracking-wider">
+            Seg
+          </span>
         </div>
       </div>
 
       <div className="mt-4 flex items-center justify-center gap-2">
         <div className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse" />
-        <p className="text-xs font-bold text-gray-400">El sistema girará la ruleta automáticamente</p>
+        <p className="text-xs font-bold text-gray-400">
+          El sistema girará la ruleta automáticamente
+        </p>
       </div>
     </div>
   );
@@ -255,13 +316,13 @@ export default function SorteoPage() {
         ]);
         setJunta(j);
         setMembers(m);
-        const active = c.find(cy => cy.status === 'activo') || c[c.length - 1] || null;
+        const active = c.find((cy) => cy.status === 'activo') || c[c.length - 1] || null;
         setCurrentCycle(active);
         setExistingTurns(t);
 
         // If draw already performed, show result immediately
         if (active?.drawWinnerMemberId) {
-          const idx = m.findIndex(mem => mem.id === active.drawWinnerMemberId);
+          const idx = m.findIndex((mem) => mem.id === active.drawWinnerMemberId);
           if (idx >= 0) {
             setWinnerIndex(idx);
             setShowResult(true);
@@ -272,7 +333,9 @@ export default function SorteoPage() {
           }
         } else if (j?.firstDrawDate) {
           // Show countdown if draw date is in the future
-          let target = j.firstDrawDate.includes('T') ? new Date(j.firstDrawDate) : new Date(j.firstDrawDate + 'T00:00:00');
+          let target = j.firstDrawDate.includes('T')
+            ? new Date(j.firstDrawDate)
+            : new Date(j.firstDrawDate + 'T00:00:00');
           if (target.getTime() > Date.now()) {
             setShowCountdown(true);
           }
@@ -287,102 +350,109 @@ export default function SorteoPage() {
     load();
   }, [juntaId]);
 
-  const handleSpin = useCallback((membersArr: JuntaMember[], cycle: JuntaCycle) => {
-    if (spinning || showResult || membersArr.length === 0) return;
-    setSpinning(true);
-    setShowCountdown(false);
-    setError('');
+  const handleSpin = useCallback(
+    (membersArr: JuntaMember[], cycle: JuntaCycle) => {
+      if (spinning || showResult || membersArr.length === 0) return;
+      setSpinning(true);
+      setShowCountdown(false);
+      setError('');
 
-    const seed = `${juntaId}-${cycle.id}-${cycle.cycleNumber}`;
-    const winIdx = pickWinnerFromSeed(seed, membersArr.length);
-
-    const n = membersArr.length;
-    const sliceAngle = (2 * Math.PI) / n;
-    const targetAngle = -(winIdx * sliceAngle + sliceAngle / 2) + Math.PI * 1.5;
-    const totalRotation = Math.PI * 2 * 8 + targetAngle;
-
-    const duration = 4500;
-    const startTime = performance.now();
-    const startRotation = 0;
-
-    function easeOut(t: number) {
-      return 1 - Math.pow(1 - t, 4);
-    }
-
-    function animate(now: number) {
-      const elapsed = now - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      const eased = easeOut(t);
-      const current = startRotation + totalRotation * eased;
-      setRotation(current);
-
-      if (t < 1) {
-        animFrameRef.current = requestAnimationFrame(animate);
-      } else {
-        setRotation(startRotation + totalRotation);
-        setWinnerIndex(winIdx);
-        setSpinning(false);
-        setTimeout(() => {
-          setShowResult(true);
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3500);
-          // Auto-save after spin
-          autoSaveResult(winIdx, membersArr, cycle);
-        }, 600);
-      }
-    }
-
-    animFrameRef.current = requestAnimationFrame(animate);
-  }, [spinning, showResult, juntaId]);
-
-  const autoSaveResult = useCallback(async (winIdx: number, membersArr: JuntaMember[], cycle: JuntaCycle) => {
-    if (!junta) return;
-    setSaving(true);
-    try {
-      const winner = membersArr[winIdx];
       const seed = `${juntaId}-${cycle.id}-${cycle.cycleNumber}`;
+      const winIdx = pickWinnerFromSeed(seed, membersArr.length);
 
-      await juntaCyclesService.performDraw(cycle.id, winner.id, seed);
+      const n = membersArr.length;
+      const sliceAngle = (2 * Math.PI) / n;
+      const targetAngle = -(winIdx * sliceAngle + sliceAngle / 2) + Math.PI * 1.5;
+      const totalRotation = Math.PI * 2 * 8 + targetAngle;
 
-      if (existingTurns.length === 0) {
-        const drawDateStr = junta.firstDrawDate.includes('T') ? junta.firstDrawDate : junta.firstDrawDate + 'T00:00:00';
-        const drawDate = new Date(drawDateStr);
-        const turns: Omit<JuntaTurn, 'id' | 'createdAt'>[] = membersArr.map((m, i) => {
-          const d = new Date(drawDate);
-          d.setMonth(d.getMonth() + i);
-          return {
-            juntaId,
-            memberId: m.id,
-            turnOrder: i + 1,
-            turnMonth: MONTHS_FULL[d.getMonth()],
-            turnYear: d.getFullYear(),
-            amountToReceive: junta.contributionAmount * junta.maxParticipants,
-            status: i === 0 ? 'proximo' : 'pendiente',
-          };
-        });
-        const reordered = [
-          turns[winIdx],
-          ...turns.filter((_, i) => i !== winIdx),
-        ].map((t, i) => ({ ...t, turnOrder: i + 1 }));
-        await juntaTurnsService.createMany(reordered);
+      const duration = 4500;
+      const startTime = performance.now();
+      const startRotation = 0;
+
+      function easeOut(t: number) {
+        return 1 - Math.pow(1 - t, 4);
       }
 
-      await juntaEventsService.create({
-        juntaId,
-        actorMemberId: null,
-        eventType: 'sorteo_realizado',
-        description: `Sorteo automático realizado. Ganador: ${winner.displayName}`,
-        metadata: { winnerId: winner.id, cycleId: cycle.id, seed, auto: true },
-      });
+      function animate(now: number) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const eased = easeOut(t);
+        const current = startRotation + totalRotation * eased;
+        setRotation(current);
 
-      setSaved(true);
-    } catch (err) {
-      console.error(err);
-      setError(`Error al guardar el resultado. ${getErrorMessage(err)}`);
-    } finally {
-      setSaving(false);
-    }
-  }, [junta, juntaId, existingTurns]);
+        if (t < 1) {
+          animFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          setRotation(startRotation + totalRotation);
+          setWinnerIndex(winIdx);
+          setSpinning(false);
+          setTimeout(() => {
+            setShowResult(true);
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 3500);
+            // Auto-save after spin
+            autoSaveResult(winIdx, membersArr, cycle);
+          }, 600);
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(animate);
+    },
+    [spinning, showResult, juntaId]
+  );
+
+  const autoSaveResult = useCallback(
+    async (winIdx: number, membersArr: JuntaMember[], cycle: JuntaCycle) => {
+      if (!junta) return;
+      setSaving(true);
+      try {
+        const winner = membersArr[winIdx];
+        const seed = `${juntaId}-${cycle.id}-${cycle.cycleNumber}`;
+
+        await juntaCyclesService.performDraw(cycle.id, winner.id, seed);
+
+        if (existingTurns.length === 0) {
+          const drawDateStr = junta.firstDrawDate.includes('T')
+            ? junta.firstDrawDate
+            : junta.firstDrawDate + 'T00:00:00';
+          const drawDate = new Date(drawDateStr);
+          const turns: Omit<JuntaTurn, 'id' | 'createdAt'>[] = membersArr.map((m, i) => {
+            const d = new Date(drawDate);
+            d.setMonth(d.getMonth() + i);
+            return {
+              juntaId,
+              memberId: m.id,
+              turnOrder: i + 1,
+              turnMonth: MONTHS_FULL[d.getMonth()],
+              turnYear: d.getFullYear(),
+              amountToReceive: junta.contributionAmount * junta.maxParticipants,
+              status: i === 0 ? 'proximo' : 'pendiente',
+            };
+          });
+          const reordered = [turns[winIdx], ...turns.filter((_, i) => i !== winIdx)].map(
+            (t, i) => ({ ...t, turnOrder: i + 1 })
+          );
+          await juntaTurnsService.createMany(reordered);
+        }
+
+        await juntaEventsService.create({
+          juntaId,
+          actorMemberId: null,
+          eventType: 'sorteo_realizado',
+          description: `Sorteo automático realizado. Ganador: ${winner.displayName}`,
+          metadata: { winnerId: winner.id, cycleId: cycle.id, seed, auto: true },
+        });
+
+        setSaved(true);
+      } catch (err) {
+        console.error(err);
+        setError(`Error al guardar el resultado. ${getErrorMessage(err)}`);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [junta, juntaId, existingTurns]
+  );
 
   const handleCountdownZero = useCallback(() => {
     if (autoSpinTriggered.current || !currentCycle || members.length === 0) return;
@@ -430,10 +500,7 @@ export default function SorteoPage() {
 
         {/* Countdown phase */}
         {showCountdown && !showResult && junta?.firstDrawDate && (
-          <LiveCountdown
-            targetDateStr={junta.firstDrawDate}
-            onZero={handleCountdownZero}
-          />
+          <LiveCountdown targetDateStr={junta.firstDrawDate} onZero={handleCountdownZero} />
         )}
 
         {/* Wheel */}
@@ -477,7 +544,9 @@ export default function SorteoPage() {
               {/* 100% random badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#4ADE80]/10 border border-[#4ADE80]/30 rounded-full">
                 <Shield className="w-4 h-4 text-[#4ADE80]" />
-                <p className="text-xs font-black text-[#4ADE80]">El sistema realizó este sorteo 100% al azar</p>
+                <p className="text-xs font-black text-[#4ADE80]">
+                  El sistema realizó este sorteo 100% al azar
+                </p>
               </div>
             </div>
 
@@ -490,12 +559,17 @@ export default function SorteoPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-black text-[#FFD43B] text-xs font-black rounded-full">1</span>
+                      <span className="px-2 py-0.5 bg-black text-[#FFD43B] text-xs font-black rounded-full">
+                        1
+                      </span>
                       <p className="text-xl font-black text-black">{winner.displayName}</p>
                     </div>
-                    <p className="text-sm font-bold text-black/70">{currentCycle?.cycleMonth} {currentCycle?.cycleYear}</p>
+                    <p className="text-sm font-bold text-black/70">
+                      {currentCycle?.cycleMonth} {currentCycle?.cycleYear}
+                    </p>
                     <p className="text-sm font-black text-black">
-                      Recibe {junta ? fmtAmount(junta.contributionAmount * junta.maxParticipants) : '—'}
+                      Recibe{' '}
+                      {junta ? fmtAmount(junta.contributionAmount * junta.maxParticipants) : '—'}
                     </p>
                   </div>
                 </div>
@@ -507,7 +581,9 @@ export default function SorteoPage() {
               {members.map((m, i) => {
                 const order = i === winnerIndex ? 1 : i < (winnerIndex ?? 0) ? i + 2 : i + 1;
                 const drawDateStr = junta?.firstDrawDate
-                  ? (junta.firstDrawDate.includes('T') ? junta.firstDrawDate : junta.firstDrawDate + 'T00:00:00')
+                  ? junta.firstDrawDate.includes('T')
+                    ? junta.firstDrawDate
+                    : junta.firstDrawDate + 'T00:00:00'
                   : new Date().toISOString();
                 const drawDate = new Date(drawDateStr);
                 const d = new Date(drawDate);
@@ -515,12 +591,21 @@ export default function SorteoPage() {
                 const monthLabel = `${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`;
 
                 return (
-                  <div key={m.id} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 ${
-                    i === winnerIndex ? 'border-[#FFD43B] bg-[#FFD43B]/10' : 'border-white/10 bg-white/5'
-                  }`}>
-                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-black shrink-0 ${
-                      i === winnerIndex ? 'bg-[#FFD43B] border-[#FFD43B] text-black' : 'bg-white/10 border-white/20 text-white'
-                    }`}>
+                  <div
+                    key={m.id}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 ${
+                      i === winnerIndex
+                        ? 'border-[#FFD43B] bg-[#FFD43B]/10'
+                        : 'border-white/10 bg-white/5'
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-black shrink-0 ${
+                        i === winnerIndex
+                          ? 'bg-[#FFD43B] border-[#FFD43B] text-black'
+                          : 'bg-white/10 border-white/20 text-white'
+                      }`}
+                    >
                       {order}
                     </div>
                     <div className="w-8 h-8 rounded-full bg-[#FFD43B] border-2 border-black flex items-center justify-center text-xs font-black text-black shrink-0">
@@ -543,7 +628,9 @@ export default function SorteoPage() {
 
             {saved && (
               <div className="w-full mb-3 px-4 py-3 bg-green-900/50 border-2 border-green-500 rounded-2xl text-center">
-                <p className="text-sm font-black text-green-400">✓ Turnos guardados correctamente</p>
+                <p className="text-sm font-black text-green-400">
+                  ✓ Turnos guardados correctamente
+                </p>
               </div>
             )}
 

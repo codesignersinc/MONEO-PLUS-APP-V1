@@ -3,26 +3,84 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getErrorMessage } from '@/lib/dataError';
-import { ArrowLeft, MoreHorizontal, Calendar, CheckCircle, AlertCircle, Share2, Copy, MessageCircle, ChevronRight, Plus, Trophy, Clock } from 'lucide-react';
 import {
-  juntasService, juntaMembersService, juntaCyclesService, juntaTurnsService,
-  juntaContributionsService, juntaInvitesService, juntaEventsService,
-  type Junta, type JuntaMember, type JuntaCycle, type JuntaTurn,
-  type JuntaContribution, type JuntaEvent
+  ArrowLeft,
+  MoreHorizontal,
+  Calendar,
+  CheckCircle,
+  AlertCircle,
+  Share2,
+  Copy,
+  MessageCircle,
+  ChevronRight,
+  Plus,
+  Trophy,
+  Clock,
+} from 'lucide-react';
+import {
+  juntasService,
+  juntaMembersService,
+  juntaCyclesService,
+  juntaTurnsService,
+  juntaContributionsService,
+  juntaInvitesService,
+  juntaEventsService,
+  type Junta,
+  type JuntaMember,
+  type JuntaCycle,
+  type JuntaTurn,
+  type JuntaContribution,
+  type JuntaEvent,
 } from '@/lib/supabaseJuntas';
 
-const MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-const MONTHS_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const MONTHS_ES = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+];
+const MONTHS_FULL = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
 
 function fmtAmount(n: number) {
   return 'S/ ' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  activa:     { label: 'Activa',     color: 'text-green-700',  bg: 'bg-green-100',  dot: 'bg-green-500'  },
-  en_pausa:   { label: 'En pausa',   color: 'text-orange-700', bg: 'bg-orange-100', dot: 'bg-orange-500' },
-  finalizada: { label: 'Finalizada', color: 'text-gray-600',   bg: 'bg-gray-100',   dot: 'bg-gray-400'   },
-  pendiente:  { label: 'Pendiente',  color: 'text-blue-700',   bg: 'bg-blue-100',   dot: 'bg-blue-500'   },
+  activa: { label: 'Activa', color: 'text-green-700', bg: 'bg-green-100', dot: 'bg-green-500' },
+  en_pausa: {
+    label: 'En pausa',
+    color: 'text-orange-700',
+    bg: 'bg-orange-100',
+    dot: 'bg-orange-500',
+  },
+  finalizada: {
+    label: 'Finalizada',
+    color: 'text-gray-600',
+    bg: 'bg-gray-100',
+    dot: 'bg-gray-400',
+  },
+  pendiente: { label: 'Pendiente', color: 'text-blue-700', bg: 'bg-blue-100', dot: 'bg-blue-500' },
 };
 
 type TabKey = 'resumen' | 'aportes' | 'participantes' | 'turnos' | 'actividad';
@@ -63,7 +121,9 @@ function useCountdown(targetDateStr: string) {
   return timeLeft;
 }
 
-function pad(n: number) { return String(n).padStart(2, '0'); }
+function pad(n: number) {
+  return String(n).padStart(2, '0');
+}
 
 function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }) {
   const router = useRouter();
@@ -72,7 +132,7 @@ function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }
   const [triggered, setTriggered] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => setPulse(p => !p), 1000);
+    const id = setInterval(() => setPulse((p) => !p), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -117,7 +177,9 @@ function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }
     >
       <div className="flex items-center gap-2 mb-3">
         <Clock className={`w-4 h-4 ${isUrgent ? 'text-orange-600' : 'text-gray-400'}`} />
-        <p className={`text-xs font-black uppercase tracking-wide ${isUrgent ? 'text-orange-600' : 'text-gray-400'}`}>
+        <p
+          className={`text-xs font-black uppercase tracking-wide ${isUrgent ? 'text-orange-600' : 'text-gray-400'}`}
+        >
           El sorteo de turnos empieza en
         </p>
       </div>
@@ -125,38 +187,69 @@ function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }
       {/* Big animated countdown */}
       <div className="flex items-center justify-center gap-2 mb-3">
         {/* Hours */}
-        <div className={`flex flex-col items-center px-3 py-2 rounded-2xl border-[3px] border-white/20 min-w-[64px] transition-all ${
-          isUrgent ? 'bg-orange-500 border-orange-300' : 'bg-white/10'
-        }`}>
-          <span className={`text-3xl font-black tabular-nums leading-none ${isUrgent ? 'text-white' : 'text-white'} ${pulse ? 'scale-105' : 'scale-100'} transition-transform`}>
+        <div
+          className={`flex flex-col items-center px-3 py-2 rounded-2xl border-[3px] border-white/20 min-w-[64px] transition-all ${
+            isUrgent ? 'bg-orange-500 border-orange-300' : 'bg-white/10'
+          }`}
+        >
+          <span
+            className={`text-3xl font-black tabular-nums leading-none ${isUrgent ? 'text-white' : 'text-white'} ${pulse ? 'scale-105' : 'scale-100'} transition-transform`}
+          >
             {pad(h)}
           </span>
-          <span className={`text-[10px] font-bold mt-0.5 ${isUrgent ? 'text-white/80' : 'text-gray-400'}`}>HRS</span>
+          <span
+            className={`text-[10px] font-bold mt-0.5 ${isUrgent ? 'text-white/80' : 'text-gray-400'}`}
+          >
+            HRS
+          </span>
         </div>
 
-        <span className={`text-3xl font-black ${pulse ? 'opacity-100' : 'opacity-30'} transition-opacity ${isUrgent ? 'text-orange-600' : 'text-white'}`}>:</span>
+        <span
+          className={`text-3xl font-black ${pulse ? 'opacity-100' : 'opacity-30'} transition-opacity ${isUrgent ? 'text-orange-600' : 'text-white'}`}
+        >
+          :
+        </span>
 
         {/* Minutes */}
-        <div className={`flex flex-col items-center px-3 py-2 rounded-2xl border-[3px] border-white/20 min-w-[64px] transition-all ${
-          isUrgent ? 'bg-orange-500 border-orange-300' : 'bg-white/10'
-        }`}>
-          <span className={`text-3xl font-black tabular-nums leading-none text-white ${pulse ? 'scale-105' : 'scale-100'} transition-transform`}>
+        <div
+          className={`flex flex-col items-center px-3 py-2 rounded-2xl border-[3px] border-white/20 min-w-[64px] transition-all ${
+            isUrgent ? 'bg-orange-500 border-orange-300' : 'bg-white/10'
+          }`}
+        >
+          <span
+            className={`text-3xl font-black tabular-nums leading-none text-white ${pulse ? 'scale-105' : 'scale-100'} transition-transform`}
+          >
             {pad(m)}
           </span>
-          <span className={`text-[10px] font-bold mt-0.5 ${isUrgent ? 'text-white/80' : 'text-gray-400'}`}>MIN</span>
+          <span
+            className={`text-[10px] font-bold mt-0.5 ${isUrgent ? 'text-white/80' : 'text-gray-400'}`}
+          >
+            MIN
+          </span>
         </div>
 
-        <span className={`text-3xl font-black ${pulse ? 'opacity-100' : 'opacity-30'} transition-opacity ${isUrgent ? 'text-orange-600' : 'text-white'}`}>:</span>
+        <span
+          className={`text-3xl font-black ${pulse ? 'opacity-100' : 'opacity-30'} transition-opacity ${isUrgent ? 'text-orange-600' : 'text-white'}`}
+        >
+          :
+        </span>
 
         {/* Seconds */}
-        <div className={`flex flex-col items-center px-3 py-2 rounded-2xl border-[3px] min-w-[64px] transition-all ${
-          isUrgent
-            ? 'bg-red-500 border-red-300 animate-pulse' :'bg-[#FFD43B] border-[#FFD43B]'
-        }`}>
-          <span className={`text-3xl font-black tabular-nums leading-none ${isUrgent ? 'text-white' : 'text-black'}`}>
+        <div
+          className={`flex flex-col items-center px-3 py-2 rounded-2xl border-[3px] min-w-[64px] transition-all ${
+            isUrgent ? 'bg-red-500 border-red-300 animate-pulse' : 'bg-[#FFD43B] border-[#FFD43B]'
+          }`}
+        >
+          <span
+            className={`text-3xl font-black tabular-nums leading-none ${isUrgent ? 'text-white' : 'text-black'}`}
+          >
             {pad(s)}
           </span>
-          <span className={`text-[10px] font-bold mt-0.5 ${isUrgent ? 'text-white/80' : 'text-black/60'}`}>SEG</span>
+          <span
+            className={`text-[10px] font-bold mt-0.5 ${isUrgent ? 'text-white/80' : 'text-black/60'}`}
+          >
+            SEG
+          </span>
         </div>
       </div>
 
@@ -172,13 +265,22 @@ function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }
 
 // ── Resumen Tab ──────────────────────────────────────────────────────────────
 
-function ResumenTab({ junta, members, cycle, turns, myMember }: {
-  junta: Junta; members: JuntaMember[]; cycle: JuntaCycle | null;
-  turns: JuntaTurn[]; myMember: JuntaMember | null;
+function ResumenTab({
+  junta,
+  members,
+  cycle,
+  turns,
+  myMember,
+}: {
+  junta: Junta;
+  members: JuntaMember[];
+  cycle: JuntaCycle | null;
+  turns: JuntaTurn[];
+  myMember: JuntaMember | null;
 }) {
   const router = useRouter();
   const progress = cycle ? cycle.totalCollected / Math.max(cycle.totalExpected, 1) : 0;
-  const myTurn = turns.find(t => t.memberId === myMember?.id);
+  const myTurn = turns.find((t) => t.memberId === myMember?.id);
   const st = STATUS_CONFIG[junta.status] || STATUS_CONFIG.pendiente;
 
   const handleCountdownZero = useCallback(() => {
@@ -193,9 +295,13 @@ function ResumenTab({ junta, members, cycle, turns, myMember }: {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-black text-black">{junta.name}</h2>
-            <p className="text-sm text-gray-500 font-medium">{members.length} participantes · S/ {junta.contributionAmount} mensual</p>
+            <p className="text-sm text-gray-500 font-medium">
+              {members.length} participantes · S/ {junta.contributionAmount} mensual
+            </p>
           </div>
-          <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border-2 border-current ${st.color} ${st.bg}`}>
+          <span
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border-2 border-current ${st.color} ${st.bg}`}
+          >
             <span className={`w-2 h-2 rounded-full ${st.dot}`} />
             {st.label}
           </span>
@@ -205,7 +311,9 @@ function ResumenTab({ junta, members, cycle, turns, myMember }: {
         <div className="bg-[#F0F7FF] border-2 border-[#93C5FD] rounded-2xl p-4 mb-3">
           <div className="flex items-center gap-2 mb-1">
             <Calendar className="w-4 h-4 text-blue-500" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wide">Próximo aporte</span>
+            <span className="text-xs font-black text-blue-600 uppercase tracking-wide">
+              Próximo aporte
+            </span>
           </div>
           <p className="text-2xl font-black text-black">{fmtAmount(junta.contributionAmount)}</p>
           <p className="text-sm font-bold text-gray-500">{junta.firstDrawDate}</p>
@@ -224,13 +332,21 @@ function ResumenTab({ junta, members, cycle, turns, myMember }: {
         <div className="bg-[#F5F0FF] border-[3px] border-[#7C3AED] rounded-3xl p-5 shadow-[3px_3px_0px_rgba(124,58,237,0.3)]">
           <div className="flex items-center gap-2 mb-2">
             <Trophy className="w-5 h-5 text-[#7C3AED]" />
-            <span className="text-xs font-black text-[#7C3AED] uppercase tracking-wide">Tu turno</span>
+            <span className="text-xs font-black text-[#7C3AED] uppercase tracking-wide">
+              Tu turno
+            </span>
           </div>
-          <p className="text-xl font-black text-black">{myTurn.turnMonth} {myTurn.turnYear}</p>
-          <p className="text-sm text-gray-500 font-medium mt-1">Recibirás {fmtAmount(myTurn.amountToReceive)}</p>
+          <p className="text-xl font-black text-black">
+            {myTurn.turnMonth} {myTurn.turnYear}
+          </p>
+          <p className="text-sm text-gray-500 font-medium mt-1">
+            Recibirás {fmtAmount(myTurn.amountToReceive)}
+          </p>
           <div className="mt-2 flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-500" />
-            <span className="text-xs font-bold text-green-600">Vas al día · {members.length} de {junta.maxParticipants} aportes</span>
+            <span className="text-xs font-bold text-green-600">
+              Vas al día · {members.length} de {junta.maxParticipants} aportes
+            </span>
           </div>
         </div>
       )}
@@ -241,7 +357,9 @@ function ResumenTab({ junta, members, cycle, turns, myMember }: {
           <h3 className="font-black text-black mb-3">Progreso de esta ronda</h3>
           <div className="flex items-center justify-between mb-2">
             <span className="text-lg font-black text-black">{fmtAmount(cycle.totalCollected)}</span>
-            <span className="text-sm font-bold text-gray-500">/ {fmtAmount(cycle.totalExpected)}</span>
+            <span className="text-sm font-bold text-gray-500">
+              / {fmtAmount(cycle.totalExpected)}
+            </span>
           </div>
           <div className="h-4 bg-gray-100 border-2 border-black rounded-full overflow-hidden mb-2">
             <div
@@ -250,7 +368,8 @@ function ResumenTab({ junta, members, cycle, turns, myMember }: {
             />
           </div>
           <p className="text-xs font-bold text-gray-500">
-            Falta {junta.maxParticipants - Math.round(progress * junta.maxParticipants)} aporte{junta.maxParticipants - Math.round(progress * junta.maxParticipants) !== 1 ? 's' : ''}
+            Falta {junta.maxParticipants - Math.round(progress * junta.maxParticipants)} aporte
+            {junta.maxParticipants - Math.round(progress * junta.maxParticipants) !== 1 ? 's' : ''}
           </p>
         </div>
       )}
@@ -268,7 +387,9 @@ function ResumenTab({ junta, members, cycle, turns, myMember }: {
           </div>
           <div className="flex-1">
             <p className="font-black text-white text-base">Sorteo mensual</p>
-            <p className="text-xs text-gray-400 font-medium">Gira la ruleta para definir el turno</p>
+            <p className="text-xs text-gray-400 font-medium">
+              Gira la ruleta para definir el turno
+            </p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </Link>
@@ -279,8 +400,16 @@ function ResumenTab({ junta, members, cycle, turns, myMember }: {
 
 // ── Aportes Tab ──────────────────────────────────────────────────────────────
 
-function AportesTab({ junta, members, cycle, contributions }: {
-  junta: Junta; members: JuntaMember[]; cycle: JuntaCycle | null; contributions: JuntaContribution[];
+function AportesTab({
+  junta,
+  members,
+  cycle,
+  contributions,
+}: {
+  junta: Junta;
+  members: JuntaMember[];
+  cycle: JuntaCycle | null;
+  contributions: JuntaContribution[];
 }) {
   const router = useRouter();
   const progress = cycle ? cycle.totalCollected / Math.max(cycle.totalExpected, 1) : 0;
@@ -289,31 +418,47 @@ function AportesTab({ junta, members, cycle, contributions }: {
     <div className="space-y-4">
       {cycle && (
         <div className="bg-white border-[3px] border-black rounded-3xl p-5 shadow-[3px_3px_0px_rgba(0,0,0,1)]">
-          <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-1">{cycle.cycleMonth.toUpperCase()} {cycle.cycleYear}</p>
+          <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-1">
+            {cycle.cycleMonth.toUpperCase()} {cycle.cycleYear}
+          </p>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-2xl font-black text-black">{fmtAmount(cycle.totalCollected)}</span>
-            <span className="text-sm font-bold text-gray-500">/ {fmtAmount(cycle.totalExpected)}</span>
+            <span className="text-2xl font-black text-black">
+              {fmtAmount(cycle.totalCollected)}
+            </span>
+            <span className="text-sm font-bold text-gray-500">
+              / {fmtAmount(cycle.totalExpected)}
+            </span>
           </div>
           <div className="h-4 bg-gray-100 border-2 border-black rounded-full overflow-hidden mb-2">
-            <div className="h-full bg-[#4ADE80] rounded-full transition-all duration-700" style={{ width: `${Math.min(progress * 100, 100)}%` }} />
+            <div
+              className="h-full bg-[#4ADE80] rounded-full transition-all duration-700"
+              style={{ width: `${Math.min(progress * 100, 100)}%` }}
+            />
           </div>
           <p className="text-xs font-bold text-gray-500">
-            {contributions.filter(c => c.status === 'pagado' || c.status === 'verificado').length} de {members.length} aportes
+            {contributions.filter((c) => c.status === 'pagado' || c.status === 'verificado').length}{' '}
+            de {members.length} aportes
           </p>
         </div>
       )}
 
       <div className="bg-white border-[3px] border-black rounded-3xl overflow-hidden shadow-[3px_3px_0px_rgba(0,0,0,1)]">
         {members.map((m, i) => {
-          const contrib = contributions.find(c => c.memberId === m.id);
+          const contrib = contributions.find((c) => c.memberId === m.id);
           const paid = contrib?.status === 'pagado' || contrib?.status === 'verificado';
           return (
-            <div key={m.id} className={`flex items-center gap-3 px-5 py-4 ${i < members.length - 1 ? 'border-b-2 border-gray-100' : ''}`}>
+            <div
+              key={m.id}
+              className={`flex items-center gap-3 px-5 py-4 ${i < members.length - 1 ? 'border-b-2 border-gray-100' : ''}`}
+            >
               <div className="w-9 h-9 rounded-full bg-[#FFD43B] border-2 border-black flex items-center justify-center text-sm font-black text-black shrink-0">
                 {m.displayName[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-black text-sm truncate">{m.displayName}{m.role === 'admin' ? ' (Tú)' : ''}</p>
+                <p className="font-black text-black text-sm truncate">
+                  {m.displayName}
+                  {m.role === 'admin' ? ' (Tú)' : ''}
+                </p>
                 {contrib?.paidAt && <p className="text-xs text-gray-400 font-medium">Pagado</p>}
               </div>
               {paid ? (
@@ -342,8 +487,16 @@ function AportesTab({ junta, members, cycle, contributions }: {
 
 // ── Participantes Tab ────────────────────────────────────────────────────────
 
-function ParticipantesTab({ junta, members, turns, inviteCode }: {
-  junta: Junta; members: JuntaMember[]; turns: JuntaTurn[]; inviteCode: string;
+function ParticipantesTab({
+  junta,
+  members,
+  turns,
+  inviteCode,
+}: {
+  junta: Junta;
+  members: JuntaMember[];
+  turns: JuntaTurn[];
+  inviteCode: string;
 }) {
   const [copied, setCopied] = useState(false);
   const inviteUrl = `https://moneo.app/junta/${inviteCode}`;
@@ -359,7 +512,7 @@ function ParticipantesTab({ junta, members, turns, inviteCode }: {
     window.open(`https://wa.me/?text=${msg}`, '_blank');
   }
 
-  const memberTurns = (memberId: string) => turns.find(t => t.memberId === memberId);
+  const memberTurns = (memberId: string) => turns.find((t) => t.memberId === memberId);
 
   return (
     <div className="space-y-4">
@@ -367,11 +520,15 @@ function ParticipantesTab({ junta, members, turns, inviteCode }: {
       <div className="bg-[#FFD43B] border-[3px] border-black rounded-3xl p-5 shadow-[3px_3px_0px_rgba(0,0,0,1)]">
         <h3 className="font-black text-black text-base mb-1">Invita a tu junta</h3>
         <p className="text-xs text-black/70 font-medium mb-3">
-          Invita a {Math.max(0, junta.maxParticipants - members.length)} personas más para completar la junta.
+          Invita a {Math.max(0, junta.maxParticipants - members.length)} personas más para completar
+          la junta.
         </p>
         <div className="bg-white border-2 border-black rounded-xl px-3 py-2 mb-3 flex items-center gap-2">
           <span className="text-xs font-bold text-gray-600 flex-1 truncate">{inviteUrl}</span>
-          <button onClick={handleCopy} className="shrink-0 px-2 py-1 bg-black text-white text-xs font-black rounded-lg">
+          <button
+            onClick={handleCopy}
+            className="shrink-0 px-2 py-1 bg-black text-white text-xs font-black rounded-lg"
+          >
             {copied ? '✓' : <Copy className="w-3 h-3" />}
           </button>
         </div>
@@ -399,21 +556,37 @@ function ParticipantesTab({ junta, members, turns, inviteCode }: {
         {members.map((m, i) => {
           const turn = memberTurns(m.id);
           return (
-            <div key={m.id} className={`flex items-center gap-3 px-5 py-4 ${i < members.length - 1 ? 'border-b-2 border-gray-100' : ''}`}>
+            <div
+              key={m.id}
+              className={`flex items-center gap-3 px-5 py-4 ${i < members.length - 1 ? 'border-b-2 border-gray-100' : ''}`}
+            >
               <div className="w-10 h-10 rounded-full bg-[#FFD43B] border-2 border-black flex items-center justify-center text-sm font-black text-black shrink-0">
                 {m.displayName[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-black text-sm">{m.displayName}{m.role === 'admin' ? ' (Tú)' : ''}</p>
-                {turn && <p className="text-xs text-gray-400 font-medium">Turno: {turn.turnMonth} {turn.turnYear}</p>}
+                <p className="font-black text-black text-sm">
+                  {m.displayName}
+                  {m.role === 'admin' ? ' (Tú)' : ''}
+                </p>
+                {turn && (
+                  <p className="text-xs text-gray-400 font-medium">
+                    Turno: {turn.turnMonth} {turn.turnYear}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col items-end gap-1">
                 {m.role === 'admin' && (
-                  <span className="px-2 py-0.5 bg-black text-white text-[10px] font-black rounded-full">Admin</span>
+                  <span className="px-2 py-0.5 bg-black text-white text-[10px] font-black rounded-full">
+                    Admin
+                  </span>
                 )}
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                  m.status === 'unido' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                }`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                    m.status === 'unido'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
                   {m.status === 'unido' ? '✓ Unido' : 'Pendiente'}
                 </span>
               </div>
@@ -427,14 +600,24 @@ function ParticipantesTab({ junta, members, turns, inviteCode }: {
 
 // ── Turnos Tab ───────────────────────────────────────────────────────────────
 
-function TurnosTab({ turns, members, myMember }: { turns: JuntaTurn[]; members: JuntaMember[]; myMember: JuntaMember | null }) {
-  const getMember = (id: string) => members.find(m => m.id === id);
+function TurnosTab({
+  turns,
+  members,
+  myMember,
+}: {
+  turns: JuntaTurn[];
+  members: JuntaMember[];
+  myMember: JuntaMember | null;
+}) {
+  const getMember = (id: string) => members.find((m) => m.id === id);
 
   return (
     <div className="space-y-3">
       {turns.length === 0 && (
         <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-100 border-2 border-black rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">🎰</div>
+          <div className="w-16 h-16 bg-gray-100 border-2 border-black rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">
+            🎰
+          </div>
           <p className="font-black text-black mb-1">Aún no hay turnos</p>
           <p className="text-sm text-gray-500">Realiza el sorteo para definir el orden.</p>
         </div>
@@ -451,9 +634,11 @@ function TurnosTab({ turns, members, myMember }: { turns: JuntaTurn[]; members: 
                 : 'bg-white border-black shadow-[2px_2px_0px_rgba(0,0,0,0.5)]'
             }`}
           >
-            <div className={`w-9 h-9 rounded-full border-[3px] border-black flex items-center justify-center text-sm font-black shrink-0 ${
-              i === 0 ? 'bg-[#FFD43B]' : isMe ? 'bg-[#7C3AED] text-white' : 'bg-gray-100'
-            }`}>
+            <div
+              className={`w-9 h-9 rounded-full border-[3px] border-black flex items-center justify-center text-sm font-black shrink-0 ${
+                i === 0 ? 'bg-[#FFD43B]' : isMe ? 'bg-[#7C3AED] text-white' : 'bg-gray-100'
+              }`}
+            >
               {turn.turnOrder}
             </div>
             <div className="w-9 h-9 rounded-full bg-[#FFD43B] border-2 border-black flex items-center justify-center text-sm font-black text-black shrink-0">
@@ -461,12 +646,18 @@ function TurnosTab({ turns, members, myMember }: { turns: JuntaTurn[]; members: 
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-black text-sm">{member?.displayName || '—'}</p>
-              <p className="text-xs text-gray-500 font-medium">{turn.turnMonth} {turn.turnYear}</p>
+              <p className="text-xs text-gray-500 font-medium">
+                {turn.turnMonth} {turn.turnYear}
+              </p>
             </div>
             <div className="text-right">
               <p className="font-black text-black text-sm">{fmtAmount(turn.amountToReceive)}</p>
               {isMe && <span className="text-[10px] font-black text-[#7C3AED]">Tu turno</span>}
-              {i === 0 && !isMe && <span className="text-[10px] font-black text-[#FFD43B] bg-black px-1.5 py-0.5 rounded-full">Recibe</span>}
+              {i === 0 && !isMe && (
+                <span className="text-[10px] font-black text-[#FFD43B] bg-black px-1.5 py-0.5 rounded-full">
+                  Recibe
+                </span>
+              )}
             </div>
           </div>
         );
@@ -478,7 +669,7 @@ function TurnosTab({ turns, members, myMember }: { turns: JuntaTurn[]; members: 
 // ── Actividad Tab ────────────────────────────────────────────────────────────
 
 function ActividadTab({ events, members }: { events: JuntaEvent[]; members: JuntaMember[] }) {
-  const getMember = (id: string | null) => id ? members.find(m => m.id === id) : null;
+  const getMember = (id: string | null) => (id ? members.find((m) => m.id === id) : null);
 
   const EVENT_ICONS: Record<string, string> = {
     junta_creada: '🎉',
@@ -492,7 +683,9 @@ function ActividadTab({ events, members }: { events: JuntaEvent[]; members: Junt
     <div className="space-y-3">
       {events.length === 0 && (
         <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-100 border-2 border-black rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">📋</div>
+          <div className="w-16 h-16 bg-gray-100 border-2 border-black rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">
+            📋
+          </div>
           <p className="font-black text-black mb-1">Sin actividad aún</p>
           <p className="text-sm text-gray-500">Las acciones de la junta aparecerán aquí.</p>
         </div>
@@ -503,7 +696,10 @@ function ActividadTab({ events, members }: { events: JuntaEvent[]; members: Junt
         const date = new Date(ev.createdAt);
         const dateStr = `${date.getDate()} ${MONTHS_ES[date.getMonth()]}`;
         return (
-          <div key={ev.id} className="flex items-start gap-3 bg-white border-2 border-gray-100 rounded-2xl px-4 py-3">
+          <div
+            key={ev.id}
+            className="flex items-start gap-3 bg-white border-2 border-gray-100 rounded-2xl px-4 py-3"
+          >
             <div className="w-9 h-9 bg-[#FAFAF8] border-2 border-black rounded-xl flex items-center justify-center text-lg shrink-0">
               {icon}
             </div>
@@ -555,7 +751,10 @@ export default function JuntaDetailPage() {
         juntaInvitesService.getByJunta(juntaId),
       ]);
       // getById resolves null only when the junta really doesn't exist / isn't visible.
-      if (!j) { setNotFound(true); return; }
+      if (!j) {
+        setNotFound(true);
+        return;
+      }
       setJunta(j);
       setMembers(m);
       setCycles(c);
@@ -564,7 +763,7 @@ export default function JuntaDetailPage() {
       if (inv.length > 0) setInviteCode(inv[0].inviteCode);
 
       // Load contributions for current cycle
-      const currentCycle = c.find(cy => cy.status === 'activo') || c[c.length - 1];
+      const currentCycle = c.find((cy) => cy.status === 'activo') || c[c.length - 1];
       if (currentCycle) {
         const contribs = await juntaContributionsService.getByCycle(currentCycle.id);
         setContributions(contribs);
@@ -605,10 +804,16 @@ export default function JuntaDetailPage() {
         <div role="alert" className="text-center">
           <p className="text-lg font-black text-black mb-4">{error}</p>
           <div className="flex gap-2 justify-center">
-            <button onClick={loadData} className="px-4 py-2 bg-white border-2 border-black rounded-xl font-bold text-sm">
+            <button
+              onClick={loadData}
+              className="px-4 py-2 bg-white border-2 border-black rounded-xl font-bold text-sm"
+            >
               Reintentar
             </button>
-            <button onClick={() => router.push('/finanzas/juntas')} className="px-4 py-2 bg-[#FFD43B] border-2 border-black rounded-xl font-bold text-sm">
+            <button
+              onClick={() => router.push('/finanzas/juntas')}
+              className="px-4 py-2 bg-[#FFD43B] border-2 border-black rounded-xl font-bold text-sm"
+            >
               Volver a Juntas
             </button>
           </div>
@@ -622,7 +827,10 @@ export default function JuntaDetailPage() {
       <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-lg font-black text-black mb-2">Junta no encontrada</p>
-          <button onClick={() => router.push('/finanzas/juntas')} className="px-4 py-2 bg-[#FFD43B] border-2 border-black rounded-xl font-bold text-sm">
+          <button
+            onClick={() => router.push('/finanzas/juntas')}
+            className="px-4 py-2 bg-[#FFD43B] border-2 border-black rounded-xl font-bold text-sm"
+          >
             Volver a Juntas
           </button>
         </div>
@@ -630,8 +838,9 @@ export default function JuntaDetailPage() {
     );
   }
 
-  const currentCycle = cycles.find(c => c.status === 'activo') || cycles[cycles.length - 1] || null;
-  const myMember = members.find(m => m.role === 'admin') || members[0] || null;
+  const currentCycle =
+    cycles.find((c) => c.status === 'activo') || cycles[cycles.length - 1] || null;
+  const myMember = members.find((m) => m.role === 'admin') || members[0] || null;
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'resumen', label: 'Resumen' },
     { key: 'aportes', label: 'Aportes' },
@@ -670,13 +879,14 @@ export default function JuntaDetailPage() {
       {/* Tabs */}
       <div className="border-b-2 border-black bg-white overflow-x-auto">
         <div className="flex min-w-max px-4">
-          {tabs.map(t => (
+          {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-4 py-3 text-sm font-black border-b-[3px] transition-all whitespace-nowrap ${
                 tab === t.key
-                  ? 'border-black text-black' :'border-transparent text-gray-400 hover:text-black'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-400 hover:text-black'
               }`}
             >
               {t.label}
@@ -688,20 +898,27 @@ export default function JuntaDetailPage() {
       {/* Tab content */}
       <div className="px-4 py-5 max-w-2xl mx-auto">
         {tab === 'resumen' && (
-          <ResumenTab junta={junta} members={members} cycle={currentCycle} turns={turns} myMember={myMember} />
+          <ResumenTab
+            junta={junta}
+            members={members}
+            cycle={currentCycle}
+            turns={turns}
+            myMember={myMember}
+          />
         )}
         {tab === 'aportes' && (
-          <AportesTab junta={junta} members={members} cycle={currentCycle} contributions={contributions} />
+          <AportesTab
+            junta={junta}
+            members={members}
+            cycle={currentCycle}
+            contributions={contributions}
+          />
         )}
         {tab === 'participantes' && (
           <ParticipantesTab junta={junta} members={members} turns={turns} inviteCode={inviteCode} />
         )}
-        {tab === 'turnos' && (
-          <TurnosTab turns={turns} members={members} myMember={myMember} />
-        )}
-        {tab === 'actividad' && (
-          <ActividadTab events={events} members={members} />
-        )}
+        {tab === 'turnos' && <TurnosTab turns={turns} members={members} myMember={myMember} />}
+        {tab === 'actividad' && <ActividadTab events={events} members={members} />}
       </div>
     </div>
   );

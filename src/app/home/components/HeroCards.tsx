@@ -4,21 +4,21 @@ import React, { useEffect, useRef, useState } from 'react';
 // ─── Spending Ticker Card ────────────────────────────────────────────────────
 const CATEGORIES = [
   { label: 'Groceries', base: 312, color: '#A78BFA' },
-  { label: 'Streaming', base: 47,  color: '#7C3AED' },
-  { label: 'Transit',   base: 89,  color: '#6D28D9' },
-  { label: 'Dining',    base: 203, color: '#8B5CF6' },
-  { label: 'Shopping',  base: 156, color: '#A78BFA' },
+  { label: 'Streaming', base: 47, color: '#7C3AED' },
+  { label: 'Transit', base: 89, color: '#6D28D9' },
+  { label: 'Dining', base: 203, color: '#8B5CF6' },
+  { label: 'Shopping', base: 156, color: '#A78BFA' },
 ];
 
 function SpendingTickerCard() {
-  const [values, setValues] = useState(CATEGORIES.map(c => c.base));
+  const [values, setValues] = useState(CATEGORIES.map((c) => c.base));
   const [ticked, setTicked] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
       const idx = Math.floor(Math.random() * CATEGORIES.length);
       const delta = Math.floor(Math.random() * 12) + 1;
-      setValues(prev => prev.map((v, i) => i === idx ? v + delta : v));
+      setValues((prev) => prev.map((v, i) => (i === idx ? v + delta : v)));
       setTicked(idx);
       setTimeout(() => setTicked(null), 400);
     }, 1400);
@@ -28,7 +28,9 @@ function SpendingTickerCard() {
   return (
     <div className="glass-card p-5 w-full h-full flex flex-col gap-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">Live Spend</span>
+        <span className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">
+          Live Spend
+        </span>
         <span className="w-2 h-2 rounded-full bg-[#7C3AED] animate-pulse" />
       </div>
       {CATEGORIES.map((cat, i) => (
@@ -68,7 +70,10 @@ function BudgetRingCard() {
       setPulse(true);
       setTimeout(() => setPulse(false), 600);
     }, 3000);
-    return () => { clearTimeout(t1); clearInterval(t2); };
+    return () => {
+      clearTimeout(t1);
+      clearInterval(t2);
+    };
   }, []);
 
   const radius = 80;
@@ -79,7 +84,9 @@ function BudgetRingCard() {
   return (
     <div className="glass-card p-6 w-full h-full flex flex-col items-center justify-center gap-4">
       <div className="flex items-center justify-between w-full mb-1">
-        <span className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">Monthly Budget</span>
+        <span className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">
+          Monthly Budget
+        </span>
         <span className="font-mono text-[10px] text-[#7C3AED]">62% used</span>
       </div>
 
@@ -87,7 +94,9 @@ function BudgetRingCard() {
         <svg width="180" height="180" viewBox="0 0 180 180">
           {/* Track */}
           <circle
-            cx="90" cy="90" r={radius}
+            cx="90"
+            cy="90"
+            r={radius}
             fill="none"
             stroke="rgba(124,58,237,0.12)"
             strokeWidth="12"
@@ -95,7 +104,9 @@ function BudgetRingCard() {
           {/* Progress */}
           <circle
             ref={ref}
-            cx="90" cy="90" r={radius}
+            cx="90"
+            cy="90"
+            r={radius}
             fill="none"
             stroke="url(#ringGrad)"
             strokeWidth="12"
@@ -122,7 +133,9 @@ function BudgetRingCard() {
               pulse ? 'text-[#A78BFA]' : 'text-[#EDEEF0]'
             }`}
             style={{
-              textShadow: pulse ? '0 0 30px rgba(167,139,250,0.9)' : '0 0 16px rgba(124,58,237,0.4)',
+              textShadow: pulse
+                ? '0 0 30px rgba(167,139,250,0.9)'
+                : '0 0 16px rgba(124,58,237,0.4)',
             }}
           >
             $1,847
@@ -134,10 +147,12 @@ function BudgetRingCard() {
       <div className="flex items-center gap-4 w-full">
         {[
           { label: 'Remaining', val: '$1,153', color: '#A78BFA' },
-          { label: 'Avg/day',   val: '$61',    color: '#6B7280' },
+          { label: 'Avg/day', val: '$61', color: '#6B7280' },
         ].map(({ label, val, color }) => (
           <div key={label} className="flex-1 text-center">
-            <div className="font-mono text-sm font-medium" style={{ color }}>{val}</div>
+            <div className="font-mono text-sm font-medium" style={{ color }}>
+              {val}
+            </div>
             <div className="font-sans text-[10px] text-[#4B5563] mt-0.5">{label}</div>
           </div>
         ))}
@@ -148,20 +163,22 @@ function BudgetRingCard() {
 
 // ─── Subscription Toggles Card ───────────────────────────────────────────────
 const SUBS = [
-  { name: 'Netflix',   price: '$15.49', active: true,  color: '#7C3AED' },
-  { name: 'Spotify',   price: '$10.99', active: false, color: '#6B7280' },
+  { name: 'Netflix', price: '$15.49', active: true, color: '#7C3AED' },
+  { name: 'Spotify', price: '$10.99', active: false, color: '#6B7280' },
   { name: 'Headspace', price: '$12.99', active: false, color: '#6B7280' },
 ];
 
 function SubscriptionTogglesCard() {
-  const [states, setStates] = useState(SUBS.map(s => s.active));
+  const [states, setStates] = useState(SUBS.map((s) => s.active));
 
-  const toggle = (i: number) => setStates(prev => prev.map((v, idx) => idx === i ? !v : v));
+  const toggle = (i: number) => setStates((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
 
   return (
     <div className="glass-card p-5 w-full h-full flex flex-col gap-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">Subscriptions</span>
+        <span className="font-mono text-[10px] text-[#6B7280] tracking-widest uppercase">
+          Subscriptions
+        </span>
         <span className="font-sans text-[10px] text-[#7C3AED]">3 active</span>
       </div>
       {SUBS.map((sub, i) => (
@@ -172,13 +189,17 @@ function SubscriptionTogglesCard() {
               style={{
                 background: states[i] ? 'rgba(124,58,237,0.25)' : 'rgba(237,238,240,0.06)',
                 color: states[i] ? '#A78BFA' : '#6B7280',
-                border: states[i] ? '1px solid rgba(124,58,237,0.3)' : '1px solid rgba(237,238,240,0.08)',
+                border: states[i]
+                  ? '1px solid rgba(124,58,237,0.3)'
+                  : '1px solid rgba(237,238,240,0.08)',
               }}
             >
               {sub.name[0]}
             </div>
             <div className="min-w-0">
-              <div className={`font-sans text-sm font-medium truncate ${states[i] ? 'text-[#EDEEF0]' : 'text-[#6B7280]'}`}>
+              <div
+                className={`font-sans text-sm font-medium truncate ${states[i] ? 'text-[#EDEEF0]' : 'text-[#6B7280]'}`}
+              >
                 {sub.name}
               </div>
               <div className="font-mono text-[10px] text-[#4B5563]">{sub.price}/mo</div>
@@ -203,7 +224,10 @@ function SubscriptionTogglesCard() {
 // ─── Hero Cards Container ────────────────────────────────────────────────────
 export default function HeroCards() {
   return (
-    <div className="relative w-full flex items-center justify-center" style={{ minHeight: '420px' }}>
+    <div
+      className="relative w-full flex items-center justify-center"
+      style={{ minHeight: '420px' }}
+    >
       {/* Left card — spending ticker */}
       <div
         className="absolute hidden lg:block"

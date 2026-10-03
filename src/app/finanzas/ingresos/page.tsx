@@ -76,7 +76,10 @@ async function createEntry(
   entry: Omit<IncomeEntry, 'id'>
 ): Promise<{ entry: IncomeEntry; syncFailed: boolean }> {
   const supabase = createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError) throw toDataError(authError);
   if (!user) throw authRequired();
   const { data, error } = await supabase
@@ -99,16 +102,16 @@ async function createEntry(
   let syncFailed = false;
   if (entry.status === 'cobrado') {
     const { error: syncError } = await supabase.from('transactions').insert({
-        user_id: user.id,
-        name: entry.name,
-        category: entry.category,
-        category_icon: entry.categoryIcon,
-        account_name: 'Ingresos',
-        amount: Math.abs(entry.amount),
-        transaction_date: entry.collectionDate || new Date().toISOString().split('T')[0],
-        transaction_time: new Date().toTimeString().slice(0, 5),
-        transaction_type: 'ingreso',
-        notes: entry.notes || '',
+      user_id: user.id,
+      name: entry.name,
+      category: entry.category,
+      category_icon: entry.categoryIcon,
+      account_name: 'Ingresos',
+      amount: Math.abs(entry.amount),
+      transaction_date: entry.collectionDate || new Date().toISOString().split('T')[0],
+      transaction_time: new Date().toTimeString().slice(0, 5),
+      transaction_type: 'ingreso',
+      notes: entry.notes || '',
     });
     if (syncError) {
       console.error('income → transactions sync failed:', syncError);
@@ -117,7 +120,16 @@ async function createEntry(
   }
 
   return {
-    entry: { id: data.id, name: data.name, amount: data.amount, category: data.category, categoryIcon: data.category_icon, collectionDate: data.collection_date, notes: data.notes, status: data.status },
+    entry: {
+      id: data.id,
+      name: data.name,
+      amount: data.amount,
+      category: data.category,
+      categoryIcon: data.category_icon,
+      collectionDate: data.collection_date,
+      notes: data.notes,
+      status: data.status,
+    },
     syncFailed,
   };
 }
@@ -132,7 +144,11 @@ async function updateEntry(id: string, entry: Partial<IncomeEntry>): Promise<voi
   if (entry.collectionDate !== undefined) updates.collection_date = entry.collectionDate;
   if (entry.notes !== undefined) updates.notes = entry.notes;
   if (entry.status !== undefined) updates.status = entry.status;
-  const { data, error } = await supabase.from('income_entries').update(updates).eq('id', id).select('id');
+  const { data, error } = await supabase
+    .from('income_entries')
+    .update(updates)
+    .eq('id', id)
+    .select('id');
   if (error) throw toDataError(error);
   assertAffected(data);
 }
@@ -159,7 +175,10 @@ export default function IngresosPage() {
   const load = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    getAll().then(setEntries).catch(setLoadError).finally(() => setLoading(false));
+    getAll()
+      .then(setEntries)
+      .catch(setLoadError)
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -168,8 +187,12 @@ export default function IngresosPage() {
 
   const filtered = entries.filter((e) => filterStatus === 'todos' || e.status === filterStatus);
 
-  const totalPendiente = entries.filter((e) => e.status === 'pendiente').reduce((s, e) => s + e.amount, 0);
-  const totalCobrado = entries.filter((e) => e.status === 'cobrado').reduce((s, e) => s + e.amount, 0);
+  const totalPendiente = entries
+    .filter((e) => e.status === 'pendiente')
+    .reduce((s, e) => s + e.amount, 0);
+  const totalCobrado = entries
+    .filter((e) => e.status === 'cobrado')
+    .reduce((s, e) => s + e.amount, 0);
 
   const openAdd = () => {
     setEditingEntry(null);
@@ -214,7 +237,9 @@ export default function IngresosPage() {
       };
       if (editingEntry) {
         await updateEntry(editingEntry.id, entryData);
-        setEntries((prev) => prev.map((e) => (e.id === editingEntry.id ? { ...e, ...entryData } : e)));
+        setEntries((prev) =>
+          prev.map((e) => (e.id === editingEntry.id ? { ...e, ...entryData } : e))
+        );
       } else {
         const { entry: created, syncFailed } = await createEntry(entryData);
         setEntries((prev) => [...prev, created]);
@@ -255,7 +280,10 @@ export default function IngresosPage() {
         : 'El ingreso volvió a pendiente, pero no se pudo actualizar Movimientos.';
     try {
       const supabase = createClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError) throw toDataError(authError);
       if (!user) throw authRequired();
 
@@ -296,7 +324,20 @@ export default function IngresosPage() {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
     const [year, month, day] = dateStr.split('-');
-    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const months = [
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
+    ];
     return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
   };
 
@@ -324,7 +365,10 @@ export default function IngresosPage() {
           onClick={openAdd}
           className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
         >
-          <Plus className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90" strokeWidth={2.5} />
+          <Plus
+            className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
+            strokeWidth={2.5}
+          />
           Agregar ingreso
         </button>
       </div>
@@ -337,7 +381,9 @@ export default function IngresosPage() {
             <p className="text-xs text-gray-500 font-medium">Por cobrar</p>
           </div>
           <p className="text-xl font-bold text-amber-600">S/ {totalPendiente.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{entries.filter((e) => e.status === 'pendiente').length} ingresos</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {entries.filter((e) => e.status === 'pendiente').length} ingresos
+          </p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
@@ -345,7 +391,9 @@ export default function IngresosPage() {
             <p className="text-xs text-gray-500 font-medium">Cobrado</p>
           </div>
           <p className="text-xl font-bold text-green-700">S/ {totalCobrado.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{entries.filter((e) => e.status === 'cobrado').length} ingresos</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {entries.filter((e) => e.status === 'cobrado').length} ingresos
+          </p>
         </div>
       </div>
 
@@ -397,18 +445,26 @@ export default function IngresosPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className={`text-sm font-semibold truncate ${entry.status === 'cobrado' ? 'text-gray-400 line-through' : 'text-fin-text'}`}>
+                  <p
+                    className={`text-sm font-semibold truncate ${entry.status === 'cobrado' ? 'text-gray-400 line-through' : 'text-fin-text'}`}
+                  >
                     {entry.name}
                   </p>
                   {entry.status === 'cobrado' && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold shrink-0">Cobrado</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold shrink-0">
+                      Cobrado
+                    </span>
                   )}
                   {isOverdue(entry.collectionDate, entry.status) && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold shrink-0">Vencido</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold shrink-0">
+                      Vencido
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-fin-muted">{entry.category}</span>
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-fin-muted">
+                    {entry.category}
+                  </span>
                   {entry.collectionDate && (
                     <span className="flex items-center gap-1 text-xs text-fin-muted">
                       <Calendar className="w-3 h-3" strokeWidth={1.75} />
@@ -418,7 +474,9 @@ export default function IngresosPage() {
                 </div>
               </div>
               <div className="text-right flex-shrink-0 flex items-center gap-2">
-                <p className={`text-sm font-manrope font-700 ${entry.status === 'cobrado' ? 'text-gray-400' : 'text-fin-green'}`}>
+                <p
+                  className={`text-sm font-manrope font-700 ${entry.status === 'cobrado' ? 'text-gray-400' : 'text-fin-green'}`}
+                >
                   +S/ {entry.amount.toFixed(2)}
                 </p>
                 <div className="hidden group-hover:flex items-center gap-1 ml-1">
@@ -427,19 +485,28 @@ export default function IngresosPage() {
                     title={entry.status === 'cobrado' ? 'Marcar pendiente' : 'Marcar cobrado'}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 transition-colors"
                   >
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${entry.status === 'cobrado' ? 'text-green-500' : 'text-gray-400 hover:text-green-600'}`} strokeWidth={1.75} />
+                    <CheckCircle2
+                      className={`w-3.5 h-3.5 ${entry.status === 'cobrado' ? 'text-green-500' : 'text-gray-400 hover:text-green-600'}`}
+                      strokeWidth={1.75}
+                    />
                   </button>
                   <button
                     onClick={() => openEdit(entry)}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 transition-colors"
                   >
-                    <Pencil className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600 transition-colors" strokeWidth={1.75} />
+                    <Pencil
+                      className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600 transition-colors"
+                      strokeWidth={1.75}
+                    />
                   </button>
                   <button
                     onClick={() => handleDelete(entry.id)}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500 transition-colors" strokeWidth={1.75} />
+                    <Trash2
+                      className="w-3.5 h-3.5 text-gray-400 hover:text-red-500 transition-colors"
+                      strokeWidth={1.75}
+                    />
                   </button>
                 </div>
               </div>
@@ -467,7 +534,9 @@ export default function IngresosPage() {
             <div className="px-6 py-5 space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Descripción</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Descripción
+                </label>
                 <input
                   type="text"
                   value={form.name}
@@ -479,7 +548,9 @@ export default function IngresosPage() {
 
               {/* Amount */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Monto (S/)</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Monto (S/)
+                </label>
                 <input
                   type="number"
                   value={form.amount}
@@ -493,7 +564,9 @@ export default function IngresosPage() {
 
               {/* Category */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Categoría</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Categoría
+                </label>
                 <div className="grid grid-cols-4 gap-2">
                   {INCOME_CATEGORIES.map((cat) => (
                     <button
@@ -529,7 +602,9 @@ export default function IngresosPage() {
 
               {/* Status */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Estado</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Estado
+                </label>
                 <div className="flex gap-2">
                   {(['pendiente', 'cobrado'] as const).map((s) => (
                     <button
@@ -539,7 +614,9 @@ export default function IngresosPage() {
                       className={`flex-1 py-2.5 rounded-xl border-[2px] text-sm font-semibold transition-all ${
                         form.status === s
                           ? s === 'cobrado'
-                            ? 'border-black bg-[#4ADE80] text-black' :'border-black bg-[#FFD93D] text-black' :'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                            ? 'border-black bg-[#4ADE80] text-black'
+                            : 'border-black bg-[#FFD93D] text-black'
+                          : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                       }`}
                     >
                       {s === 'pendiente' ? '⏳ Por cobrar' : '✅ Cobrado'}
@@ -550,7 +627,9 @@ export default function IngresosPage() {
 
               {/* Notes */}
               <div>
-                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">Notas (opcional)</label>
+                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
+                  Notas (opcional)
+                </label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
@@ -562,7 +641,9 @@ export default function IngresosPage() {
             </div>
 
             {formError && (
-              <p role="alert" className="px-6 pb-3 text-sm font-semibold text-red-600">{formError}</p>
+              <p role="alert" className="px-6 pb-3 text-sm font-semibold text-red-600">
+                {formError}
+              </p>
             )}
 
             <div className="px-6 pb-6 flex gap-3">

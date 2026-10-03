@@ -23,25 +23,25 @@ export const CURRENCIES: CurrencyInfo[] = [
 export const DEFAULT_CURRENCY = 'PEN';
 
 export function getCurrencyInfo(code: string): CurrencyInfo {
-  return CURRENCIES.find(c => c.code === code) || CURRENCIES[0];
+  return CURRENCIES.find((c) => c.code === code) || CURRENCIES[0];
 }
 
 // ─── Default exchange rates (reference only, not for production) ──────────────
 // These are reference rates. In production, user sets manual rates.
 export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
-  'USD_PEN': 3.73,
-  'EUR_PEN': 4.05,
-  'GBP_PEN': 4.72,
-  'BRL_PEN': 0.74,
-  'CLP_PEN': 0.0041,
-  'COP_PEN': 0.00093,
-  'MXN_PEN': 0.22,
-  'ARS_PEN': 0.0041,
-  'PEN_USD': 0.268,
-  'PEN_EUR': 0.247,
-  'PEN_GBP': 0.212,
-  'EUR_USD': 1.085,
-  'GBP_USD': 1.265,
+  USD_PEN: 3.73,
+  EUR_PEN: 4.05,
+  GBP_PEN: 4.72,
+  BRL_PEN: 0.74,
+  CLP_PEN: 0.0041,
+  COP_PEN: 0.00093,
+  MXN_PEN: 0.22,
+  ARS_PEN: 0.0041,
+  PEN_USD: 0.268,
+  PEN_EUR: 0.247,
+  PEN_GBP: 0.212,
+  EUR_USD: 1.085,
+  GBP_USD: 1.265,
 };
 
 export function getDefaultRate(from: string, to: string): number {
@@ -67,7 +67,12 @@ export function formatCurrencyWithCode(amount: number, currencyCode: string): st
   return `${formatCurrency(amount, currencyCode)} ${currencyCode}`;
 }
 
-export function formatEquivalent(amount: number, fromCurrency: string, toCurrency: string, rate: number): string {
+export function formatEquivalent(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number
+): string {
   if (fromCurrency === toCurrency) return '';
   const converted = amount * rate;
   return `≈ ${formatCurrency(converted, toCurrency)}`;
@@ -75,7 +80,12 @@ export function formatEquivalent(amount: number, fromCurrency: string, toCurrenc
 
 // ─── Conversion ───────────────────────────────────────────────────────────────
 
-export function convertAmount(amount: number, fromCurrency: string, toCurrency: string, rate: number): number {
+export function convertAmount(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number
+): number {
   if (fromCurrency === toCurrency) return amount;
   return amount * rate;
 }
@@ -109,11 +119,7 @@ export function buildRateKey(from: string, to: string): string {
   return `${from}_${to}`;
 }
 
-export function getRateFromMap(
-  ratesMap: Record<string, number>,
-  from: string,
-  to: string
-): number {
+export function getRateFromMap(ratesMap: Record<string, number>, from: string, to: string): number {
   if (from === to) return 1;
   const key = buildRateKey(from, to);
   if (ratesMap[key]) return ratesMap[key];
@@ -151,11 +157,13 @@ export function groupAccountsByCurrency(
 
   const totalBase = Object.values(groups).reduce((s, g) => s + g.totalBase, 0);
 
-  return Object.entries(groups).map(([code, g]) => ({
-    currencyCode: code,
-    totalOriginal: g.total,
-    totalInBase: g.totalBase,
-    percentage: totalBase > 0 ? Math.round((g.totalBase / totalBase) * 100) : 0,
-    rate: g.rate,
-  })).sort((a, b) => b.totalInBase - a.totalInBase);
+  return Object.entries(groups)
+    .map(([code, g]) => ({
+      currencyCode: code,
+      totalOriginal: g.total,
+      totalInBase: g.totalBase,
+      percentage: totalBase > 0 ? Math.round((g.totalBase / totalBase) * 100) : 0,
+      rate: g.rate,
+    }))
+    .sort((a, b) => b.totalInBase - a.totalInBase);
 }

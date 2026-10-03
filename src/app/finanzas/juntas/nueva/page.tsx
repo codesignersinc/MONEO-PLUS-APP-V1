@@ -1,19 +1,47 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Users, Calendar, Lock, AlertTriangle, CheckCircle, ChevronDown } from 'lucide-react';
-import { juntasService, juntaMembersService, juntaCyclesService, juntaInvitesService, juntaEventsService } from '@/lib/supabaseJuntas';
+import {
+  ArrowLeft,
+  ChevronRight,
+  Users,
+  Calendar,
+  Lock,
+  AlertTriangle,
+  CheckCircle,
+  ChevronDown,
+} from 'lucide-react';
+import {
+  juntasService,
+  juntaMembersService,
+  juntaCyclesService,
+  juntaInvitesService,
+  juntaEventsService,
+} from '@/lib/supabaseJuntas';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 
 const PARTICIPANT_OPTIONS = [4, 6, 8, 10, 12];
-const MONTHS_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const MONTHS_FULL = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
 
 const FREQUENCY_OPTIONS = [
-  { value: 'semanal',   label: 'Semanal',   desc: 'Aportes cada semana' },
+  { value: 'semanal', label: 'Semanal', desc: 'Aportes cada semana' },
   { value: 'quincenal', label: 'Quincenal', desc: 'Aportes cada 15 días' },
-  { value: 'mensual',   label: 'Mensual',   desc: 'Aportes cada mes' },
+  { value: 'mensual', label: 'Mensual', desc: 'Aportes cada mes' },
 ];
 
 function generateInviteCode(): string {
@@ -35,13 +63,21 @@ function StepIndicator({ step, total }: StepProps) {
     <div className="flex items-center gap-2 mb-6">
       {Array.from({ length: total }).map((_, i) => (
         <React.Fragment key={i}>
-          <div className={`w-8 h-8 rounded-full border-[3px] border-black flex items-center justify-center text-xs font-black transition-all ${
-            i + 1 === step ? 'bg-[#FFD43B] text-black' : i + 1 < step ? 'bg-black text-white' : 'bg-white text-gray-400'
-          }`}>
+          <div
+            className={`w-8 h-8 rounded-full border-[3px] border-black flex items-center justify-center text-xs font-black transition-all ${
+              i + 1 === step
+                ? 'bg-[#FFD43B] text-black'
+                : i + 1 < step
+                  ? 'bg-black text-white'
+                  : 'bg-white text-gray-400'
+            }`}
+          >
             {i + 1 < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
           </div>
           {i < total - 1 && (
-            <div className={`flex-1 h-1 rounded-full transition-all ${i + 1 < step ? 'bg-black' : 'bg-gray-200'}`} />
+            <div
+              className={`flex-1 h-1 rounded-full transition-all ${i + 1 < step ? 'bg-black' : 'bg-gray-200'}`}
+            />
           )}
         </React.Fragment>
       ))}
@@ -75,16 +111,27 @@ export default function NuevaJuntaPage() {
   const [isPrivate, setIsPrivate] = useState(true);
   const [additionalNotes, setAdditionalNotes] = useState('');
 
-  const effectiveParticipants = customParticipants ? parseInt(customParticipants) || participants : participants;
+  const effectiveParticipants = customParticipants
+    ? parseInt(customParticipants) || participants
+    : participants;
 
   function handleNext() {
     setError('');
     if (step === 1) {
-      if (!name.trim()) { setError('El nombre de la junta es obligatorio.'); return; }
+      if (!name.trim()) {
+        setError('El nombre de la junta es obligatorio.');
+        return;
+      }
       setStep(2);
     } else if (step === 2) {
-      if (!amount || parseFloat(amount) <= 0) { setError('Ingresa un monto válido.'); return; }
-      if (!firstDrawDate) { setError('Selecciona la fecha y hora del primer sorteo.'); return; }
+      if (!amount || parseFloat(amount) <= 0) {
+        setError('Ingresa un monto válido.');
+        return;
+      }
+      if (!firstDrawDate) {
+        setError('Selecciona la fecha y hora del primer sorteo.');
+        return;
+      }
       setStep(3);
     }
   }
@@ -94,19 +141,22 @@ export default function NuevaJuntaPage() {
     setSaving(true);
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('No estás autenticado. Por favor inicia sesión.');
 
       // Upsert user profile to ensure FK constraint is satisfied
       let displayName = user.email?.split('@')[0] || 'Tú';
       try {
-        await supabase
-          .from('user_profiles')
-          .upsert({
+        await supabase.from('user_profiles').upsert(
+          {
             id: user.id,
             email: user.email || '',
             full_name: user.user_metadata?.full_name || displayName,
-          }, { onConflict: 'id' });
+          },
+          { onConflict: 'id' }
+        );
 
         const { data: profile } = await supabase
           .from('user_profiles')
@@ -124,7 +174,9 @@ export default function NuevaJuntaPage() {
         contributionAmount: parseFloat(amount),
         frequency,
         maxParticipants: effectiveParticipants,
-        firstDrawDate: firstDrawDate.includes('T') ? firstDrawDate : `${firstDrawDate}T${firstDrawTime}:00`,
+        firstDrawDate: firstDrawDate.includes('T')
+          ? firstDrawDate
+          : `${firstDrawDate}T${firstDrawTime}:00`,
         paymentConfirmation,
         paymentDeadlineDay,
         latePolicy,
@@ -154,24 +206,28 @@ export default function NuevaJuntaPage() {
       }
 
       // Create first cycle (non-blocking — don't abort junta creation if this fails)
-      const drawDateStr = firstDrawDate.includes('T') ? firstDrawDate : `${firstDrawDate}T${firstDrawTime}:00`;
+      const drawDateStr = firstDrawDate.includes('T')
+        ? firstDrawDate
+        : `${firstDrawDate}T${firstDrawTime}:00`;
       const drawDate = new Date(drawDateStr);
-      juntaCyclesService.create({
-        juntaId: junta.id,
-        cycleNumber: 1,
-        cycleMonth: MONTHS_FULL[drawDate.getMonth()],
-        cycleYear: drawDate.getFullYear(),
-        totalExpected: parseFloat(amount) * effectiveParticipants,
-        totalCollected: 0,
-        status: 'activo',
-        drawWinnerMemberId: null,
-        drawPerformedAt: null,
-        drawSeed: null,
-      }).catch((err) => {
-        // Non-blocking — the cycle can be created later, but tell the user.
-        console.error('junta first cycle creation failed:', err);
-        toast.showError('La junta se creó, pero no se pudo crear el primer ciclo.');
-      });
+      juntaCyclesService
+        .create({
+          juntaId: junta.id,
+          cycleNumber: 1,
+          cycleMonth: MONTHS_FULL[drawDate.getMonth()],
+          cycleYear: drawDate.getFullYear(),
+          totalExpected: parseFloat(amount) * effectiveParticipants,
+          totalCollected: 0,
+          status: 'activo',
+          drawWinnerMemberId: null,
+          drawPerformedAt: null,
+          drawSeed: null,
+        })
+        .catch((err) => {
+          // Non-blocking — the cycle can be created later, but tell the user.
+          console.error('junta first cycle creation failed:', err);
+          toast.showError('La junta se creó, pero no se pudo crear el primer ciclo.');
+        });
 
       // Create invite code (non-blocking)
       let code = generateInviteCode();
@@ -181,13 +237,15 @@ export default function NuevaJuntaPage() {
       });
 
       // Log event (non-blocking; history only, so log without bothering the user)
-      juntaEventsService.create({
-        juntaId: junta.id,
-        actorMemberId: null,
-        eventType: 'junta_creada',
-        description: `Junta "${junta.name}" creada`,
-        metadata: { amount: parseFloat(amount), participants: effectiveParticipants, frequency },
-      }).catch((err) => console.error('junta event log failed:', err));
+      juntaEventsService
+        .create({
+          juntaId: junta.id,
+          actorMemberId: null,
+          eventType: 'junta_creada',
+          description: `Junta "${junta.name}" creada`,
+          metadata: { amount: parseFloat(amount), participants: effectiveParticipants, frequency },
+        })
+        .catch((err) => console.error('junta event log failed:', err));
 
       router.push(`/finanzas/juntas/${junta.id}?created=1`);
     } catch (e: unknown) {
@@ -205,14 +263,18 @@ export default function NuevaJuntaPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#FAFAF8] border-b-2 border-black px-4 py-4 flex items-center gap-3">
         <button
-          onClick={() => step > 1 ? setStep(s => s - 1) : router.back()}
+          onClick={() => (step > 1 ? setStep((s) => s - 1) : router.back())}
           className="w-9 h-9 rounded-xl border-2 border-black bg-white flex items-center justify-center hover:bg-gray-50 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 text-black" strokeWidth={2.5} />
         </button>
         <div>
           <h1 className="text-lg font-black text-black leading-tight">
-            {step === 1 ? 'Información de la junta' : step === 2 ? 'Configuración' : 'Reglas de la junta'}
+            {step === 1
+              ? 'Información de la junta'
+              : step === 2
+                ? 'Configuración'
+                : 'Reglas de la junta'}
           </h1>
           <p className="text-xs text-gray-500 font-medium">{step} de 3</p>
         </div>
@@ -236,12 +298,21 @@ export default function NuevaJuntaPage() {
                 <Users className="w-8 h-8 text-black" strokeWidth={2} />
                 <div>
                   <p className="font-black text-black text-base">Junta de ahorro</p>
-                  <span className="px-2 py-0.5 bg-black text-[#FFD43B] text-[10px] font-black rounded-full">Popular</span>
+                  <span className="px-2 py-0.5 bg-black text-[#FFD43B] text-[10px] font-black rounded-full">
+                    Popular
+                  </span>
                 </div>
               </div>
-              <p className="text-sm text-black/80 font-medium">Todos aportan periódicamente y se hace un sorteo para definir quién recibe el fondo.</p>
+              <p className="text-sm text-black/80 font-medium">
+                Todos aportan periódicamente y se hace un sorteo para definir quién recibe el fondo.
+              </p>
               <div className="mt-3 space-y-1">
-                {['Fácil de organizar', 'Sorteo automático', 'Todo queda registrado', 'Sin complicaciones'].map(f => (
+                {[
+                  'Fácil de organizar',
+                  'Sorteo automático',
+                  'Todo queda registrado',
+                  'Sin complicaciones',
+                ].map((f) => (
                   <div key={f} className="flex items-center gap-2">
                     <CheckCircle className="w-3.5 h-3.5 text-black" strokeWidth={2.5} />
                     <span className="text-xs font-bold text-black">{f}</span>
@@ -251,20 +322,24 @@ export default function NuevaJuntaPage() {
             </div>
 
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Nombre de la junta *</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Nombre de la junta *
+              </label>
               <input
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="Ej. Junta de amigos"
                 className="mt-1.5 w-full px-4 py-3 border-[3px] border-black rounded-2xl text-sm font-bold text-black outline-none focus:border-[#FFD43B] bg-white transition-colors"
               />
             </div>
 
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Descripción (opcional)</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Descripción (opcional)
+              </label>
               <input
                 value={description}
-                onChange={e => setDescription(e.target.value)}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Ej. Para nuestro viaje a Europa ✈️"
                 className="mt-1.5 w-full px-4 py-3 border-[3px] border-black rounded-2xl text-sm font-medium text-black outline-none focus:border-[#FFD43B] bg-white transition-colors"
               />
@@ -283,13 +358,17 @@ export default function NuevaJuntaPage() {
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Monto de aporte (S/)</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Monto de aporte (S/)
+              </label>
               <div className="mt-1.5 relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400 text-sm">S/</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400 text-sm">
+                  S/
+                </span>
                 <input
                   type="number"
                   value={amount}
-                  onChange={e => setAmount(e.target.value)}
+                  onChange={(e) => setAmount(e.target.value)}
                   placeholder="500.00"
                   className="w-full pl-10 pr-4 py-3 border-[3px] border-black rounded-2xl text-sm font-bold text-black outline-none focus:border-[#FFD43B] bg-white transition-colors"
                 />
@@ -298,16 +377,20 @@ export default function NuevaJuntaPage() {
 
             {/* Frecuencia dropdown */}
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Frecuencia</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Frecuencia
+              </label>
               <div className="mt-1.5 relative">
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <select
                   value={frequency}
-                  onChange={e => setFrequency(e.target.value)}
+                  onChange={(e) => setFrequency(e.target.value)}
                   className="w-full pl-10 pr-10 py-3 border-[3px] border-black rounded-2xl text-sm font-bold text-black outline-none focus:border-[#FFD43B] bg-white transition-colors appearance-none cursor-pointer"
                 >
-                  {FREQUENCY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label} — {opt.desc}</option>
+                  {FREQUENCY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label} — {opt.desc}
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -315,12 +398,17 @@ export default function NuevaJuntaPage() {
             </div>
 
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Número de participantes</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Número de participantes
+              </label>
               <div className="mt-1.5 flex flex-wrap gap-2">
-                {PARTICIPANT_OPTIONS.map(n => (
+                {PARTICIPANT_OPTIONS.map((n) => (
                   <button
                     key={n}
-                    onClick={() => { setParticipants(n); setCustomParticipants(''); }}
+                    onClick={() => {
+                      setParticipants(n);
+                      setCustomParticipants('');
+                    }}
                     className={`px-4 py-2.5 rounded-xl border-[3px] text-sm font-black transition-all ${
                       participants === n && !customParticipants
                         ? 'border-black bg-[#FFD43B] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]'
@@ -333,7 +421,7 @@ export default function NuevaJuntaPage() {
                 <input
                   type="number"
                   value={customParticipants}
-                  onChange={e => setCustomParticipants(e.target.value)}
+                  onChange={(e) => setCustomParticipants(e.target.value)}
                   placeholder="Otro"
                   className={`w-20 px-3 py-2.5 rounded-xl border-[3px] text-sm font-bold text-black outline-none transition-all ${
                     customParticipants ? 'border-black bg-[#FFD43B]' : 'border-gray-200'
@@ -341,28 +429,37 @@ export default function NuevaJuntaPage() {
                 />
               </div>
               <p className="mt-1.5 text-xs text-gray-500 font-medium">
-                Fondo total: {amount ? `S/ ${(parseFloat(amount) * effectiveParticipants).toFixed(2)}` : '—'}
+                Fondo total:{' '}
+                {amount ? `S/ ${(parseFloat(amount) * effectiveParticipants).toFixed(2)}` : '—'}
               </p>
             </div>
 
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Fecha del primer sorteo</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Fecha del primer sorteo
+              </label>
               <div className="mt-1.5 grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1 block">Fecha</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1 block">
+                    Fecha
+                  </label>
                   <input
                     type="date"
-                    value={firstDrawDate.includes('T') ? firstDrawDate.split('T')[0] : firstDrawDate}
-                    onChange={e => setFirstDrawDate(e.target.value)}
+                    value={
+                      firstDrawDate.includes('T') ? firstDrawDate.split('T')[0] : firstDrawDate
+                    }
+                    onChange={(e) => setFirstDrawDate(e.target.value)}
                     className="w-full px-3 py-3 border-[3px] border-black rounded-2xl text-sm font-bold text-black outline-none focus:border-[#FFD43B] bg-white transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1 block">Hora</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1 block">
+                    Hora
+                  </label>
                   <input
                     type="time"
                     value={firstDrawTime}
-                    onChange={e => setFirstDrawTime(e.target.value)}
+                    onChange={(e) => setFirstDrawTime(e.target.value)}
                     className="w-full px-3 py-3 border-[3px] border-black rounded-2xl text-sm font-bold text-black outline-none focus:border-[#FFD43B] bg-white transition-colors"
                   />
                 </div>
@@ -385,13 +482,15 @@ export default function NuevaJuntaPage() {
         {step === 3 && (
           <div className="space-y-5">
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">¿Cómo se confirma el pago?</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                ¿Cómo se confirma el pago?
+              </label>
               <div className="mt-1.5 space-y-2">
                 {[
                   { value: 'comprobante', label: 'Comprobante + confirmación', icon: '📸' },
                   { value: 'honor', label: 'Sistema de honor', icon: '🤝' },
                   { value: 'admin', label: 'El admin confirma', icon: '👤' },
-                ].map(opt => (
+                ].map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setPaymentConfirmation(opt.value)}
@@ -409,14 +508,16 @@ export default function NuevaJuntaPage() {
             </div>
 
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Día límite del aporte cada mes</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Día límite del aporte cada mes
+              </label>
               <div className="mt-1.5 flex items-center gap-3">
                 <input
                   type="number"
                   min={1}
                   max={28}
                   value={paymentDeadlineDay}
-                  onChange={e => setPaymentDeadlineDay(parseInt(e.target.value) || 10)}
+                  onChange={(e) => setPaymentDeadlineDay(parseInt(e.target.value) || 10)}
                   className="w-24 px-4 py-3 border-[3px] border-black rounded-2xl text-sm font-bold text-black outline-none focus:border-[#FFD43B] bg-white text-center"
                 />
                 <span className="text-sm font-bold text-gray-500">de cada mes</span>
@@ -424,13 +525,19 @@ export default function NuevaJuntaPage() {
             </div>
 
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">¿Qué pasa si alguien se retrasa?</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                ¿Qué pasa si alguien se retrasa?
+              </label>
               <div className="mt-1.5 space-y-2">
                 {[
-                  { value: 'aviso_automatico', label: 'Aviso automático + 2 días de tolerancia', icon: '⏰' },
+                  {
+                    value: 'aviso_automatico',
+                    label: 'Aviso automático + 2 días de tolerancia',
+                    icon: '⏰',
+                  },
                   { value: 'suspension', label: 'Suspensión temporal', icon: '⛔' },
                   { value: 'flexible', label: 'Flexible, el admin decide', icon: '💬' },
-                ].map(opt => (
+                ].map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setLatePolicy(opt.value)}
@@ -448,10 +555,12 @@ export default function NuevaJuntaPage() {
             </div>
 
             <div>
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">Notas adicionales (opcional)</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
+                Notas adicionales (opcional)
+              </label>
               <textarea
                 value={additionalNotes}
-                onChange={e => setAdditionalNotes(e.target.value)}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
                 placeholder="Solo amigos. Compromiso serio para el viaje 🙌"
                 rows={3}
                 className="mt-1.5 w-full px-4 py-3 border-[3px] border-black rounded-2xl text-sm font-medium text-black outline-none focus:border-[#FFD43B] bg-white transition-colors resize-none"
@@ -463,14 +572,18 @@ export default function NuevaJuntaPage() {
                 <Lock className="w-4 h-4 text-gray-500" />
                 <div>
                   <p className="text-sm font-black text-black">Junta privada</p>
-                  <p className="text-xs text-gray-500 font-medium">Solo personas con invitación pueden unirse.</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Solo personas con invitación pueden unirse.
+                  </p>
                 </div>
               </div>
               <button
-                onClick={() => setIsPrivate(p => !p)}
+                onClick={() => setIsPrivate((p) => !p)}
                 className={`w-12 h-6 rounded-full border-2 border-black transition-all ${isPrivate ? 'bg-[#FFD43B]' : 'bg-gray-200'}`}
               >
-                <div className={`w-4 h-4 bg-black rounded-full transition-all mx-0.5 ${isPrivate ? 'translate-x-6' : 'translate-x-0'}`} />
+                <div
+                  className={`w-4 h-4 bg-black rounded-full transition-all mx-0.5 ${isPrivate ? 'translate-x-6' : 'translate-x-0'}`}
+                />
               </button>
             </div>
 
@@ -485,7 +598,9 @@ export default function NuevaJuntaPage() {
                   Creando junta...
                 </>
               ) : (
-                <>Crear junta <ChevronRight className="w-5 h-5" strokeWidth={3} /></>
+                <>
+                  Crear junta <ChevronRight className="w-5 h-5" strokeWidth={3} />
+                </>
               )}
             </button>
           </div>

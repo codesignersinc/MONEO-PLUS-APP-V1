@@ -3,15 +3,24 @@
 import { createClient } from '@/lib/supabase/client';
 import { assertAffected, authRequired, toDataError } from '@/lib/dataError';
 import type {
-  Account, Transaction, BudgetCategory, SavingsGoal,
-  Debt, Investment, Subscription, FinanceData
+  Account,
+  Transaction,
+  BudgetCategory,
+  SavingsGoal,
+  Debt,
+  Investment,
+  Subscription,
+  FinanceData,
 } from './financeStore';
 
 // Every function below either resolves with real data or throws a DataError.
 // An empty array always means "no rows", never "the request failed".
 
 async function requireUserId(supabase: ReturnType<typeof createClient>): Promise<string> {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
   if (error) throw toDataError(error);
   if (!user) throw authRequired();
   return user.id;
@@ -27,10 +36,16 @@ export const accountsService = {
       .select('*')
       .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
-    return (data || []).map(r => ({
-      id: r.id, name: r.name, type: r.account_type,
-      institution: r.institution, balance: r.balance,
-      currency: r.currency, icon: r.icon, color: r.color, bgColor: r.bg_color,
+    return (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      type: r.account_type,
+      institution: r.institution,
+      balance: r.balance,
+      currency: r.currency,
+      icon: r.icon,
+      color: r.color,
+      bgColor: r.bg_color,
     }));
   },
 
@@ -40,14 +55,30 @@ export const accountsService = {
     const { data, error } = await supabase
       .from('accounts')
       .insert({
-        user_id: userId, name: account.name, account_type: account.type,
-        institution: account.institution, balance: account.balance,
-        currency: account.currency, icon: account.icon,
-        color: account.color, bg_color: account.bgColor,
+        user_id: userId,
+        name: account.name,
+        account_type: account.type,
+        institution: account.institution,
+        balance: account.balance,
+        currency: account.currency,
+        icon: account.icon,
+        color: account.color,
+        bg_color: account.bgColor,
       })
-      .select().single();
+      .select()
+      .single();
     if (error) throw toDataError(error);
-    return { id: data.id, name: data.name, type: data.account_type, institution: data.institution, balance: data.balance, currency: data.currency, icon: data.icon, color: data.color, bgColor: data.bg_color };
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.account_type,
+      institution: data.institution,
+      balance: data.balance,
+      currency: data.currency,
+      icon: data.icon,
+      color: data.color,
+      bgColor: data.bg_color,
+    };
   },
 
   async update(id: string, account: Partial<Account>): Promise<void> {
@@ -62,7 +93,11 @@ export const accountsService = {
     if (account.color !== undefined) updates.color = account.color;
     if (account.bgColor !== undefined) updates.bg_color = account.bgColor;
     updates.updated_at = new Date().toISOString();
-    const { data, error } = await supabase.from('accounts').update(updates).eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('accounts')
+      .update(updates)
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
@@ -85,11 +120,18 @@ export const transactionsService = {
       .select('*')
       .order('transaction_date', { ascending: false });
     if (error) throw toDataError(error);
-    return (data || []).map(r => ({
-      id: r.id, name: r.name, category: r.category, categoryIcon: r.category_icon,
-      account: r.account_name, accountId: r.account_id || '',
-      amount: r.amount, date: r.transaction_date, time: r.transaction_time,
-      type: r.transaction_type, notes: r.notes || '',
+    return (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      category: r.category,
+      categoryIcon: r.category_icon,
+      account: r.account_name,
+      accountId: r.account_id || '',
+      amount: r.amount,
+      date: r.transaction_date,
+      time: r.transaction_time,
+      type: r.transaction_type,
+      notes: r.notes || '',
     }));
   },
 
@@ -99,15 +141,34 @@ export const transactionsService = {
     const { data, error } = await supabase
       .from('transactions')
       .insert({
-        user_id: userId, account_id: tx.accountId || null,
-        name: tx.name, category: tx.category, category_icon: tx.categoryIcon,
-        account_name: tx.account, amount: tx.amount,
-        transaction_date: tx.date, transaction_time: tx.time,
-        transaction_type: tx.type, notes: tx.notes || '',
+        user_id: userId,
+        account_id: tx.accountId || null,
+        name: tx.name,
+        category: tx.category,
+        category_icon: tx.categoryIcon,
+        account_name: tx.account,
+        amount: tx.amount,
+        transaction_date: tx.date,
+        transaction_time: tx.time,
+        transaction_type: tx.type,
+        notes: tx.notes || '',
       })
-      .select().single();
+      .select()
+      .single();
     if (error) throw toDataError(error);
-    return { id: data.id, name: data.name, category: data.category, categoryIcon: data.category_icon, account: data.account_name, accountId: data.account_id || '', amount: data.amount, date: data.transaction_date, time: data.transaction_time, type: data.transaction_type, notes: data.notes };
+    return {
+      id: data.id,
+      name: data.name,
+      category: data.category,
+      categoryIcon: data.category_icon,
+      account: data.account_name,
+      accountId: data.account_id || '',
+      amount: data.amount,
+      date: data.transaction_date,
+      time: data.transaction_time,
+      type: data.transaction_type,
+      notes: data.notes,
+    };
   },
 
   async update(id: string, tx: Partial<Transaction>): Promise<void> {
@@ -123,7 +184,11 @@ export const transactionsService = {
     if (tx.time !== undefined) updates.transaction_time = tx.time;
     if (tx.type !== undefined) updates.transaction_type = tx.type;
     if (tx.notes !== undefined) updates.notes = tx.notes;
-    const { data, error } = await supabase.from('transactions').update(updates).eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(updates)
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
@@ -141,17 +206,45 @@ export const transactionsService = {
 export const budgetService = {
   async getAll(): Promise<BudgetCategory[]> {
     const supabase = createClient();
-    const { data, error } = await supabase.from('budget_categories').select('*').order('created_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('budget_categories')
+      .select('*')
+      .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
-    return (data || []).map(r => ({ id: r.id, name: r.name, icon: r.icon, budget: r.budget, color: r.color, bgColor: r.bg_color }));
+    return (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      icon: r.icon,
+      budget: r.budget,
+      color: r.color,
+      bgColor: r.bg_color,
+    }));
   },
 
   async create(cat: Omit<BudgetCategory, 'id'>): Promise<BudgetCategory> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
-    const { data, error } = await supabase.from('budget_categories').insert({ user_id: userId, name: cat.name, icon: cat.icon, budget: cat.budget, color: cat.color, bg_color: cat.bgColor }).select().single();
+    const { data, error } = await supabase
+      .from('budget_categories')
+      .insert({
+        user_id: userId,
+        name: cat.name,
+        icon: cat.icon,
+        budget: cat.budget,
+        color: cat.color,
+        bg_color: cat.bgColor,
+      })
+      .select()
+      .single();
     if (error) throw toDataError(error);
-    return { id: data.id, name: data.name, icon: data.icon, budget: data.budget, color: data.color, bgColor: data.bg_color };
+    return {
+      id: data.id,
+      name: data.name,
+      icon: data.icon,
+      budget: data.budget,
+      color: data.color,
+      bgColor: data.bg_color,
+    };
   },
 
   async update(id: string, cat: Partial<BudgetCategory>): Promise<void> {
@@ -162,14 +255,22 @@ export const budgetService = {
     if (cat.budget !== undefined) updates.budget = cat.budget;
     if (cat.color !== undefined) updates.color = cat.color;
     if (cat.bgColor !== undefined) updates.bg_color = cat.bgColor;
-    const { data, error } = await supabase.from('budget_categories').update(updates).eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('budget_categories')
+      .update(updates)
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
 
   async delete(id: string): Promise<void> {
     const supabase = createClient();
-    const { data, error } = await supabase.from('budget_categories').delete().eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('budget_categories')
+      .delete()
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
@@ -180,17 +281,48 @@ export const budgetService = {
 export const savingsService = {
   async getAll(): Promise<SavingsGoal[]> {
     const supabase = createClient();
-    const { data, error } = await supabase.from('savings_goals').select('*').order('created_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('savings_goals')
+      .select('*')
+      .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
-    return (data || []).map(r => ({ id: r.id, name: r.name, icon: r.icon, current: r.current_amount, target: r.target_amount, color: r.color, targetDate: r.target_date }));
+    return (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      icon: r.icon,
+      current: r.current_amount,
+      target: r.target_amount,
+      color: r.color,
+      targetDate: r.target_date,
+    }));
   },
 
   async create(goal: Omit<SavingsGoal, 'id'>): Promise<SavingsGoal> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
-    const { data, error } = await supabase.from('savings_goals').insert({ user_id: userId, name: goal.name, icon: goal.icon, current_amount: goal.current, target_amount: goal.target, color: goal.color, target_date: goal.targetDate }).select().single();
+    const { data, error } = await supabase
+      .from('savings_goals')
+      .insert({
+        user_id: userId,
+        name: goal.name,
+        icon: goal.icon,
+        current_amount: goal.current,
+        target_amount: goal.target,
+        color: goal.color,
+        target_date: goal.targetDate,
+      })
+      .select()
+      .single();
     if (error) throw toDataError(error);
-    return { id: data.id, name: data.name, icon: data.icon, current: data.current_amount, target: data.target_amount, color: data.color, targetDate: data.target_date };
+    return {
+      id: data.id,
+      name: data.name,
+      icon: data.icon,
+      current: data.current_amount,
+      target: data.target_amount,
+      color: data.color,
+      targetDate: data.target_date,
+    };
   },
 
   async update(id: string, goal: Partial<SavingsGoal>): Promise<void> {
@@ -202,7 +334,11 @@ export const savingsService = {
     if (goal.target !== undefined) updates.target_amount = goal.target;
     if (goal.color !== undefined) updates.color = goal.color;
     if (goal.targetDate !== undefined) updates.target_date = goal.targetDate;
-    const { data, error } = await supabase.from('savings_goals').update(updates).eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('savings_goals')
+      .update(updates)
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
@@ -220,17 +356,60 @@ export const savingsService = {
 export const debtsService = {
   async getAll(): Promise<Debt[]> {
     const supabase = createClient();
-    const { data, error } = await supabase.from('debts').select('*').order('created_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('debts')
+      .select('*')
+      .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
-    return (data || []).map(r => ({ id: r.id, name: r.name, institution: r.institution, icon: r.icon, balance: r.balance, limit: r.credit_limit, monthlyPayment: r.monthly_payment, dueDate: r.due_date, type: r.debt_type, color: r.color, interestRate: r.interest_rate }));
+    return (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      institution: r.institution,
+      icon: r.icon,
+      balance: r.balance,
+      limit: r.credit_limit,
+      monthlyPayment: r.monthly_payment,
+      dueDate: r.due_date,
+      type: r.debt_type,
+      color: r.color,
+      interestRate: r.interest_rate,
+    }));
   },
 
   async create(debt: Omit<Debt, 'id'>): Promise<Debt> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
-    const { data, error } = await supabase.from('debts').insert({ user_id: userId, name: debt.name, institution: debt.institution, icon: debt.icon, balance: debt.balance, credit_limit: debt.limit, monthly_payment: debt.monthlyPayment, due_date: debt.dueDate, debt_type: debt.type, color: debt.color, interest_rate: debt.interestRate }).select().single();
+    const { data, error } = await supabase
+      .from('debts')
+      .insert({
+        user_id: userId,
+        name: debt.name,
+        institution: debt.institution,
+        icon: debt.icon,
+        balance: debt.balance,
+        credit_limit: debt.limit,
+        monthly_payment: debt.monthlyPayment,
+        due_date: debt.dueDate,
+        debt_type: debt.type,
+        color: debt.color,
+        interest_rate: debt.interestRate,
+      })
+      .select()
+      .single();
     if (error) throw toDataError(error);
-    return { id: data.id, name: data.name, institution: data.institution, icon: data.icon, balance: data.balance, limit: data.credit_limit, monthlyPayment: data.monthly_payment, dueDate: data.due_date, type: data.debt_type, color: data.color, interestRate: data.interest_rate };
+    return {
+      id: data.id,
+      name: data.name,
+      institution: data.institution,
+      icon: data.icon,
+      balance: data.balance,
+      limit: data.credit_limit,
+      monthlyPayment: data.monthly_payment,
+      dueDate: data.due_date,
+      type: data.debt_type,
+      color: data.color,
+      interestRate: data.interest_rate,
+    };
   },
 
   async update(id: string, debt: Partial<Debt>): Promise<void> {
@@ -264,17 +443,54 @@ export const debtsService = {
 export const investmentsService = {
   async getAll(): Promise<Investment[]> {
     const supabase = createClient();
-    const { data, error } = await supabase.from('investments').select('*').order('created_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('investments')
+      .select('*')
+      .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
-    return (data || []).map(r => ({ id: r.id, name: r.name, ticker: r.ticker, type: r.investment_type, shares: r.shares, price: r.price, cost: r.cost, icon: r.icon, color: r.color }));
+    return (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      ticker: r.ticker,
+      type: r.investment_type,
+      shares: r.shares,
+      price: r.price,
+      cost: r.cost,
+      icon: r.icon,
+      color: r.color,
+    }));
   },
 
   async create(inv: Omit<Investment, 'id'>): Promise<Investment> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
-    const { data, error } = await supabase.from('investments').insert({ user_id: userId, name: inv.name, ticker: inv.ticker, investment_type: inv.type, shares: inv.shares, price: inv.price, cost: inv.cost, icon: inv.icon, color: inv.color }).select().single();
+    const { data, error } = await supabase
+      .from('investments')
+      .insert({
+        user_id: userId,
+        name: inv.name,
+        ticker: inv.ticker,
+        investment_type: inv.type,
+        shares: inv.shares,
+        price: inv.price,
+        cost: inv.cost,
+        icon: inv.icon,
+        color: inv.color,
+      })
+      .select()
+      .single();
     if (error) throw toDataError(error);
-    return { id: data.id, name: data.name, ticker: data.ticker, type: data.investment_type, shares: data.shares, price: data.price, cost: data.cost, icon: data.icon, color: data.color };
+    return {
+      id: data.id,
+      name: data.name,
+      ticker: data.ticker,
+      type: data.investment_type,
+      shares: data.shares,
+      price: data.price,
+      cost: data.cost,
+      icon: data.icon,
+      color: data.color,
+    };
   },
 
   async update(id: string, inv: Partial<Investment>): Promise<void> {
@@ -288,7 +504,11 @@ export const investmentsService = {
     if (inv.cost !== undefined) updates.cost = inv.cost;
     if (inv.icon !== undefined) updates.icon = inv.icon;
     if (inv.color !== undefined) updates.color = inv.color;
-    const { data, error } = await supabase.from('investments').update(updates).eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('investments')
+      .update(updates)
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
@@ -306,9 +526,12 @@ export const investmentsService = {
 export const subscriptionsService = {
   async getAll(): Promise<Subscription[]> {
     const supabase = createClient();
-    const { data, error } = await supabase.from('subscriptions').select('*').order('created_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
-    return (data || []).map(r => ({
+    return (data || []).map((r) => ({
       id: r.id,
       name: r.name,
       category: r.category,
@@ -326,19 +549,23 @@ export const subscriptionsService = {
   async create(sub: Omit<Subscription, 'id'>): Promise<Subscription> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
-    const { data, error } = await supabase.from('subscriptions').insert({
-      user_id: userId,
-      name: sub.name,
-      category: sub.category,
-      amount: sub.amount,
-      next_date: sub.nextDate,
-      next_payment_date: sub.nextPaymentDate,
-      payment_day: sub.paymentDay,
-      payment_status: sub.paymentStatus,
-      active: sub.active,
-      icon: sub.icon,
-      color: sub.color,
-    }).select().single();
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .insert({
+        user_id: userId,
+        name: sub.name,
+        category: sub.category,
+        amount: sub.amount,
+        next_date: sub.nextDate,
+        next_payment_date: sub.nextPaymentDate,
+        payment_day: sub.paymentDay,
+        payment_status: sub.paymentStatus,
+        active: sub.active,
+        icon: sub.icon,
+        color: sub.color,
+      })
+      .select()
+      .single();
     if (error) throw toDataError(error);
     return {
       id: data.id,
@@ -368,14 +595,20 @@ export const subscriptionsService = {
     if (sub.active !== undefined) updates.active = sub.active;
     if (sub.icon !== undefined) updates.icon = sub.icon;
     if (sub.color !== undefined) updates.color = sub.color;
-    const { data, error } = await supabase.from('subscriptions').update(updates).eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .update(updates)
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
 
   // Records the payment as an expense ("gasto") and advances next_payment_date
   // by one month from the current due date, keeping the same payment day.
-  async markAsPaid(sub: Subscription): Promise<{ nextPaymentDate: string; transaction: Transaction }> {
+  async markAsPaid(
+    sub: Subscription
+  ): Promise<{ nextPaymentDate: string; transaction: Transaction }> {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -422,7 +655,15 @@ export const subscriptionsService = {
 // ─── Load all finance data ─────────────────────────────────────────────────────
 
 export async function loadFinanceData(): Promise<FinanceData> {
-  const [accounts, transactions, budgetCategories, savingsGoals, debts, investments, subscriptions] = await Promise.all([
+  const [
+    accounts,
+    transactions,
+    budgetCategories,
+    savingsGoals,
+    debts,
+    investments,
+    subscriptions,
+  ] = await Promise.all([
     accountsService.getAll(),
     transactionsService.getAll(),
     budgetService.getAll(),
@@ -431,7 +672,15 @@ export async function loadFinanceData(): Promise<FinanceData> {
     investmentsService.getAll(),
     subscriptionsService.getAll(),
   ]);
-  return { accounts, transactions, budgetCategories, savingsGoals, debts, investments, subscriptions };
+  return {
+    accounts,
+    transactions,
+    budgetCategories,
+    savingsGoals,
+    debts,
+    investments,
+    subscriptions,
+  };
 }
 
 export { SavingsGoal };

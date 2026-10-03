@@ -26,7 +26,10 @@ function rowToNotification(row: Record<string, unknown>): Notification {
 // Throws a DataError when the request fails; [] only means "no notifications".
 export async function fetchNotifications(limit = 30): Promise<Notification[]> {
   const supabase = createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError) throw toDataError(authError);
   if (!user) throw authRequired();
 
@@ -42,7 +45,9 @@ export async function fetchNotifications(limit = 30): Promise<Notification[]> {
 }
 
 // ── Create notification (centralised, with deduplication) ───────────────────
-export async function createNotification(params: CreateNotificationParams): Promise<Notification | null> {
+export async function createNotification(
+  params: CreateNotificationParams
+): Promise<Notification | null> {
   const supabase = createClient();
 
   // Deduplication: avoid duplicate notifications for same event
@@ -89,7 +94,9 @@ export async function createNotification(params: CreateNotificationParams): Prom
 // ── Mark single notification as read ────────────────────────────────────────
 export async function markNotificationRead(notificationId: string): Promise<boolean> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   const { data, error } = await supabase
@@ -110,7 +117,9 @@ export async function markNotificationRead(notificationId: string): Promise<bool
 // ── Mark all notifications as read ──────────────────────────────────────────
 export async function markAllNotificationsRead(): Promise<boolean> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   const { error } = await supabase
@@ -146,7 +155,20 @@ export function formatNotificationTime(dateStr: string): string {
 
   // Older: show date
   const day = date.getDate();
-  const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const months = [
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sep',
+    'oct',
+    'nov',
+    'dic',
+  ];
   const month = months[date.getMonth()];
   return `${day} ${month}`;
 }
@@ -154,21 +176,21 @@ export function formatNotificationTime(dateStr: string): string {
 // ── Notification type config ─────────────────────────────────────────────────
 export function getNotificationTypeConfig(type: string): { icon: string; color: string } {
   const configs: Record<string, { icon: string; color: string }> = {
-    expense:      { icon: '🧾', color: '#FEE2E2' },
-    income:       { icon: '💰', color: '#DCFCE7' },
-    transfer:     { icon: '⇄',  color: '#DBEAFE' },
-    budget:       { icon: '📊', color: '#FEF9C3' },
-    savings:      { icon: '🐷', color: '#DCFCE7' },
-    goal:         { icon: '🎯', color: '#F3E8FF' },
-    debt:         { icon: '💳', color: '#FEE2E2' },
-    investment:   { icon: '📈', color: '#DBEAFE' },
+    expense: { icon: '🧾', color: '#FEE2E2' },
+    income: { icon: '💰', color: '#DCFCE7' },
+    transfer: { icon: '⇄', color: '#DBEAFE' },
+    budget: { icon: '📊', color: '#FEF9C3' },
+    savings: { icon: '🐷', color: '#DCFCE7' },
+    goal: { icon: '🎯', color: '#F3E8FF' },
+    debt: { icon: '💳', color: '#FEE2E2' },
+    investment: { icon: '📈', color: '#DBEAFE' },
     subscription: { icon: '📺', color: '#EDE9FE' },
-    account:      { icon: '🏦', color: '#DBEAFE' },
-    junta:        { icon: '👥', color: '#FEF9C3' },
-    reminder:     { icon: '⏰', color: '#FEF3C7' },
-    achievement:  { icon: '🏆', color: '#FEF9C3' },
-    system:       { icon: '🔔', color: '#F1F5F9' },
-    security:     { icon: '🔒', color: '#FEE2E2' },
+    account: { icon: '🏦', color: '#DBEAFE' },
+    junta: { icon: '👥', color: '#FEF9C3' },
+    reminder: { icon: '⏰', color: '#FEF3C7' },
+    achievement: { icon: '🏆', color: '#FEF9C3' },
+    system: { icon: '🔔', color: '#F1F5F9' },
+    security: { icon: '🔒', color: '#FEE2E2' },
   };
   return configs[type] ?? { icon: '🔔', color: '#F1F5F9' };
 }

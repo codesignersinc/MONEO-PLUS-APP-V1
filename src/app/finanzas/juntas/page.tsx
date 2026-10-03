@@ -4,10 +4,30 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Plus, Users, ChevronRight } from 'lucide-react';
-import { juntasService, juntaMembersService, juntaCyclesService, type Junta, type JuntaMember, type JuntaCycle } from '@/lib/supabaseJuntas';
+import {
+  juntasService,
+  juntaMembersService,
+  juntaCyclesService,
+  type Junta,
+  type JuntaMember,
+  type JuntaCycle,
+} from '@/lib/supabaseJuntas';
 import { getErrorMessage } from '@/lib/dataError';
 
-const MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const MONTHS_ES = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+];
 
 function fmtAmount(n: number) {
   return 'S/ ' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -26,10 +46,20 @@ interface JuntaWithMeta extends Junta {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  activa:     { label: 'Activa',       color: 'text-green-700',  bg: 'bg-green-100',  dot: 'bg-green-500'  },
-  en_pausa:   { label: 'En pausa',     color: 'text-orange-700', bg: 'bg-orange-100', dot: 'bg-orange-500' },
-  finalizada: { label: 'Finalizada',   color: 'text-gray-600',   bg: 'bg-gray-100',   dot: 'bg-gray-400'   },
-  pendiente:  { label: 'Pendiente',    color: 'text-blue-700',   bg: 'bg-blue-100',   dot: 'bg-blue-500'   },
+  activa: { label: 'Activa', color: 'text-green-700', bg: 'bg-green-100', dot: 'bg-green-500' },
+  en_pausa: {
+    label: 'En pausa',
+    color: 'text-orange-700',
+    bg: 'bg-orange-100',
+    dot: 'bg-orange-500',
+  },
+  finalizada: {
+    label: 'Finalizada',
+    color: 'text-gray-600',
+    bg: 'bg-gray-100',
+    dot: 'bg-gray-400',
+  },
+  pendiente: { label: 'Pendiente', color: 'text-blue-700', bg: 'bg-blue-100', dot: 'bg-blue-500' },
 };
 
 export default function JuntasPage() {
@@ -54,7 +84,8 @@ export default function JuntasPage() {
             juntaMembersService.getByJunta(j.id),
             juntaCyclesService.getByJunta(j.id),
           ]);
-          const currentCycle = cycles.find(c => c.status === 'activo') || cycles[cycles.length - 1] || null;
+          const currentCycle =
+            cycles.find((c) => c.status === 'activo') || cycles[cycles.length - 1] || null;
           return {
             ...j,
             memberCount: members.length,
@@ -101,7 +132,9 @@ export default function JuntasPage() {
         {/* Title below banner */}
         <div className="mt-4 mb-1">
           <h1 className="text-3xl font-black text-black leading-tight">Juntas</h1>
-          <p className="text-sm text-gray-500 font-medium mt-0.5">Ahorrar en grupo, sin complicaciones.</p>
+          <p className="text-sm text-gray-500 font-medium mt-0.5">
+            Ahorrar en grupo, sin complicaciones.
+          </p>
         </div>
       </div>
 
@@ -116,7 +149,10 @@ export default function JuntasPage() {
         </Link>
 
         {error && (
-          <div role="alert" className="mb-4 px-4 py-3 bg-red-50 border-2 border-red-400 rounded-2xl flex items-center justify-between gap-3">
+          <div
+            role="alert"
+            className="mb-4 px-4 py-3 bg-red-50 border-2 border-red-400 rounded-2xl flex items-center justify-between gap-3"
+          >
             <p className="text-sm font-bold text-red-600">{error}</p>
             <button
               type="button"
@@ -156,7 +192,9 @@ export default function JuntasPage() {
               {juntas.map((junta, idx) => {
                 const st = STATUS_CONFIG[junta.status] || STATUS_CONFIG.pendiente;
                 const cycle = junta.currentCycle;
-                const progress = cycle ? (cycle.totalCollected / Math.max(cycle.totalExpected, 1)) : 0;
+                const progress = cycle
+                  ? cycle.totalCollected / Math.max(cycle.totalExpected, 1)
+                  : 0;
                 const paidCount = cycle ? Math.round(progress * junta.memberCount) : 0;
 
                 return (
@@ -173,11 +211,17 @@ export default function JuntasPage() {
                           <Users className="w-5 h-5 text-black" strokeWidth={2.5} />
                         </div>
                         <div>
-                          <h3 className="font-black text-black text-base leading-tight">{junta.name}</h3>
-                          <p className="text-xs text-gray-500 font-medium">{junta.memberCount} participantes</p>
+                          <h3 className="font-black text-black text-base leading-tight">
+                            {junta.name}
+                          </h3>
+                          <p className="text-xs text-gray-500 font-medium">
+                            {junta.memberCount} participantes
+                          </p>
                         </div>
                       </div>
-                      <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-current ${st.color} ${st.bg}`}>
+                      <span
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-current ${st.color} ${st.bg}`}
+                      >
                         <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                         {st.label}
                       </span>
@@ -186,12 +230,18 @@ export default function JuntasPage() {
                     {/* Amounts row */}
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-xl font-black text-black">{fmtAmount(junta.contributionAmount)}</p>
-                        <p className="text-xs text-gray-500 font-medium capitalize">Aporte {junta.frequency}</p>
+                        <p className="text-xl font-black text-black">
+                          {fmtAmount(junta.contributionAmount)}
+                        </p>
+                        <p className="text-xs text-gray-500 font-medium capitalize">
+                          Aporte {junta.frequency}
+                        </p>
                       </div>
                       {junta.firstDrawDate && (
                         <div className="text-right">
-                          <p className="text-sm font-black text-black">{fmtDate(junta.firstDrawDate)}</p>
+                          <p className="text-sm font-black text-black">
+                            {fmtDate(junta.firstDrawDate)}
+                          </p>
                           <p className="text-xs text-gray-500 font-medium">Próximo aporte</p>
                         </div>
                       )}
@@ -220,7 +270,9 @@ export default function JuntasPage() {
                     {/* Footer */}
                     <div className="flex items-center justify-between">
                       {junta.myTurnLabel ? (
-                        <p className="text-xs font-bold text-[#7C3AED]">Tu turno: {junta.myTurnLabel}</p>
+                        <p className="text-xs font-bold text-[#7C3AED]">
+                          Tu turno: {junta.myTurnLabel}
+                        </p>
                       ) : (
                         <p className="text-xs text-gray-400 font-medium">Ver detalles →</p>
                       )}

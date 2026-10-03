@@ -209,26 +209,26 @@ export const juntasService = {
       .select('*')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return (data || []).map(r => mapJunta(r as Record<string, unknown>));
+    return (data || []).map((r) => mapJunta(r as Record<string, unknown>));
   },
 
   // Resolves null when the junta does not exist (or is not visible to the user);
   // throws a DataError when the request itself fails.
   async getById(id: string): Promise<Junta | null> {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('juntas')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from('juntas').select('*').eq('id', id).maybeSingle();
     if (error) throw toDataError(error);
     if (!data) return null;
     return mapJunta(data as Record<string, unknown>);
   },
 
-  async create(junta: Omit<Junta, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<Junta | null> {
+  async create(
+    junta: Omit<Junta, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+  ): Promise<Junta | null> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('juntas')
@@ -258,7 +258,8 @@ export const juntasService = {
     const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (updates.name !== undefined) payload.name = updates.name;
     if (updates.description !== undefined) payload.description = updates.description;
-    if (updates.contributionAmount !== undefined) payload.contribution_amount = updates.contributionAmount;
+    if (updates.contributionAmount !== undefined)
+      payload.contribution_amount = updates.contributionAmount;
     if (updates.status !== undefined) payload.status = updates.status;
     if (updates.maxParticipants !== undefined) payload.max_participants = updates.maxParticipants;
     const { data, error } = await supabase.from('juntas').update(payload).eq('id', id).select('id');
@@ -278,7 +279,7 @@ export const juntaMembersService = {
       .eq('junta_id', juntaId)
       .order('created_at', { ascending: true });
     if (error) throw error;
-    return (data || []).map(r => mapMember(r as Record<string, unknown>));
+    return (data || []).map((r) => mapMember(r as Record<string, unknown>));
   },
 
   async create(member: Omit<JuntaMember, 'id' | 'createdAt'>): Promise<JuntaMember | null> {
@@ -306,7 +307,11 @@ export const juntaMembersService = {
     if (updates.status !== undefined) payload.status = updates.status;
     if (updates.displayName !== undefined) payload.display_name = updates.displayName;
     if (updates.joinedAt !== undefined) payload.joined_at = updates.joinedAt;
-    const { data, error } = await supabase.from('junta_members').update(payload).eq('id', id).select('id');
+    const { data, error } = await supabase
+      .from('junta_members')
+      .update(payload)
+      .eq('id', id)
+      .select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
   },
@@ -323,7 +328,7 @@ export const juntaCyclesService = {
       .eq('junta_id', juntaId)
       .order('cycle_number', { ascending: true });
     if (error) throw error;
-    return (data || []).map(r => mapCycle(r as Record<string, unknown>));
+    return (data || []).map((r) => mapCycle(r as Record<string, unknown>));
   },
 
   async create(cycle: Omit<JuntaCycle, 'id' | 'createdAt'>): Promise<JuntaCycle | null> {
@@ -376,12 +381,12 @@ export const juntaTurnsService = {
       .eq('junta_id', juntaId)
       .order('turn_order', { ascending: true });
     if (error) throw error;
-    return (data || []).map(r => mapTurn(r as Record<string, unknown>));
+    return (data || []).map((r) => mapTurn(r as Record<string, unknown>));
   },
 
   async createMany(turns: Omit<JuntaTurn, 'id' | 'createdAt'>[]): Promise<void> {
     const supabase = createClient();
-    const rows = turns.map(t => ({
+    const rows = turns.map((t) => ({
       junta_id: t.juntaId,
       member_id: t.memberId,
       turn_order: t.turnOrder,
@@ -406,10 +411,12 @@ export const juntaContributionsService = {
       .eq('cycle_id', cycleId)
       .order('created_at', { ascending: true });
     if (error) throw error;
-    return (data || []).map(r => mapContribution(r as Record<string, unknown>));
+    return (data || []).map((r) => mapContribution(r as Record<string, unknown>));
   },
 
-  async create(contribution: Omit<JuntaContribution, 'id' | 'createdAt'>): Promise<JuntaContribution | null> {
+  async create(
+    contribution: Omit<JuntaContribution, 'id' | 'createdAt'>
+  ): Promise<JuntaContribution | null> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('junta_contributions')
@@ -444,7 +451,7 @@ export const juntaInvitesService = {
       .eq('junta_id', juntaId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return (data || []).map(r => ({
+    return (data || []).map((r) => ({
       id: r.id as string,
       juntaId: r.junta_id as string,
       inviteCode: r.invite_code as string,
@@ -459,7 +466,9 @@ export const juntaInvitesService = {
 
   async create(juntaId: string, code: string): Promise<JuntaInvite | null> {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('junta_invites')
@@ -499,7 +508,7 @@ export const juntaEventsService = {
       .order('created_at', { ascending: false })
       .limit(50);
     if (error) throw error;
-    return (data || []).map(r => mapEvent(r as Record<string, unknown>));
+    return (data || []).map((r) => mapEvent(r as Record<string, unknown>));
   },
 
   async create(event: Omit<JuntaEvent, 'id' | 'createdAt'>): Promise<void> {
@@ -518,7 +527,13 @@ export const juntaEventsService = {
 // ─── Notification Architecture (prepared for future push notifications) ───────
 
 export type JuntaNotificationType =
-  | 'proximo_aporte' |'aporte_pendiente' |'aporte_confirmado' |'sorteo_proximo' |'resultado_sorteo' |'turno_proximo' |'junta_completada';
+  | 'proximo_aporte'
+  | 'aporte_pendiente'
+  | 'aporte_confirmado'
+  | 'sorteo_proximo'
+  | 'resultado_sorteo'
+  | 'turno_proximo'
+  | 'junta_completada';
 
 export interface JuntaNotificationPayload {
   type: JuntaNotificationType;
@@ -532,11 +547,15 @@ export interface JuntaNotificationPayload {
 // Prepared notification dispatcher — connects to push service when available
 export function prepareJuntaNotification(payload: JuntaNotificationPayload): void {
   // Architecture hook: log event for future push notification integration
-  juntaEventsService.create({
-    juntaId: payload.juntaId,
-    actorMemberId: null,
-    eventType: `notification_${payload.type}`,
-    description: `Notificación preparada: ${payload.type}`,
-    metadata: payload as unknown as Record<string, unknown>,
-  }).catch(() => {/* silent */});
+  juntaEventsService
+    .create({
+      juntaId: payload.juntaId,
+      actorMemberId: null,
+      eventType: `notification_${payload.type}`,
+      description: `Notificación preparada: ${payload.type}`,
+      metadata: payload as unknown as Record<string, unknown>,
+    })
+    .catch(() => {
+      /* silent */
+    });
 }

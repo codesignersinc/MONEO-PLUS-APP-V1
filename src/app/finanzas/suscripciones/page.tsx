@@ -4,10 +4,30 @@ import { subscriptionsService, Subscription } from '@/lib/supabaseFinance';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
-import { Plus, X, Pencil, Trash2, RefreshCcw, ToggleLeft, ToggleRight, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import {
+  Plus,
+  X,
+  Pencil,
+  Trash2,
+  RefreshCcw,
+  ToggleLeft,
+  ToggleRight,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+} from 'lucide-react';
 import SubscriptionServicePicker from '@/components/finance/SubscriptionServicePicker';
 
-const SUB_CATEGORIES = ['Entretenimiento', 'Música', 'Servicios', 'Software', 'Almacenamiento', 'Salud', 'Educación', 'Otro'];
+const SUB_CATEGORIES = [
+  'Entretenimiento',
+  'Música',
+  'Servicios',
+  'Software',
+  'Almacenamiento',
+  'Salud',
+  'Educación',
+  'Otro',
+];
 
 function computeStatus(nextPaymentDate: string | null): 'pending' | 'overdue' | 'paid' {
   if (!nextPaymentDate) return 'pending';
@@ -32,8 +52,13 @@ export default function SuscripcionesPage() {
   const [saving, setSaving] = useState(false);
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
   const [form, setForm] = useState({
-    name: '', category: 'Entretenimiento', amount: '',
-    nextPaymentDate: '', active: true, icon: '🎬', color: '#DC2626',
+    name: '',
+    category: 'Entretenimiento',
+    amount: '',
+    nextPaymentDate: '',
+    active: true,
+    icon: '🎬',
+    color: '#DC2626',
   });
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
@@ -42,48 +67,75 @@ export default function SuscripcionesPage() {
   const load = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    subscriptionsService.getAll().then(data => {
-      const updated = data.map(s => ({
-        ...s,
-        paymentStatus: s.paymentStatus === 'paid' ? 'paid' : computeStatus(s.nextPaymentDate),
-      }));
-      setSubs(updated as Subscription[]);
-    }).catch(setLoadError).finally(() => setLoading(false));
+    subscriptionsService
+      .getAll()
+      .then((data) => {
+        const updated = data.map((s) => ({
+          ...s,
+          paymentStatus: s.paymentStatus === 'paid' ? 'paid' : computeStatus(s.nextPaymentDate),
+        }));
+        setSubs(updated as Subscription[]);
+      })
+      .catch(setLoadError)
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const activeSubs = subs.filter(s => s.active);
+  const activeSubs = subs.filter((s) => s.active);
   const monthlyTotal = activeSubs.reduce((s, sub) => s + sub.amount, 0);
   const annualProjection = monthlyTotal * 12;
-  const pendingCount = subs.filter(s => s.active && s.paymentStatus === 'pending').length;
-  const overdueCount = subs.filter(s => s.active && s.paymentStatus === 'overdue').length;
+  const pendingCount = subs.filter((s) => s.active && s.paymentStatus === 'pending').length;
+  const overdueCount = subs.filter((s) => s.active && s.paymentStatus === 'overdue').length;
 
   const toggleSub = async (id: string) => {
-    const sub = subs.find(s => s.id === id);
+    const sub = subs.find((s) => s.id === id);
     if (!sub) return;
     try {
       await subscriptionsService.update(id, { active: !sub.active });
-      setSubs(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
-    } catch (err) { toast.showError(err); }
+      setSubs((prev) => prev.map((s) => (s.id === id ? { ...s, active: !s.active } : s)));
+    } catch (err) {
+      toast.showError(err);
+    }
   };
 
   const handleMarkPaid = async (sub: Subscription) => {
     setMarkingPaid(sub.id);
     try {
       const { nextPaymentDate } = await subscriptionsService.markAsPaid(sub);
-      setSubs(prev => prev.map(s => s.id === sub.id
-        ? { ...s, paymentStatus: computeStatus(nextPaymentDate), nextPaymentDate, nextDate: nextPaymentDate }
-        : s));
+      setSubs((prev) =>
+        prev.map((s) =>
+          s.id === sub.id
+            ? {
+                ...s,
+                paymentStatus: computeStatus(nextPaymentDate),
+                nextPaymentDate,
+                nextDate: nextPaymentDate,
+              }
+            : s
+        )
+      );
       toast.showSuccess(`Pago de ${sub.name} registrado como gasto`);
-    } catch (err) { toast.showError(err); } finally { setMarkingPaid(null); }
+    } catch (err) {
+      toast.showError(err);
+    } finally {
+      setMarkingPaid(null);
+    }
   };
 
   const openAdd = () => {
     setEditingSub(null);
-    setForm({ name: '', category: 'Entretenimiento', amount: '', nextPaymentDate: '', active: true, icon: '🎬', color: '#DC2626' });
+    setForm({
+      name: '',
+      category: 'Entretenimiento',
+      amount: '',
+      nextPaymentDate: '',
+      active: true,
+      icon: '🎬',
+      color: '#DC2626',
+    });
     setFormError('');
     setShowForm(true);
   };
@@ -91,8 +143,13 @@ export default function SuscripcionesPage() {
   const openEdit = (sub: Subscription) => {
     setEditingSub(sub);
     setForm({
-      name: sub.name, category: sub.category, amount: String(sub.amount),
-      nextPaymentDate: sub.nextPaymentDate ?? '', active: sub.active, icon: sub.icon, color: sub.color,
+      name: sub.name,
+      category: sub.category,
+      amount: String(sub.amount),
+      nextPaymentDate: sub.nextPaymentDate ?? '',
+      active: sub.active,
+      icon: sub.icon,
+      color: sub.color,
     });
     setFormError('');
     setShowForm(true);
@@ -106,7 +163,8 @@ export default function SuscripcionesPage() {
       const paymentDay = new Date(form.nextPaymentDate + 'T00:00:00').getDate();
       const status = computeStatus(form.nextPaymentDate);
       const subData: Omit<Subscription, 'id'> = {
-        name: form.name, category: form.category,
+        name: form.name,
+        category: form.category,
         amount: parseFloat(form.amount),
         nextDate: form.nextPaymentDate,
         nextPaymentDate: form.nextPaymentDate,
@@ -118,23 +176,27 @@ export default function SuscripcionesPage() {
       };
       if (editingSub) {
         await subscriptionsService.update(editingSub.id, subData);
-        setSubs(prev => prev.map(s => s.id === editingSub.id ? { ...s, ...subData } : s));
+        setSubs((prev) => prev.map((s) => (s.id === editingSub.id ? { ...s, ...subData } : s)));
       } else {
         const created = await subscriptionsService.create(subData);
-        setSubs(prev => [...prev, { ...created, paymentStatus: status }]);
+        setSubs((prev) => [...prev, { ...created, paymentStatus: status }]);
       }
       setShowForm(false);
     } catch (err) {
       console.error(err);
       setFormError(getErrorMessage(err));
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await subscriptionsService.delete(id);
-      setSubs(prev => prev.filter(s => s.id !== id));
-    } catch (err) { toast.showError(err); }
+      setSubs((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      toast.showError(err);
+    }
   };
 
   const statusBadge = (sub: Subscription) => {
@@ -188,7 +250,10 @@ export default function SuscripcionesPage() {
           onClick={openAdd}
           className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
         >
-          <Plus className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90" strokeWidth={2.5} />
+          <Plus
+            className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
+            strokeWidth={2.5}
+          />
           Agregar
         </button>
       </div>
@@ -199,8 +264,13 @@ export default function SuscripcionesPage() {
             <RefreshCcw className="w-4 h-4 text-purple-500" strokeWidth={1.75} />
             <p className="text-sm text-fin-muted">Gasto mensual en suscripciones</p>
           </div>
-          <p className="text-3xl font-manrope font-800 text-fin-text">S/ {monthlyTotal.toFixed(2)}</p>
-          <p className="text-sm text-fin-muted mt-1">Proyección anual: <span className="font-semibold text-fin-text">S/ {annualProjection.toFixed(2)}</span></p>
+          <p className="text-3xl font-manrope font-800 text-fin-text">
+            S/ {monthlyTotal.toFixed(2)}
+          </p>
+          <p className="text-sm text-fin-muted mt-1">
+            Proyección anual:{' '}
+            <span className="font-semibold text-fin-text">S/ {annualProjection.toFixed(2)}</span>
+          </p>
           {(pendingCount > 0 || overdueCount > 0) && (
             <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
               {overdueCount > 0 && (
@@ -224,9 +294,17 @@ export default function SuscripcionesPage() {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <RefreshCcw className="w-12 h-12 text-gray-200 mb-3" strokeWidth={1.25} />
           <p className="text-gray-500 font-medium mb-1">Sin suscripciones registradas</p>
-          <p className="text-sm text-gray-400 mb-4">Agrega tus suscripciones para controlar gastos recurrentes</p>
-          <button onClick={openAdd} className="group flex items-center gap-2 px-4 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200">
-            <Plus className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90" strokeWidth={2.5} />
+          <p className="text-sm text-gray-400 mb-4">
+            Agrega tus suscripciones para controlar gastos recurrentes
+          </p>
+          <button
+            onClick={openAdd}
+            className="group flex items-center gap-2 px-4 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+          >
+            <Plus
+              className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
+              strokeWidth={2.5}
+            />
             Agregar suscripción
           </button>
         </div>
@@ -234,10 +312,18 @@ export default function SuscripcionesPage() {
 
       {subs.length > 0 && (
         <div className="space-y-3">
-          {subs.map(sub => (
-            <div key={sub.id} className={`bg-white rounded-2xl border p-4 shadow-fin-card transition-all group ${sub.paymentStatus === 'overdue' && sub.active ? 'border-red-200' : sub.active ? 'border-fin-border' : 'border-gray-100 opacity-60'}`}>
+          {subs.map((sub) => (
+            <div
+              key={sub.id}
+              className={`bg-white rounded-2xl border p-4 shadow-fin-card transition-all group ${sub.paymentStatus === 'overdue' && sub.active ? 'border-red-200' : sub.active ? 'border-fin-border' : 'border-gray-100 opacity-60'}`}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: '#EDE9FE' }}>{sub.icon}</div>
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                  style={{ background: '#EDE9FE' }}
+                >
+                  {sub.icon}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-manrope font-700 text-fin-text">{sub.name}</p>
@@ -248,7 +334,9 @@ export default function SuscripcionesPage() {
                     {sub.nextPaymentDate && (
                       <>
                         <span className="w-1 h-1 rounded-full bg-gray-300" />
-                        <span className={`text-xs font-medium ${sub.paymentStatus === 'overdue' ? 'text-red-500' : 'text-fin-muted'}`}>
+                        <span
+                          className={`text-xs font-medium ${sub.paymentStatus === 'overdue' ? 'text-red-500' : 'text-fin-muted'}`}
+                        >
                           Pago: {formatDate(sub.nextPaymentDate)}
                         </span>
                       </>
@@ -256,28 +344,57 @@ export default function SuscripcionesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <span className="text-sm font-manrope font-700 text-fin-text mr-1">S/ {sub.amount.toFixed(2)}</span>
-                  {sub.active && (sub.paymentStatus === 'pending' || sub.paymentStatus === 'overdue') && (
-                    <button
-                      onClick={() => handleMarkPaid(sub)}
-                      disabled={markingPaid === sub.id}
-                      title="Marcar como pagado"
-                      aria-label="Marcar como pagado"
-                      className="group p-1.5 rounded-lg hover:bg-green-50 transition-all duration-150 disabled:opacity-50"
-                    >
-                      <CheckCircle2 className={`w-6 h-6 text-gray-400 group-hover:text-green-500 transition-colors ${markingPaid === sub.id ? 'animate-pulse' : ''}`} strokeWidth={1.75} />
-                    </button>
-                  )}
-                  <button onClick={() => toggleSub(sub.id)} className={`group p-1.5 rounded-lg transition-all duration-150 ${sub.active ? 'hover:bg-amber-50' : 'hover:bg-green-50'}`}>
-                    {sub.active
-                      ? <ToggleRight className="w-4 h-4 text-green-500 group-hover:text-amber-500 transition-colors" strokeWidth={1.75} />
-                      : <ToggleLeft className="w-4 h-4 text-gray-400 group-hover:text-green-500 transition-colors" strokeWidth={1.75} />}
+                  <span className="text-sm font-manrope font-700 text-fin-text mr-1">
+                    S/ {sub.amount.toFixed(2)}
+                  </span>
+                  {sub.active &&
+                    (sub.paymentStatus === 'pending' || sub.paymentStatus === 'overdue') && (
+                      <button
+                        onClick={() => handleMarkPaid(sub)}
+                        disabled={markingPaid === sub.id}
+                        title="Marcar como pagado"
+                        aria-label="Marcar como pagado"
+                        className="group p-1.5 rounded-lg hover:bg-green-50 transition-all duration-150 disabled:opacity-50"
+                      >
+                        <CheckCircle2
+                          className={`w-6 h-6 text-gray-400 group-hover:text-green-500 transition-colors ${markingPaid === sub.id ? 'animate-pulse' : ''}`}
+                          strokeWidth={1.75}
+                        />
+                      </button>
+                    )}
+                  <button
+                    onClick={() => toggleSub(sub.id)}
+                    className={`group p-1.5 rounded-lg transition-all duration-150 ${sub.active ? 'hover:bg-amber-50' : 'hover:bg-green-50'}`}
+                  >
+                    {sub.active ? (
+                      <ToggleRight
+                        className="w-4 h-4 text-green-500 group-hover:text-amber-500 transition-colors"
+                        strokeWidth={1.75}
+                      />
+                    ) : (
+                      <ToggleLeft
+                        className="w-4 h-4 text-gray-400 group-hover:text-green-500 transition-colors"
+                        strokeWidth={1.75}
+                      />
+                    )}
                   </button>
-                  <button onClick={() => openEdit(sub)} className="group p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150">
-                    <Pencil className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors" strokeWidth={1.75} />
+                  <button
+                    onClick={() => openEdit(sub)}
+                    className="group p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150"
+                  >
+                    <Pencil
+                      className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors"
+                      strokeWidth={1.75}
+                    />
                   </button>
-                  <button onClick={() => handleDelete(sub.id)} className="group p-1.5 rounded-lg hover:bg-red-50 transition-all duration-150">
-                    <Trash2 className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500 transition-colors" strokeWidth={1.75} />
+                  <button
+                    onClick={() => handleDelete(sub.id)}
+                    className="group p-1.5 rounded-lg hover:bg-red-50 transition-all duration-150"
+                  >
+                    <Trash2
+                      className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500 transition-colors"
+                      strokeWidth={1.75}
+                    />
                   </button>
                 </div>
               </div>
@@ -288,15 +405,20 @@ export default function SuscripcionesPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowForm(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={() => setShowForm(false)}
+        >
           <div className="absolute inset-0 bg-black/50" />
           <div
             className="relative bg-[#FAFAF8] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col max-h-[92vh]"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b-[3px] border-black">
-              <h2 className="font-black text-black text-lg">{editingSub ? 'Editar suscripción' : 'Nueva suscripción'}</h2>
+              <h2 className="font-black text-black text-lg">
+                {editingSub ? 'Editar suscripción' : 'Nueva suscripción'}
+              </h2>
               <button
                 onClick={() => setShowForm(false)}
                 className="w-9 h-9 rounded-xl bg-black flex items-center justify-center text-white hover:bg-gray-800 transition-all"
@@ -308,36 +430,46 @@ export default function SuscripcionesPage() {
             <div className="px-5 py-4 space-y-3 overflow-y-auto">
               {/* Service Picker */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Servicio</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Servicio
+                </label>
                 <SubscriptionServicePicker
                   value={form.name}
                   onChange={({ name, category, icon }) => {
-                    setForm(f => ({ ...f, name, category, icon }));
+                    setForm((f) => ({ ...f, name, category, icon }));
                   }}
                 />
               </div>
 
               {/* Category — auto-filled but editable */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Categoría</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Categoría
+                </label>
                 <select
                   value={form.category}
-                  onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                   className="w-full px-4 py-3 bg-white rounded-xl border-[2.5px] border-black text-sm font-bold text-black outline-none focus:ring-2 focus:ring-[#FFD43B] transition-all"
                 >
-                  {SUB_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {SUB_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               {/* Amount */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Monto mensual</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Monto mensual
+                </label>
                 <div className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl border-[2.5px] border-black focus-within:ring-2 focus-within:ring-[#FFD43B] transition-all">
                   <span className="text-black font-black text-sm">S/</span>
                   <input
                     type="number"
                     value={form.amount}
-                    onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
                     placeholder="0.00"
                     className="flex-1 bg-transparent text-sm font-black text-black outline-none"
                   />
@@ -346,17 +478,25 @@ export default function SuscripcionesPage() {
 
               {/* Date */}
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">Fecha de pago mensual</label>
+                <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                  Fecha de pago mensual
+                </label>
                 <input
                   type="date"
                   value={form.nextPaymentDate}
-                  onChange={e => setForm(f => ({ ...f, nextPaymentDate: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, nextPaymentDate: e.target.value }))}
                   className="w-full px-4 py-3 bg-white rounded-xl border-[2.5px] border-black text-sm font-bold text-black outline-none focus:ring-2 focus:ring-[#FFD43B] transition-all"
                 />
-                <p className="text-xs font-medium text-gray-500 mt-1">El día del mes se usará para los cobros recurrentes</p>
+                <p className="text-xs font-medium text-gray-500 mt-1">
+                  El día del mes se usará para los cobros recurrentes
+                </p>
               </div>
 
-              {formError && <p role="alert" className="text-sm font-semibold text-red-600">{formError}</p>}
+              {formError && (
+                <p role="alert" className="text-sm font-semibold text-red-600">
+                  {formError}
+                </p>
+              )}
 
               {/* Save button */}
               <button

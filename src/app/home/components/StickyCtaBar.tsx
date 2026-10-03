@@ -8,10 +8,10 @@ export default function StickyCtaBar() {
     const trigger = document.getElementById('sticky-trigger');
     if (!trigger) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => setShow(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '0px' }
-    );
+    const observer = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting), {
+      threshold: 0,
+      rootMargin: '0px',
+    });
     observer?.observe(trigger);
     return () => observer?.disconnect();
   }, []);
