@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Plus, Users, ChevronRight } from 'lucide-react';
 import { juntasService, juntaMembersService, juntaCyclesService, type Junta, type JuntaMember, type JuntaCycle } from '@/lib/supabaseJuntas';
+import { getErrorMessage } from '@/lib/dataError';
 
 const MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -44,12 +45,14 @@ export default function JuntasPage() {
   async function loadJuntas() {
     try {
       setLoading(true);
+      setError('');
       const raw = await juntasService.getAll();
       const enriched: JuntaWithMeta[] = await Promise.all(
         raw.map(async (j) => {
-          const [members, cycles] = await Promise.all([
-            juntaMembersService.getByJunta(j.id).catch(() => [] as JuntaMember[]),
-            juntaCyclesService.getByJunta(j.id).catch(() => [] as JuntaCycle[]),
+          // Failures propagate: a failed lookup must not show "0 miembros".
+          const [members, cycles]: [JuntaMember[], JuntaCycle[]] = await Promise.all([
+            juntaMembersService.getByJunta(j.id),
+            juntaCyclesService.getByJunta(j.id),
           ]);
           const currentCycle = cycles.find(c => c.status === 'activo') || cycles[cycles.length - 1] || null;
           return {
@@ -61,8 +64,9 @@ export default function JuntasPage() {
         })
       );
       setJuntas(enriched);
-    } catch {
-      setError('No se pudieron cargar las juntas.');
+    } catch (err) {
+      console.error(err);
+      setError(`No se pudieron cargar las juntas. ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -112,8 +116,15 @@ export default function JuntasPage() {
         </Link>
 
         {error && (
-          <div className="mb-4 px-4 py-3 bg-red-50 border-2 border-red-400 rounded-2xl">
+          <div role="alert" className="mb-4 px-4 py-3 bg-red-50 border-2 border-red-400 rounded-2xl flex items-center justify-between gap-3">
             <p className="text-sm font-bold text-red-600">{error}</p>
+            <button
+              type="button"
+              onClick={loadJuntas}
+              className="flex-shrink-0 px-3 py-1.5 bg-white border-2 border-black rounded-xl text-xs font-black text-black"
+            >
+              Reintentar
+            </button>
           </div>
         )}
 

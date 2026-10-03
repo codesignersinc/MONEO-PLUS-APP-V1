@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { LayoutDashboard, ArrowLeftRight, Wallet, TrendingUp, CreditCard, Landmark, CalendarDays, BarChart3, Settings2, LogOut, Zap, Target, DollarSign, Receipt, ChevronLeft, ChevronRight, Users, RefreshCw } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { useToast } from '@/components/ui/Toast';
 
 
 
@@ -44,6 +45,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   const isActive = (href: string) => {
     if (href === '/finanzas') return pathname === '/finanzas';
@@ -54,7 +56,9 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
     try {
       await signOut();
       router.replace('/login');
-    } catch {}
+    } catch (err) {
+      toast.showError(err);
+    }
   }
 
   return (

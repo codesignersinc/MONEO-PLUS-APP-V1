@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Shield } from 'lucide-react';
+import { getErrorMessage } from '@/lib/dataError';
 import {
   juntasService, juntaMembersService, juntaCyclesService, juntaTurnsService, juntaEventsService,
   type Junta, type JuntaMember, type JuntaCycle, type JuntaTurn
@@ -276,8 +277,9 @@ export default function SorteoPage() {
             setShowCountdown(true);
           }
         }
-      } catch {
-        setError('Error al cargar el sorteo.');
+      } catch (err) {
+        console.error(err);
+        setError(`Error al cargar el sorteo. ${getErrorMessage(err)}`);
       } finally {
         setLoading(false);
       }
@@ -374,8 +376,9 @@ export default function SorteoPage() {
       });
 
       setSaved(true);
-    } catch {
-      setError('Error al guardar el resultado.');
+    } catch (err) {
+      console.error(err);
+      setError(`Error al guardar el resultado. ${getErrorMessage(err)}`);
     } finally {
       setSaving(false);
     }

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { getErrorMessage } from '@/lib/dataError';
 import { ArrowLeft, MoreHorizontal, Calendar, CheckCircle, AlertCircle, Share2, Copy, MessageCircle, ChevronRight, Plus, Trophy, Clock } from 'lucide-react';
 import {
   juntasService, juntaMembersService, juntaCyclesService, juntaTurnsService,
@@ -537,11 +538,14 @@ export default function JuntaDetailPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notFound, setNotFound] = useState(false);
   const [showCreatedBanner, setShowCreatedBanner] = useState(isNewlyCreated);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
+      setNotFound(false);
       const [j, m, c, t, ev, inv] = await Promise.all([
         juntasService.getById(juntaId),
         juntaMembersService.getByJunta(juntaId),
@@ -550,7 +554,8 @@ export default function JuntaDetailPage() {
         juntaEventsService.getByJunta(juntaId),
         juntaInvitesService.getByJunta(juntaId),
       ]);
-      if (!j) { setError('Junta no encontrada.'); return; }
+      // getById resolves null only when the junta really doesn't exist / isn't visible.
+      if (!j) { setNotFound(true); return; }
       setJunta(j);
       setMembers(m);
       setCycles(c);
@@ -564,8 +569,9 @@ export default function JuntaDetailPage() {
         const contribs = await juntaContributionsService.getByCycle(currentCycle.id);
         setContributions(contribs);
       }
-    } catch {
-      setError('Error al cargar la junta.');
+    } catch (err) {
+      console.error(err);
+      setError(`Error al cargar la junta. ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -593,11 +599,29 @@ export default function JuntaDetailPage() {
     );
   }
 
-  if (error || !junta) {
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center px-4">
+        <div role="alert" className="text-center">
+          <p className="text-lg font-black text-black mb-4">{error}</p>
+          <div className="flex gap-2 justify-center">
+            <button onClick={loadData} className="px-4 py-2 bg-white border-2 border-black rounded-xl font-bold text-sm">
+              Reintentar
+            </button>
+            <button onClick={() => router.push('/finanzas/juntas')} className="px-4 py-2 bg-[#FFD43B] border-2 border-black rounded-xl font-bold text-sm">
+              Volver a Juntas
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !junta) {
     return (
       <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-lg font-black text-black mb-2">{error || 'Junta no encontrada'}</p>
+          <p className="text-lg font-black text-black mb-2">Junta no encontrada</p>
           <button onClick={() => router.push('/finanzas/juntas')} className="px-4 py-2 bg-[#FFD43B] border-2 border-black rounded-xl font-bold text-sm">
             Volver a Juntas
           </button>

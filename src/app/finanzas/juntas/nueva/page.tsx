@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, Users, Calendar, Lock, AlertTriangle, CheckCircle, ChevronDown } from 'lucide-react';
 import { juntasService, juntaMembersService, juntaCyclesService, juntaInvitesService, juntaEventsService } from '@/lib/supabaseJuntas';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 
 const PARTICIPANT_OPTIONS = [4, 6, 8, 10, 12];
 const MONTHS_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -52,6 +54,7 @@ export default function NuevaJuntaPage() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
 
   // Step 1
   const [name, setName] = useState('');
@@ -131,17 +134,24 @@ export default function NuevaJuntaPage() {
       });
 
       if (!junta) throw new Error('No se pudo crear la junta.');
+      // From here on the junta exists: follow-up failures are warnings, never a
+      // form error (retrying the form would create a duplicate junta).
 
       // Add creator as admin member
-      await juntaMembersService.create({
-        juntaId: junta.id,
-        userId: user.id,
-        displayName,
-        email: user.email || '',
-        role: 'admin',
-        status: 'unido',
-        joinedAt: new Date().toISOString(),
-      });
+      try {
+        await juntaMembersService.create({
+          juntaId: junta.id,
+          userId: user.id,
+          displayName,
+          email: user.email || '',
+          role: 'admin',
+          status: 'unido',
+          joinedAt: new Date().toISOString(),
+        });
+      } catch (memberErr) {
+        console.error('junta admin member creation failed:', memberErr);
+        toast.showError('La junta se creó, pero no se pudo agregarte como administrador.');
+      }
 
       // Create first cycle (non-blocking — don't abort junta creation if this fails)
       const drawDateStr = firstDrawDate.includes('T') ? firstDrawDate : `${firstDrawDate}T${firstDrawTime}:00`;
@@ -157,24 +167,33 @@ export default function NuevaJuntaPage() {
         drawWinnerMemberId: null,
         drawPerformedAt: null,
         drawSeed: null,
-      }).catch(() => {/* silent — cycle can be created later */});
+      }).catch((err) => {
+        // Non-blocking — the cycle can be created later, but tell the user.
+        console.error('junta first cycle creation failed:', err);
+        toast.showError('La junta se creó, pero no se pudo crear el primer ciclo.');
+      });
 
       // Create invite code (non-blocking)
       let code = generateInviteCode();
-      juntaInvitesService.create(junta.id, code).catch(() => {/* silent */});
+      juntaInvitesService.create(junta.id, code).catch((err) => {
+        console.error('junta invite creation failed:', err);
+        toast.showError('La junta se creó, pero no se pudo generar el código de invitación.');
+      });
 
-      // Log event (non-blocking)
+      // Log event (non-blocking; history only, so log without bothering the user)
       juntaEventsService.create({
         juntaId: junta.id,
         actorMemberId: null,
         eventType: 'junta_creada',
         description: `Junta "${junta.name}" creada`,
         metadata: { amount: parseFloat(amount), participants: effectiveParticipants, frequency },
-      }).catch(() => {/* silent */});
+      }).catch((err) => console.error('junta event log failed:', err));
 
       router.push(`/finanzas/juntas/${junta.id}?created=1`);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error al crear la junta.';
+      // Supabase errors carry a `code`: translate them; keep our own messages as-is.
+      const isSupabaseError = typeof e === 'object' && e !== null && 'code' in e;
+      const msg = !isSupabaseError && e instanceof Error ? e.message : getErrorMessage(e);
       setError(msg);
     } finally {
       setSaving(false);

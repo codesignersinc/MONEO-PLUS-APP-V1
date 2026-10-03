@@ -4,6 +4,7 @@ import { accountsService, transactionsService } from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
+import { getErrorMessage } from '@/lib/dataError';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -35,9 +36,13 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
   const [saving, setSaving] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
+  const [loadError, setLoadError] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
+      setLoadError('');
+      setSaveError('');
       const today = new Date();
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -62,7 +67,11 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
         if (opts.length > 0 && !selectedAccount) {
           setSelectedAccount(opts[0]);
         }
-      }).catch(console.error);
+      }).catch((err) => {
+        // Not the same as "no accounts": tell the user loading failed.
+        console.error(err);
+        setLoadError(`No pudimos cargar tus cuentas. ${getErrorMessage(err)}`);
+      });
     }
   }, [isOpen]);
 
@@ -79,6 +88,7 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
   const handleSave = async () => {
     if (!amount || !name || !selectedAccount) return;
     setSaving(true);
+    setSaveError('');
     try {
       const amt = parseFloat(amount);
       const finalAmt = activeTab === 'gasto' ? -Math.abs(amt) : Math.abs(amt);
@@ -111,7 +121,9 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
       setName('');
       setNote('');
     } catch (err) {
+      // Keep the modal open with the user's data so they can retry.
       console.error(err);
+      setSaveError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -235,6 +247,9 @@ export default function AddTransactionModal({ isOpen, onClose, onSaved }: AddTra
           {/* Note */}
           <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="Nota (opcional)"
             className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors" />
+
+          {loadError && <p role="alert" className="text-sm font-semibold text-red-600">{loadError}</p>}
+          {saveError && <p role="alert" className="text-sm font-semibold text-red-600">{saveError}</p>}
 
           {/* Save */}
           <button onClick={handleSave} disabled={!amount || !name || saving}

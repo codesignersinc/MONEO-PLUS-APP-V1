@@ -6,6 +6,8 @@ import { juntasService, juntaMembersService, juntaCyclesService, juntaTurnsServi
 import { accountsService } from '@/lib/supabaseFinance';
 import type { Account } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 
 type PaymentTab = 'yape' | 'plin' | 'transferencia' | 'efectivo';
 
@@ -214,6 +216,7 @@ export default function AportePage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
 
   const [amount, setAmount] = useState('');
   const [activeTab, setActiveTab] = useState<PaymentTab>('yape');
@@ -230,7 +233,8 @@ export default function AportePage() {
           juntaMembersService.getByJunta(juntaId),
           juntaCyclesService.getByJunta(juntaId),
           juntaTurnsService.getByJunta(juntaId),
-          accountsService.getAll().catch(() => [] as Account[]),
+          // Propagate failures: "no accounts" must not be shown when loading failed.
+          accountsService.getAll(),
         ]);
         setJunta(j);
         setMembers(m);
@@ -254,8 +258,9 @@ export default function AportePage() {
         }
 
         setRecipientAccounts(accs);
-      } catch {
-        setError('Error al cargar los datos.');
+      } catch (err) {
+        console.error(err);
+        setError(`Error al cargar los datos. ${getErrorMessage(err)}`);
       } finally {
         setLoading(false);
       }
@@ -287,27 +292,41 @@ export default function AportePage() {
         paidAt: isEfectivo ? null : new Date().toISOString(),
         transactionType: 'junta_contribution',
       });
+      // From here on the contribution is saved: follow-up failures are warnings,
+      // never a form error (retrying would duplicate the contribution).
 
       if (!isEfectivo) {
+        // NOTE: client-side read-modify-write total (audit C-03) — unchanged here.
         const newTotal = currentCycle.totalCollected + parseFloat(amount);
         const supabaseClient = createClient();
-        await supabaseClient
+        const { data: updated, error: totalError } = await supabaseClient
           .from('junta_cycles')
           .update({ total_collected: newTotal, updated_at: new Date().toISOString() })
-          .eq('id', currentCycle.id);
+          .eq('id', currentCycle.id)
+          .select('id');
+        if (totalError || !updated || updated.length === 0) {
+          console.error('junta total_collected update failed:', totalError);
+          toast.showError('El aporte se registró, pero no se pudo actualizar el total recaudado del ciclo.');
+        }
       }
 
-      await juntaEventsService.create({
-        juntaId,
-        actorMemberId: myMember.id,
-        eventType: 'aporte_registrado',
-        description: `${myMember.displayName} registró un aporte de S/ ${parseFloat(amount).toFixed(2)} vía ${activeTab}${isEfectivo ? ' (pendiente de aprobación)' : ''}`,
-        metadata: { amount: parseFloat(amount), method: activeTab, status: isEfectivo ? 'pendiente' : 'pagado' },
-      });
+      try {
+        await juntaEventsService.create({
+          juntaId,
+          actorMemberId: myMember.id,
+          eventType: 'aporte_registrado',
+          description: `${myMember.displayName} registró un aporte de S/ ${parseFloat(amount).toFixed(2)} vía ${activeTab}${isEfectivo ? ' (pendiente de aprobación)' : ''}`,
+          metadata: { amount: parseFloat(amount), method: activeTab, status: isEfectivo ? 'pendiente' : 'pagado' },
+        });
+      } catch (eventErr) {
+        console.error('junta event log failed:', eventErr);
+        toast.showError('El aporte se registró, pero no se pudo agregar al historial de la junta.');
+      }
 
       setSuccess(true);
-    } catch {
-      setError('Error al registrar el aporte.');
+    } catch (err) {
+      console.error(err);
+      setError(`Error al registrar el aporte. ${getErrorMessage(err)}`);
     } finally {
       setSaving(false);
     }

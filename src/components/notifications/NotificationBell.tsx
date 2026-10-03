@@ -9,9 +9,12 @@ import {
 } from '@/lib/notifications';
 import type { Notification } from '@/types/notifications';
 import NotificationPanel from './NotificationPanel';
+import { useToast } from '@/components/ui/Toast';
+import { getErrorMessage } from '@/lib/dataError';
 
 export default function NotificationBell() {
   const { user } = useAuth();
+  const toast = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +33,9 @@ export default function NotificationBell() {
     try {
       const data = await fetchNotifications(30);
       setNotifications(data);
-    } catch {
-      setError('Error al cargar notificaciones');
+    } catch (err) {
+      console.error(err);
+      setError(`Error al cargar notificaciones. ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -97,17 +101,28 @@ export default function NotificationBell() {
     };
   }, [user?.id]);
 
+  // Optimistic updates are rolled back when the server rejects the change.
   async function handleMarkRead(id: string) {
+    const previous = notifications;
     setNotifications(prev =>
       prev.map(n => n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n)
     );
-    await markNotificationRead(id);
+    const ok = await markNotificationRead(id);
+    if (!ok) {
+      setNotifications(previous);
+      toast.showError('No se pudo marcar la notificación como leída.');
+    }
   }
 
   async function handleMarkAllRead() {
+    const previous = notifications;
     const now = new Date().toISOString();
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true, readAt: now })));
-    await markAllNotificationsRead();
+    const ok = await markAllNotificationsRead();
+    if (!ok) {
+      setNotifications(previous);
+      toast.showError('No se pudieron marcar las notificaciones como leídas.');
+    }
   }
 
   function handleToggle() {

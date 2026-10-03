@@ -9,6 +9,8 @@ import { createClient } from '@/lib/supabase/client';
 import { transactionsService, accountsService, subscriptionsService, savingsService } from '@/lib/supabaseFinance';
 import Icon from '@/components/ui/AppIcon';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { useToast } from '@/components/ui/Toast';
+import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
 
 
 interface MobileNavProps {
@@ -147,6 +149,7 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   const handleSave = async () => {
     if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
     setSaving(true);
+    setError('');
     try {
       const accounts = await accountsService.getAll();
       await transactionsService.create({
@@ -162,7 +165,7 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
         time: new Date().toTimeString().slice(0, 5),
       });
       onSuccess();
-    } catch { setError('Error al guardar.'); } finally { setSaving(false); }
+    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
   };
 
   return (
@@ -191,6 +194,7 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const [status, setStatus] = useState<'pendiente' | 'cobrado'>('cobrado');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
 
   const handleCat = (label: string) => {
     const c = INCOME_CATEGORIES.find(x => x.label === label);
@@ -201,10 +205,12 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const handleSave = async () => {
     if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
     setSaving(true);
+    setError('');
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError('No autenticado.'); setSaving(false); return; }
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw toDataError(authError);
+      if (!user) throw authRequired();
       const entryDate = collectionDate || new Date().toISOString().split('T')[0];
       const { data, error: dbErr } = await supabase.from('income_entries').insert({
         user_id: user.id,
@@ -216,9 +222,11 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
         notes,
         status,
       }).select().single();
-      if (dbErr) throw dbErr;
+      if (dbErr) throw toDataError(dbErr);
       if (status === 'cobrado' && data) {
-        await supabase.from('transactions').insert({
+        // The income entry is already saved: a sync failure is a warning, not a
+        // form error (retrying the form would duplicate the entry).
+        const { error: syncError } = await supabase.from('transactions').insert({
           user_id: user.id,
           name: name.trim(),
           category,
@@ -230,9 +238,13 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
           transaction_type: 'ingreso',
           notes,
         });
+        if (syncError) {
+          console.error('income → transactions sync failed:', syncError);
+          toast.showError('El ingreso se guardó, pero no se pudo registrar en Movimientos.');
+        }
       }
       onSuccess();
-    } catch { setError('Error al guardar.'); } finally { setSaving(false); }
+    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
   };
 
   return (
@@ -300,6 +312,7 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
   const [status, setStatus] = useState<'pendiente' | 'pagado'>('pendiente');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
 
   const handleCat = (label: string) => {
     const c = PAGO_CATEGORIES.find(x => x.label === label);
@@ -310,13 +323,15 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
   const handleSave = async () => {
     if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
     setSaving(true);
+    setError('');
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError('No autenticado.'); setSaving(false); return; }
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw toDataError(authError);
+      if (!user) throw authRequired();
       const pDate = paymentDate || new Date().toISOString().split('T')[0];
       const paymentDay = new Date(pDate + 'T00:00:00').getDate();
-      await supabase.from('pagos').insert({
+      const { error: dbErr } = await supabase.from('pagos').insert({
         user_id: user.id,
         name: name.trim(),
         amount: parseFloat(amount),
@@ -328,8 +343,10 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
         is_recurring: false,
         payment_day: paymentDay,
       });
+      if (dbErr) throw toDataError(dbErr);
       if (status === 'pagado') {
-        await supabase.from('transactions').insert({
+        // The payment is already saved: a sync failure is a warning, not a form error.
+        const { error: syncError } = await supabase.from('transactions').insert({
           user_id: user.id,
           name: name.trim(),
           category,
@@ -341,9 +358,13 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
           transaction_type: 'gasto',
           notes,
         });
+        if (syncError) {
+          console.error('pago → transactions sync failed:', syncError);
+          toast.showError('El pago se guardó, pero no se pudo registrar en Movimientos.');
+        }
       }
       onSuccess();
-    } catch { setError('Error al guardar.'); } finally { setSaving(false); }
+    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
   };
 
   return (
@@ -412,6 +433,7 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
   const handleSave = async () => {
     if (!name.trim() || !amount || !nextPaymentDate) { setError('Completa nombre, monto y fecha.'); return; }
     setSaving(true);
+    setError('');
     try {
       const paymentDay = new Date(nextPaymentDate + 'T00:00:00').getDate();
       await subscriptionsService.create({
@@ -427,7 +449,7 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
         color: '#7C3AED',
       });
       onSuccess();
-    } catch { setError('Error al guardar.'); } finally { setSaving(false); }
+    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
   };
 
   return (
@@ -480,6 +502,7 @@ function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSucc
   const handleSave = async () => {
     if (!name.trim() || !amount) { setError('Completa nombre y monto.'); return; }
     setSaving(true);
+    setError('');
     try {
       const accounts = await accountsService.getAll();
       await transactionsService.create({
@@ -495,7 +518,7 @@ function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSucc
         time: new Date().toTimeString().slice(0, 5),
       });
       onSuccess();
-    } catch { setError('Error al guardar.'); } finally { setSaving(false); }
+    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
   };
 
   return (
@@ -528,6 +551,7 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
   const handleSave = async () => {
     if (!name.trim() || !target) { setError('Completa nombre y meta.'); return; }
     setSaving(true);
+    setError('');
     try {
       await savingsService.create({
         name: name.trim(),
@@ -538,7 +562,7 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
         targetDate,
       });
       onSuccess();
-    } catch { setError('Error al guardar.'); } finally { setSaving(false); }
+    } catch (err) { console.error(err); setError(getErrorMessage(err)); } finally { setSaving(false); }
   };
 
   return (
@@ -675,6 +699,7 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeForm, setActiveForm] = useState<FormKey>(null);
   const [successMsg, setSuccessMsg] = useState('');
+  const toast = useToast();
 
   const isActive = (href: string) => {
     if (href === '/finanzas') return pathname === '/finanzas';
@@ -689,7 +714,7 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
   ].some((h) => pathname.startsWith(h));
 
   async function handleSignOut() {
-    try { await signOut(); router.replace('/login'); } catch {}
+    try { await signOut(); router.replace('/login'); } catch (err) { toast.showError(err); }
     setSidebarOpen(false);
   }
 
