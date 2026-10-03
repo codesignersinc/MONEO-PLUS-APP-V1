@@ -523,6 +523,17 @@ export const investmentsService = {
 
 // ─── Subscriptions ─────────────────────────────────────────────────────────────
 
+// Shifts a YYYY-MM-DD date by `months`, using `paymentDay` clamped to the target
+// month's last day (e.g. day 31 → 30 Nov, 28/29 Feb).
+export function addMonthKeepingDay(dateStr: string, paymentDay: number, months: number): string {
+  const base = new Date(dateStr + 'T00:00:00');
+  const target = new Date(base.getFullYear(), base.getMonth() + months, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  const day = Math.min(paymentDay || base.getDate(), lastDay);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(day)}`;
+}
+
 export const subscriptionsService = {
   async getAll(): Promise<Subscription[]> {
     const supabase = createClient();
@@ -606,42 +617,42 @@ export const subscriptionsService = {
 
   // Records the payment as an expense ("gasto") and advances next_payment_date
   // by one month from the current due date, keeping the same payment day.
+  // Pays the current cycle from `account`: records the expense, debits the account
+  // balance by `debitAmount` (in the account's currency), marks the subscription
+  // as paid and advances next_payment_date one month, keeping the payment day.
   async markAsPaid(
-    sub: Subscription
-  ): Promise<{ nextPaymentDate: string; transaction: Transaction }> {
+    sub: Subscription,
+    account: Account,
+    debitAmount: number
+  ): Promise<{ nextPaymentDate: string; newBalance: number; transaction: Transaction }> {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-
-    const base = sub.nextPaymentDate ? new Date(sub.nextPaymentDate + 'T00:00:00') : now;
-    const year = base.getFullYear();
-    const month = base.getMonth() + 1;
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    const next = new Date(year, month, Math.min(sub.paymentDay || base.getDate(), lastDay));
-    const nextDateStr = `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`;
-
-    const accounts = await accountsService.getAll();
-    const account = accounts[0];
+    const nextDateStr = addMonthKeepingDay(sub.nextPaymentDate ?? todayStr, sub.paymentDay, 1);
+    const amount = Math.abs(debitAmount);
 
     const transaction = await transactionsService.create({
       name: sub.name,
       type: 'gasto',
-      amount: -Math.abs(sub.amount),
+      amount: -amount,
       category: 'Suscripciones',
       categoryIcon: sub.icon || '📱',
-      accountId: account?.id ?? '',
-      account: account?.name ?? '',
+      accountId: account.id,
+      account: account.name,
       notes: `Pago de suscripción${sub.nextPaymentDate ? ` (vencimiento ${sub.nextPaymentDate})` : ''}`,
       date: new Date(todayStr + 'T12:00:00').toISOString(),
       time: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
     });
 
+    const newBalance = Math.round((account.balance - amount) * 100) / 100;
+    await accountsService.update(account.id, { balance: newBalance });
+
     await subscriptionsService.update(sub.id, {
-      paymentStatus: 'pending',
+      paymentStatus: 'paid',
       nextPaymentDate: nextDateStr,
       nextDate: nextDateStr,
     });
-    return { nextPaymentDate: nextDateStr, transaction };
+    return { nextPaymentDate: nextDateStr, newBalance, transaction };
   },
 
   async delete(id: string): Promise<void> {
