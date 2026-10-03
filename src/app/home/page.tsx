@@ -117,7 +117,7 @@ export default function HomePage() {
               }}
             >
               Metric surfaces every subscription, categorizes every dollar, and fits it all on one
-              screen you'll actually want to look at.
+              screen you&apos;ll actually want to look at.
             </p>
           </div>
 
@@ -214,8 +214,8 @@ export default function HomePage() {
             Your money deserves <span className="text-gradient-violet">one screen.</span>
           </h2>
           <p className="reveal reveal-delay-2 font-sans text-[#9CA3AF] text-lg mb-10 leading-relaxed">
-            Join 4,200+ people who signed up this week. We'll scan every subscription the moment we
-            launch.
+            Join 4,200+ people who signed up this week. We&apos;ll scan every subscription the
+            moment we launch.
           </p>
           <div className="reveal reveal-delay-3 max-w-md mx-auto">
             <WaitlistForm />

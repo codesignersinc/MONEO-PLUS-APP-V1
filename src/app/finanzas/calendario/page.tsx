@@ -142,7 +142,7 @@ export default function CalendarioPage() {
       };
 
       transactions.forEach((tx: Transaction) => {
-        let d = new Date(tx.date + 'T12:00:00');
+        const d = new Date(tx.date + 'T12:00:00');
         if (d.getMonth() === month && d.getFullYear() === year) {
           addEvent(d.getDate(), {
             id: tx.id,
@@ -158,7 +158,7 @@ export default function CalendarioPage() {
         if (!sub.active) return;
         let day: number | null = null;
         if (sub.nextPaymentDate) {
-          let d = new Date(sub.nextPaymentDate + 'T12:00:00');
+          const d = new Date(sub.nextPaymentDate + 'T12:00:00');
           if (d.getMonth() === month && d.getFullYear() === year) day = d.getDate();
         } else if (sub.paymentDay) {
           day = sub.paymentDay;
@@ -176,7 +176,7 @@ export default function CalendarioPage() {
 
       pagos.forEach((p: PagoEntry) => {
         if (!p.paymentDate) return;
-        let d = new Date(p.paymentDate + 'T12:00:00');
+        const d = new Date(p.paymentDate + 'T12:00:00');
         if (d.getMonth() === month && d.getFullYear() === year) {
           addEvent(d.getDate(), {
             id: p.id,
@@ -190,7 +190,7 @@ export default function CalendarioPage() {
 
       savings.forEach((g: SavingsGoal) => {
         if (!g.targetDate) return;
-        let d = new Date(g.targetDate + 'T12:00:00');
+        const d = new Date(g.targetDate + 'T12:00:00');
         if (d.getMonth() === month && d.getFullYear() === year) {
           addEvent(d.getDate(), {
             id: g.id,

@@ -230,7 +230,7 @@ export default function NuevaJuntaPage() {
         });
 
       // Create invite code (non-blocking)
-      let code = generateInviteCode();
+      const code = generateInviteCode();
       juntaInvitesService.create(junta.id, code).catch((err) => {
         console.error('junta invite creation failed:', err);
         toast.showError('La junta se creó, pero no se pudo generar el código de invitación.');

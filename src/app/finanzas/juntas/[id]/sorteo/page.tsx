@@ -333,7 +333,7 @@ export default function SorteoPage() {
           }
         } else if (j?.firstDrawDate) {
           // Show countdown if draw date is in the future
-          let target = j.firstDrawDate.includes('T')
+          const target = j.firstDrawDate.includes('T')
             ? new Date(j.firstDrawDate)
             : new Date(j.firstDrawDate + 'T00:00:00');
           if (target.getTime() > Date.now()) {

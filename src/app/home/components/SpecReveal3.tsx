@@ -279,7 +279,7 @@ export default function SpecReveal3() {
               </div>
               {savedPerMonth > 0 && (
                 <div className="font-sans text-xs text-[#6B7280] mt-1">
-                  That's ${(savedPerMonth * 12).toFixed(0)} back per year
+                  That&apos;s ${(savedPerMonth * 12).toFixed(0)} back per year
                 </div>
               )}
             </div>

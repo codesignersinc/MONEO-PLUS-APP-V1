@@ -204,7 +204,8 @@ export default function SpecSheet() {
         {/* CTA */}
         <div className={`reveal ${visible ? 'visible' : ''} reveal-delay-4 mt-12 text-center`}>
           <p className="font-sans text-[#6B7280] mb-6">
-            Seen enough? Join the waitlist — we'll scan your subscriptions the moment we launch.
+            Seen enough? Join the waitlist — we&apos;ll scan your subscriptions the moment we
+            launch.
           </p>
           <a
             href="#waitlist"

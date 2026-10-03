@@ -16,7 +16,7 @@ function injectTokenFromHeader(request: NextRequest): void {
 
 export async function middleware(request: NextRequest) {
   injectTokenFromHeader(request);
-  let supabaseResponse = NextResponse.next({ request });
+  const supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

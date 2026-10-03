@@ -60,13 +60,15 @@ export default function WaitlistForm({ compact = false }: WaitlistFormProps) {
             <path d="M20 6L9 17l-5-5" />
           </svg>
         </div>
-        <p className="font-mono text-sm text-[#A78BFA] mb-1">You're in, {firstName || 'friend'}.</p>
+        <p className="font-mono text-sm text-[#A78BFA] mb-1">
+          You&apos;re in, {firstName || 'friend'}.
+        </p>
         <p className="font-sans text-sm text-[#6B7280]">
           Waitlist position:{' '}
           <span className="text-[#EDEEF0] font-mono">#{position.toLocaleString()}</span>
         </p>
         <p className="font-sans text-xs text-[#4B5563] mt-2">
-          We'll scan your subscriptions the moment we launch.
+          We&apos;ll scan your subscriptions the moment we launch.
         </p>
       </div>
     );
