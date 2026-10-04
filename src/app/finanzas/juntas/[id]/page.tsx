@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getErrorMessage } from '@/lib/dataError';
@@ -87,8 +87,10 @@ type TabKey = 'resumen' | 'aportes' | 'participantes' | 'turnos' | 'actividad';
 
 // ── Countdown Timer ──────────────────────────────────────────────────────────
 
+// `total` is -1 until the first calculation, so "0" always means the draw time has
+// really been reached (not "not computed yet").
 function useCountdown(targetDateStr: string) {
-  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, total: 0 });
+  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, total: -1 });
 
   useEffect(() => {
     function calc() {
@@ -130,6 +132,10 @@ function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }
   const { h, m, s, total } = useCountdown(junta.firstDrawDate);
   const [pulse, setPulse] = useState(false);
   const [triggered, setTriggered] = useState(false);
+  // Last value seen while the page is open: only a live transition (> 0 → 0) opens the
+  // draw automatically. If the draw time had already passed when the page was opened,
+  // the user stays on the profile and can open the draw from the card.
+  const prevTotal = useRef(-1);
 
   useEffect(() => {
     const id = setInterval(() => setPulse((p) => !p), 1000);
@@ -137,11 +143,15 @@ function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }
   }, []);
 
   useEffect(() => {
-    if (total === 0 && !triggered && junta.firstDrawDate) {
+    const prev = prevTotal.current;
+    prevTotal.current = total;
+    if (total === 0 && prev > 0 && !triggered && junta.firstDrawDate) {
       setTriggered(true);
       onZero?.();
     }
   }, [total, triggered, junta.firstDrawDate, onZero]);
+
+  if (total < 0) return null;
 
   const isExpired = total === 0;
   const isUrgent = total > 0 && total < 3600000; // less than 1 hour
