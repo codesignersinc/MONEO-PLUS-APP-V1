@@ -5,7 +5,12 @@ import { useToast } from '@/components/ui/Toast';
 import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
 import { transactionsService, accountsService, Transaction } from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
-import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
+import {
+  buildCurrencyFields,
+  getCurrencyInfo,
+  formatCurrency,
+  getRateFromMap,
+} from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
 import {
@@ -293,15 +298,21 @@ export default function MovimientosPage() {
     const amt = parseFloat(form.amount);
     const selectedAcc = accounts.find((a) => a.id === form.accountId);
     const accCurrency = selectedAcc?.currency || 'PEN';
-    const rate = getRateFromMap(ratesMap, accCurrency, baseCurrency);
-    const baseAmt = Math.abs(amt) * rate;
+    const signedAmt = form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt);
+    const currencyFields = buildCurrencyFields({
+      amount: signedAmt,
+      currency: accCurrency,
+      baseCurrency,
+      rateToBase: getRateFromMap(ratesMap, accCurrency, baseCurrency),
+      date: form.date,
+    });
 
     if (editingTx) {
       transactionsService
         .update(editingTx.id, {
           name: form.name,
           type: form.type,
-          amount: form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt),
+          amount: signedAmt,
           category: form.category,
           categoryIcon: form.categoryIcon,
           accountId: form.accountId,
@@ -309,6 +320,7 @@ export default function MovimientosPage() {
           notes: form.notes,
           date: form.date,
           time: form.time,
+          ...currencyFields,
         })
         .then(() => {
           setTransactions((prev) =>
@@ -318,7 +330,7 @@ export default function MovimientosPage() {
                     ...t,
                     name: form.name,
                     type: form.type,
-                    amount: form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt),
+                    amount: signedAmt,
                     category: form.category,
                     categoryIcon: form.categoryIcon,
                     accountId: form.accountId,
@@ -326,6 +338,7 @@ export default function MovimientosPage() {
                     notes: form.notes,
                     date: form.date,
                     time: form.time,
+                    ...currencyFields,
                   }
                 : t
             )
@@ -339,7 +352,7 @@ export default function MovimientosPage() {
         .create({
           name: form.name,
           type: form.type,
-          amount: form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt),
+          amount: signedAmt,
           category: form.category,
           categoryIcon: form.categoryIcon,
           accountId: form.accountId,
@@ -347,13 +360,8 @@ export default function MovimientosPage() {
           notes: form.notes,
           date: form.date,
           time: form.time,
-          currencyCode: accCurrency,
-          originalAmount: Math.abs(amt),
-          baseCurrencyCode: baseCurrency,
-          baseAmount: baseAmt,
-          exchangeRate: rate,
-          exchangeRateDate: form.date,
-        } as any)
+          ...currencyFields,
+        })
         .then((newTx) => {
           setTransactions((prev) => [newTx, ...prev]);
           setShowForm(false);

@@ -210,3 +210,19 @@ export const currencyExchangesService = {
     };
   },
 };
+
+// ─── FX context ───────────────────────────────────────────────────────────────
+
+// Base currency + the user's rates: what buildCurrencyFields needs to record a movement.
+export interface FxContext {
+  baseCurrency: string;
+  ratesMap: Record<string, number>;
+}
+
+export async function getFxContext(): Promise<FxContext> {
+  const [settings, ratesMap] = await Promise.all([
+    userSettingsService.get(),
+    exchangeRatesService.getRatesMap(),
+  ]);
+  return { baseCurrency: settings.baseCurrencyCode, ratesMap };
+}

@@ -303,12 +303,17 @@ export default function ReportesPage() {
         const monthGastos = monthTxs.filter((t) => t.type === 'gasto');
         const currencyGroups: Record<string, { amount: number; baseAmount: number }> = {};
         monthGastos.forEach((t) => {
-          const txCurrency = (t as any).currencyCode || baseCurrency;
-          const rate = getRateFromMap(ratesMap, txCurrency, baseCurrency);
-          const baseAmt = Math.abs(t.amount) * rate;
+          // Historical values: original currency/amount and the base amount stored at the
+          // time of the movement (never recomputed with today's rates).
+          const txCurrency = t.currencyCode || baseCurrency;
+          const origAmt = Math.abs(t.originalAmount ?? t.amount);
+          const baseAmt =
+            t.baseCurrencyCode === baseCurrency && t.baseAmount !== undefined
+              ? Math.abs(t.baseAmount)
+              : origAmt * getRateFromMap(ratesMap, txCurrency, baseCurrency);
           if (!currencyGroups[txCurrency])
             currencyGroups[txCurrency] = { amount: 0, baseAmount: 0 };
-          currencyGroups[txCurrency].amount += Math.abs(t.amount);
+          currencyGroups[txCurrency].amount += origAmt;
           currencyGroups[txCurrency].baseAmount += baseAmt;
         });
         const groups = Object.entries(currencyGroups);

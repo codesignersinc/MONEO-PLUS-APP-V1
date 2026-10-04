@@ -37,6 +37,8 @@ import Icon from '@/components/ui/AppIcon';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useToast } from '@/components/ui/Toast';
 import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
+import { buildCurrencyFields, getRateFromMap } from '@/lib/currency';
+import { getFxContext } from '@/lib/supabaseCurrency';
 
 interface MobileNavProps {
   onFabClick: () => void;
@@ -179,11 +181,13 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
     setSaving(true);
     setError('');
     try {
-      const accounts = await accountsService.getAll();
+      const [accounts, fx] = await Promise.all([accountsService.getAll(), getFxContext()]);
+      const accCurrency = accounts[0]?.currency || 'PEN';
+      const amt = -Math.abs(parseFloat(amount));
       await transactionsService.create({
         name: name.trim(),
         type: 'gasto',
-        amount: -Math.abs(parseFloat(amount)),
+        amount: amt,
         category,
         categoryIcon,
         accountId: accounts[0]?.id || '',
@@ -191,6 +195,13 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
         notes,
         date,
         time: new Date().toTimeString().slice(0, 5),
+        ...buildCurrencyFields({
+          amount: amt,
+          currency: accCurrency,
+          baseCurrency: fx.baseCurrency,
+          rateToBase: getRateFromMap(fx.ratesMap, accCurrency, fx.baseCurrency),
+          date,
+        }),
       });
       onSuccess();
     } catch (err) {
@@ -669,11 +680,13 @@ function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSucc
     setSaving(true);
     setError('');
     try {
-      const accounts = await accountsService.getAll();
+      const [accounts, fx] = await Promise.all([accountsService.getAll(), getFxContext()]);
+      const accCurrency = accounts[0]?.currency || 'PEN';
+      const amt = -Math.abs(parseFloat(amount));
       await transactionsService.create({
         name: name.trim(),
         type: 'transferencia',
-        amount: -Math.abs(parseFloat(amount)),
+        amount: amt,
         category: 'Transferencia',
         categoryIcon: '⇄',
         accountId: accounts[0]?.id || '',
@@ -681,6 +694,13 @@ function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSucc
         notes,
         date,
         time: new Date().toTimeString().slice(0, 5),
+        ...buildCurrencyFields({
+          amount: amt,
+          currency: accCurrency,
+          baseCurrency: fx.baseCurrency,
+          rateToBase: getRateFromMap(fx.ratesMap, accCurrency, fx.baseCurrency),
+          date,
+        }),
       });
       onSuccess();
     } catch (err) {

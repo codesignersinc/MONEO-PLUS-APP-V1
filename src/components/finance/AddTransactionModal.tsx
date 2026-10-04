@@ -2,7 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { accountsService, transactionsService } from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
-import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
+import {
+  buildCurrencyFields,
+  getCurrencyInfo,
+  formatCurrency,
+  getRateFromMap,
+} from '@/lib/currency';
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
 import { getErrorMessage } from '@/lib/dataError';
 
@@ -113,13 +118,14 @@ export default function AddTransactionModal({
         notes: note,
         date: new Date(date + 'T12:00:00').toISOString(),
         time: `${hh}:${min}`,
-        currencyCode: accountCurrency,
-        originalAmount: Math.abs(amt),
-        baseCurrencyCode: baseCurrency,
-        baseAmount: baseEquiv,
-        exchangeRate: rate,
-        exchangeRateDate: date,
-      } as any);
+        ...buildCurrencyFields({
+          amount: finalAmt,
+          currency: accountCurrency,
+          baseCurrency,
+          rateToBase: rate,
+          date,
+        }),
+      });
 
       onSaved?.();
       onClose();

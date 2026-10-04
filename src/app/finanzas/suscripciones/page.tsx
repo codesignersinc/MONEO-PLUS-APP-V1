@@ -7,7 +7,7 @@ import {
   addMonthKeepingDay,
   Subscription,
 } from '@/lib/supabaseFinance';
-import { exchangeRatesService } from '@/lib/supabaseCurrency';
+import { getFxContext, type FxContext } from '@/lib/supabaseCurrency';
 import { formatCurrency, getRateFromMap } from '@/lib/currency';
 import type { Account } from '@/lib/financeStore';
 import LoadError from '@/components/ui/LoadError';
@@ -122,7 +122,7 @@ export default function SuscripcionesPage() {
   // Pay modal
   const [payingSub, setPayingSub] = useState<Subscription | null>(null);
   const [payAccounts, setPayAccounts] = useState<Account[]>([]);
-  const [payRates, setPayRates] = useState<Record<string, number>>({});
+  const [payFx, setPayFx] = useState<FxContext>({ baseCurrency: 'PEN', ratesMap: {} });
   const [payAccountId, setPayAccountId] = useState<string | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [payLoadError, setPayLoadError] = useState<unknown>(null);
@@ -168,10 +168,10 @@ export default function SuscripcionesPage() {
   const loadPayData = useCallback(() => {
     setPayLoading(true);
     setPayLoadError(null);
-    Promise.all([accountsService.getAll(), exchangeRatesService.getRatesMap()])
-      .then(([accs, rates]) => {
+    Promise.all([accountsService.getAll(), getFxContext()])
+      .then(([accs, fx]) => {
         setPayAccounts(accs);
-        setPayRates(rates);
+        setPayFx(fx);
         setPayAccountId((prev) => prev ?? accs[0]?.id ?? null);
       })
       .catch(setPayLoadError)
@@ -190,7 +190,7 @@ export default function SuscripcionesPage() {
   };
 
   const debitFor = (sub: Subscription, account: Account) =>
-    sub.amount * getRateFromMap(payRates, 'PEN', account.currency || 'PEN');
+    sub.amount * getRateFromMap(payFx.ratesMap, 'PEN', account.currency || 'PEN');
 
   const confirmPay = async () => {
     const sub = payingSub;
@@ -202,7 +202,8 @@ export default function SuscripcionesPage() {
       const { nextPaymentDate, newBalance } = await subscriptionsService.markAsPaid(
         sub,
         account,
-        debitFor(sub, account)
+        debitFor(sub, account),
+        payFx
       );
       setSubs((prev) =>
         prev.map((s) =>

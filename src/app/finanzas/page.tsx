@@ -24,8 +24,9 @@ import {
   Target,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
+import { userSettingsService, exchangeRatesService, getFxContext } from '@/lib/supabaseCurrency';
 import {
+  buildCurrencyFields,
   getCurrencyInfo,
   formatCurrency,
   getRateFromMap,
@@ -226,19 +227,31 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
     e.preventDefault();
     setSaving(true);
     setSaveError('');
-    transactionsService
-      .create({
-        name: form.name,
-        category: form.category,
-        categoryIcon: form.categoryIcon,
-        account: form.account,
-        accountId: form.accountId,
-        amount: type === 'gasto' ? -Math.abs(parseFloat(form.amount)) : parseFloat(form.amount),
-        date: new Date(form.date).toISOString(),
-        time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
-        type: type === 'gasto' ? 'gasto' : 'ingreso',
-        notes: form.notes,
-      })
+    const amount =
+      type === 'gasto' ? -Math.abs(parseFloat(form.amount)) : Math.abs(parseFloat(form.amount));
+    const accCurrency = data.accounts.find((a) => a.id === form.accountId)?.currency || 'PEN';
+    getFxContext()
+      .then((fx) =>
+        transactionsService.create({
+          name: form.name,
+          category: form.category,
+          categoryIcon: form.categoryIcon,
+          account: form.account,
+          accountId: form.accountId,
+          amount,
+          date: new Date(form.date).toISOString(),
+          time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
+          type: type === 'gasto' ? 'gasto' : 'ingreso',
+          notes: form.notes,
+          ...buildCurrencyFields({
+            amount,
+            currency: accCurrency,
+            baseCurrency: fx.baseCurrency,
+            rateToBase: getRateFromMap(fx.ratesMap, accCurrency, fx.baseCurrency),
+            date: form.date,
+          }),
+        })
+      )
       .then((newTx) => {
         onSave({ ...data, transactions: [newTx, ...data.transactions] });
         setSaving(false);

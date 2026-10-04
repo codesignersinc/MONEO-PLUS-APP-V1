@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { assertAffected, authRequired, toDataError } from '@/lib/dataError';
+import { buildCurrencyFields, getRateFromMap } from '@/lib/currency';
+import type { FxContext } from '@/lib/supabaseCurrency';
 import type {
   Account,
   Transaction,
@@ -11,6 +13,7 @@ import type {
   Investment,
   Subscription,
   FinanceData,
+  TransactionCurrencyFields,
 } from './financeStore';
 
 // Every function below either resolves with real data or throws a DataError.
@@ -112,6 +115,17 @@ export const accountsService = {
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
+function currencyFieldsFromRow(r: any): TransactionCurrencyFields {
+  return {
+    currencyCode: r.currency_code,
+    originalAmount: Number(r.original_amount),
+    baseCurrencyCode: r.base_currency_code,
+    baseAmount: Number(r.base_amount),
+    exchangeRate: Number(r.exchange_rate),
+    exchangeRateDate: r.exchange_rate_date,
+  };
+}
+
 export const transactionsService = {
   async getAll(): Promise<Transaction[]> {
     const supabase = createClient();
@@ -132,10 +146,13 @@ export const transactionsService = {
       time: r.transaction_time,
       type: r.transaction_type,
       notes: r.notes || '',
+      ...currencyFieldsFromRow(r),
     }));
   },
 
-  async create(tx: Omit<Transaction, 'id'>): Promise<Transaction> {
+  // Every new transaction must carry its currency fields (see buildCurrencyFields);
+  // the database defaults (PEN / 0) would silently corrupt multi-currency reports.
+  async create(tx: Omit<Transaction, 'id'> & TransactionCurrencyFields): Promise<Transaction> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
     const { data, error } = await supabase
@@ -152,6 +169,12 @@ export const transactionsService = {
         transaction_time: tx.time,
         transaction_type: tx.type,
         notes: tx.notes || '',
+        currency_code: tx.currencyCode,
+        original_amount: tx.originalAmount,
+        base_currency_code: tx.baseCurrencyCode,
+        base_amount: tx.baseAmount,
+        exchange_rate: tx.exchangeRate,
+        exchange_rate_date: tx.exchangeRateDate,
       })
       .select()
       .single();
@@ -168,9 +191,11 @@ export const transactionsService = {
       time: data.transaction_time,
       type: data.transaction_type,
       notes: data.notes,
+      ...currencyFieldsFromRow(data),
     };
   },
 
+  // When `amount`, `type` or the account change, pass the recomputed currency fields too.
   async update(id: string, tx: Partial<Transaction>): Promise<void> {
     const supabase = createClient();
     const updates: any = { updated_at: new Date().toISOString() };
@@ -184,6 +209,12 @@ export const transactionsService = {
     if (tx.time !== undefined) updates.transaction_time = tx.time;
     if (tx.type !== undefined) updates.transaction_type = tx.type;
     if (tx.notes !== undefined) updates.notes = tx.notes;
+    if (tx.currencyCode !== undefined) updates.currency_code = tx.currencyCode;
+    if (tx.originalAmount !== undefined) updates.original_amount = tx.originalAmount;
+    if (tx.baseCurrencyCode !== undefined) updates.base_currency_code = tx.baseCurrencyCode;
+    if (tx.baseAmount !== undefined) updates.base_amount = tx.baseAmount;
+    if (tx.exchangeRate !== undefined) updates.exchange_rate = tx.exchangeRate;
+    if (tx.exchangeRateDate !== undefined) updates.exchange_rate_date = tx.exchangeRateDate;
     const { data, error } = await supabase
       .from('transactions')
       .update(updates)
@@ -620,10 +651,12 @@ export const subscriptionsService = {
   // Pays the current cycle from `account`: records the expense, debits the account
   // balance by `debitAmount` (in the account's currency), marks the subscription
   // as paid and advances next_payment_date one month, keeping the payment day.
+  // Subscriptions are priced in PEN; `fx` records the historical rate to the base currency.
   async markAsPaid(
     sub: Subscription,
     account: Account,
-    debitAmount: number
+    debitAmount: number,
+    fx: FxContext
   ): Promise<{ nextPaymentDate: string; newBalance: number; transaction: Transaction }> {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -642,6 +675,14 @@ export const subscriptionsService = {
       notes: `Pago de suscripción${sub.nextPaymentDate ? ` (vencimiento ${sub.nextPaymentDate})` : ''}`,
       date: new Date(todayStr + 'T12:00:00').toISOString(),
       time: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      ...buildCurrencyFields({
+        amount: -amount,
+        currency: account.currency || 'PEN',
+        baseCurrency: fx.baseCurrency,
+        rateToBase: getRateFromMap(fx.ratesMap, 'PEN', fx.baseCurrency),
+        date: todayStr,
+        original: { amount: -Math.abs(sub.amount), currency: 'PEN' },
+      }),
     });
 
     const newBalance = Math.round((account.balance - amount) * 100) / 100;

@@ -26,7 +26,27 @@ export interface Transaction {
   time: string;
   type: 'gasto' | 'ingreso' | 'transferencia';
   notes?: string;
+  // Multimoneda (ver buildCurrencyFields): `amount` va en la moneda de la cuenta,
+  // `originalAmount` en `currencyCode` y `baseAmount` en `baseCurrencyCode`, todos con signo.
+  currencyCode?: string;
+  originalAmount?: number;
+  baseCurrencyCode?: string;
+  baseAmount?: number;
+  exchangeRate?: number;
+  exchangeRateDate?: string;
 }
+
+export type TransactionCurrencyFields = Required<
+  Pick<
+    Transaction,
+    | 'currencyCode'
+    | 'originalAmount'
+    | 'baseCurrencyCode'
+    | 'baseAmount'
+    | 'exchangeRate'
+    | 'exchangeRateDate'
+  >
+>;
 
 export interface BudgetCategory {
   id: string;
