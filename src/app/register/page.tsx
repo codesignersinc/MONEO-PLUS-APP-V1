@@ -98,6 +98,17 @@ export default function RegisterPage() {
             >
               {loading ? 'Creando cuenta...' : 'Crear cuenta'}
             </button>
+            <p className="text-center text-xs text-gray-500">
+              Al crear tu cuenta aceptas los{' '}
+              <a href="/terminos" className="underline">
+                Términos y condiciones
+              </a>{' '}
+              y la{' '}
+              <a href="/privacidad" className="underline">
+                Política de privacidad
+              </a>
+              .
+            </p>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
