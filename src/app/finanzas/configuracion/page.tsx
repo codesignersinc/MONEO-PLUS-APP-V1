@@ -149,7 +149,7 @@ export default function ConfiguracionPage() {
       } catch {
         // The account no longer exists; the local session is cleared anyway.
       }
-      router.replace('/login');
+      router.replace('/');
     } catch (e) {
       console.error(e);
       setDeleteError(getErrorMessage(e));
@@ -160,7 +160,7 @@ export default function ConfiguracionPage() {
   async function handleSignOut() {
     try {
       await signOut();
-      router.replace('/login');
+      router.replace('/');
     } catch (e) {
       toast.showError(e);
     }

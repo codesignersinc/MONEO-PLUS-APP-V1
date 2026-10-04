@@ -20,7 +20,7 @@ export default function LegalPage({
   return (
     <main className="min-h-screen bg-[#FFFBEB] px-4 py-8">
       <article className="max-w-2xl mx-auto space-y-6">
-        <Link href="/finanzas" className="text-sm font-bold underline">
+        <Link href="/" className="text-sm font-bold underline">
           ← Volver a MONEO+
         </Link>
         <div

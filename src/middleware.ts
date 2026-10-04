@@ -52,7 +52,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // Signed-in users skip the public landing.
+  if (user && (isAuthRoute || request.nextUrl.pathname === '/')) {
     const url = request.nextUrl.clone();
     url.pathname = '/finanzas';
     return NextResponse.redirect(url);

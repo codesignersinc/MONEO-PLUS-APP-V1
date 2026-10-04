@@ -999,7 +999,7 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
   async function handleSignOut() {
     try {
       await signOut();
-      router.replace('/login');
+      router.replace('/');
     } catch (err) {
       toast.showError(err);
     }
