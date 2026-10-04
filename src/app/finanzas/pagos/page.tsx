@@ -1,23 +1,12 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
-import { assertAffected, authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
+import { getErrorMessage } from '@/lib/dataError';
+import { pagosService, type NewPago, type PagoEntry } from '@/lib/supabaseObligations';
+import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
+import { todayLocal } from '@/lib/dates';
 import { Plus, X, Pencil, Trash2, Clock, CheckCircle2, Calendar, RefreshCw } from 'lucide-react';
-
-interface PagoEntry {
-  id: string;
-  name: string;
-  amount: number;
-  category: string;
-  categoryIcon: string;
-  paymentDate: string;
-  notes: string;
-  status: 'pendiente' | 'pagado' | 'vencido';
-  isRecurring: boolean;
-  paymentDay: number | null;
-}
 
 interface PagoForm {
   name: string;
@@ -52,128 +41,6 @@ const defaultForm: PagoForm = {
   isRecurring: false,
 };
 
-const SYNC_WARNING = 'El pago se guardó, pero no se pudo registrar en Movimientos.';
-
-// All helpers throw a DataError on failure; [] only means "no payments".
-async function getAll(): Promise<PagoEntry[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('pagos')
-    .select('*')
-    .order('payment_date', { ascending: true });
-  if (error) throw toDataError(error);
-  return (data || []).map((r) => ({
-    id: r.id,
-    name: r.name,
-    amount: r.amount,
-    category: r.category,
-    categoryIcon: r.category_icon,
-    paymentDate: r.payment_date,
-    notes: r.notes || '',
-    status: r.status,
-    isRecurring: r.is_recurring,
-    paymentDay: r.payment_day,
-  }));
-}
-
-// Resolves with the saved payment plus whether the follow-up sync to
-// `transactions` failed (the payment itself is saved either way).
-async function createPago(
-  entry: Omit<PagoEntry, 'id'>
-): Promise<{ entry: PagoEntry; syncFailed: boolean }> {
-  const supabase = createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError) throw toDataError(authError);
-  if (!user) throw authRequired();
-  const { data, error } = await supabase
-    .from('pagos')
-    .insert({
-      user_id: user.id,
-      name: entry.name,
-      amount: entry.amount,
-      category: entry.category,
-      category_icon: entry.categoryIcon,
-      payment_date: entry.paymentDate,
-      notes: entry.notes,
-      status: entry.status,
-      is_recurring: entry.isRecurring,
-      payment_day: entry.paymentDay,
-    })
-    .select()
-    .single();
-  if (error) throw toDataError(error);
-
-  // If created as 'pagado', sync to movimientos immediately
-  let syncFailed = false;
-  if (entry.status === 'pagado') {
-    const { error: syncError } = await supabase.from('transactions').insert({
-      user_id: user.id,
-      name: entry.name,
-      category: entry.category,
-      category_icon: entry.categoryIcon,
-      account_name: 'Pagos',
-      amount: -Math.abs(entry.amount),
-      transaction_date: entry.paymentDate || new Date().toISOString().split('T')[0],
-      transaction_time: new Date().toTimeString().slice(0, 5),
-      transaction_type: 'gasto',
-      notes: entry.notes || '',
-    });
-    if (syncError) {
-      console.error('pago → transactions sync failed:', syncError);
-      syncFailed = true;
-    }
-  }
-
-  return {
-    entry: {
-      id: data.id,
-      name: data.name,
-      amount: data.amount,
-      category: data.category,
-      categoryIcon: data.category_icon,
-      paymentDate: data.payment_date,
-      notes: data.notes,
-      status: data.status,
-      isRecurring: data.is_recurring,
-      paymentDay: data.payment_day,
-    },
-    syncFailed,
-  };
-}
-
-async function updatePago(id: string, entry: Partial<PagoEntry>): Promise<void> {
-  const supabase = createClient();
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (entry.name !== undefined) updates.name = entry.name;
-  if (entry.amount !== undefined) updates.amount = entry.amount;
-  if (entry.category !== undefined) updates.category = entry.category;
-  if (entry.categoryIcon !== undefined) updates.category_icon = entry.categoryIcon;
-  if (entry.paymentDate !== undefined) updates.payment_date = entry.paymentDate;
-  if (entry.notes !== undefined) updates.notes = entry.notes;
-  if (entry.status !== undefined) updates.status = entry.status;
-  if (entry.isRecurring !== undefined) updates.is_recurring = entry.isRecurring;
-  if (entry.paymentDay !== undefined) updates.payment_day = entry.paymentDay;
-  const { data, error } = await supabase.from('pagos').update(updates).eq('id', id).select('id');
-  if (error) throw toDataError(error);
-  assertAffected(data);
-}
-
-async function deletePago(id: string): Promise<void> {
-  const supabase = createClient();
-  const { data, error } = await supabase.from('pagos').delete().eq('id', id).select('id');
-  if (error) throw toDataError(error);
-  assertAffected(data);
-}
-
-function getNextMonthDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const next = new Date(year, month, day); // month is already 0-indexed after +1
-  return next.toISOString().split('T')[0];
-}
-
 export default function PagosPage() {
   const [entries, setEntries] = useState<PagoEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,15 +53,18 @@ export default function PagosPage() {
   const [editAmountValue, setEditAmountValue] = useState('');
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
+  // Payment waiting for the user to choose the account it is paid from.
+  const [picking, setPicking] = useState<PagoEntry | null>(null);
   const toast = useToast();
 
   const load = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    getAll()
+    pagosService
+      .getAll()
       .then((data) => {
-        // Auto-detect overdue
-        const today = new Date().toISOString().split('T')[0];
+        // Auto-detect overdue (display only; never stored)
+        const today = todayLocal();
         const updated = data.map((e) => {
           if (e.status === 'pendiente' && e.paymentDate && e.paymentDate < today) {
             return { ...e, status: 'vencido' as const };
@@ -260,26 +130,32 @@ export default function PagosPage() {
       const payDay =
         form.isRecurring && form.paymentDate ? parseInt(form.paymentDate.split('-')[2]) : null;
 
-      const entryData: Omit<PagoEntry, 'id'> = {
+      const entryData: NewPago = {
         name: form.name,
         amount: parseFloat(form.amount) || 0,
         category: form.category,
         categoryIcon: form.categoryIcon,
         paymentDate: form.paymentDate,
         notes: form.notes,
-        status: form.status,
         isRecurring: form.isRecurring,
         paymentDay: payDay,
       };
       if (editingEntry) {
-        await updatePago(editingEntry.id, entryData);
-        setEntries((prev) =>
-          prev.map((e) => (e.id === editingEntry.id ? { ...e, ...entryData } : e))
-        );
+        // Editing a paid entry also updates its movement (database trigger).
+        await pagosService.update(editingEntry.id, entryData);
+        const updated = { ...editingEntry, ...entryData };
+        setEntries((prev) => prev.map((e) => (e.id === editingEntry.id ? updated : e)));
+        const wasPaid = editingEntry.status === 'pagado';
+        if (wasPaid && form.status === 'pendiente') {
+          await pagosService.markPending(editingEntry.id);
+          load();
+        } else if (!wasPaid && form.status === 'pagado') {
+          setPicking(updated);
+        }
       } else {
-        const { entry: created, syncFailed } = await createPago(entryData);
+        const created = await pagosService.create(entryData);
         setEntries((prev) => [...prev, created]);
-        if (syncFailed) toast.showError(SYNC_WARNING);
+        if (form.status === 'pagado') setPicking(created);
       }
       setShowForm(false);
     } catch (err) {
@@ -292,94 +168,41 @@ export default function PagosPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deletePago(id);
+      await pagosService.delete(id);
       setEntries((prev) => prev.filter((e) => e.id !== id));
     } catch (err) {
       toast.showError(err);
     }
   };
 
+  // Paying asks for the account; going back to pending deletes its movement.
   const handleMarkPagado = async (entry: PagoEntry) => {
-    if (entry.status === 'pagado') {
-      // Revert to pendiente
-      try {
-        await updatePago(entry.id, { status: 'pendiente' });
-      } catch (err) {
-        toast.showError(err);
-        return;
-      }
-      setEntries((prev) =>
-        prev.map((e) => (e.id === entry.id ? { ...e, status: 'pendiente' } : e))
-      );
+    if (entry.status !== 'pagado') {
+      setPicking(entry);
       return;
     }
-    // Mark as paid
     try {
-      await updatePago(entry.id, { status: 'pagado' });
+      await pagosService.markPending(entry.id);
+      load();
     } catch (err) {
       toast.showError(err);
-      return;
     }
-    setEntries((prev) => prev.map((e) => (e.id === entry.id ? { ...e, status: 'pagado' } : e)));
+  };
 
-    // Sync to movimientos (transactions table)
-    try {
-      const supabase = createClient();
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError) throw toDataError(authError);
-      if (!user) throw authRequired();
-      {
-        const { error } = await supabase.from('transactions').insert({
-          user_id: user.id,
-          name: entry.name,
-          category: entry.category,
-          category_icon: entry.categoryIcon,
-          account_name: 'Pagos',
-          amount: -Math.abs(entry.amount),
-          transaction_date: entry.paymentDate || new Date().toISOString().split('T')[0],
-          transaction_time: new Date().toTimeString().slice(0, 5),
-          transaction_type: 'gasto',
-          notes: entry.notes || '',
-        });
-        if (error) throw toDataError(error);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.showError(SYNC_WARNING);
-    }
-
-    // If recurring, create next month's entry
-    if (entry.isRecurring && entry.paymentDate) {
-      const nextDate = getNextMonthDate(entry.paymentDate);
-      const nextEntry: Omit<PagoEntry, 'id'> = {
-        name: entry.name,
-        amount: entry.amount,
-        category: entry.category,
-        categoryIcon: entry.categoryIcon,
-        paymentDate: nextDate,
-        notes: entry.notes,
-        status: 'pendiente',
-        isRecurring: true,
-        paymentDay: entry.paymentDay,
-      };
-      try {
-        const { entry: created } = await createPago(nextEntry);
-        setEntries((prev) => [...prev, created]);
-      } catch (err) {
-        console.error(err);
-        toast.showError('El pago se marcó como pagado, pero no se pudo crear el del próximo mes.');
-      }
-    }
+  // The database records the expense, moves the balance and, for a recurring
+  // payment, creates next month's one; reload to show it.
+  const confirmPaid = async (accountId: string, accountAmount?: number) => {
+    if (!picking) return;
+    await pagosService.markPaid(picking.id, accountId, accountAmount);
+    setPicking(null);
+    load();
   };
 
   const handleSaveAmount = async (entry: PagoEntry) => {
     const newAmount = parseFloat(editAmountValue);
     if (!isNaN(newAmount) && newAmount > 0) {
       try {
-        await updatePago(entry.id, { amount: newAmount });
+        await pagosService.update(entry.id, { amount: newAmount });
       } catch (err) {
         // Keep the inline editor open so the user can retry.
         toast.showError(err);
@@ -413,7 +236,7 @@ export default function PagosPage() {
 
   const isOverdue = (dateStr: string, status: string) => {
     if (!dateStr || status === 'pagado') return false;
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocal();
     return dateStr < today;
   };
 
@@ -808,6 +631,15 @@ export default function PagosPage() {
             </div>
           </div>
         </div>
+      )}
+      {picking && (
+        <AccountPickerModal
+          title={`¿Desde qué cuenta pagaste «${picking.name}»?`}
+          amount={picking.amount}
+          confirmLabel="Marcar pagado"
+          onConfirm={confirmPaid}
+          onClose={() => setPicking(null)}
+        />
       )}
     </div>
   );

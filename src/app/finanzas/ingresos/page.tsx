@@ -1,21 +1,12 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
-import { assertAffected, authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
+import { getErrorMessage } from '@/lib/dataError';
+import { incomeService, type IncomeEntry, type NewIncome } from '@/lib/supabaseObligations';
+import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
+import { todayLocal } from '@/lib/dates';
 import { Plus, X, Pencil, Trash2, Clock, CheckCircle2, Calendar } from 'lucide-react';
-
-interface IncomeEntry {
-  id: string;
-  name: string;
-  amount: number;
-  category: string;
-  categoryIcon: string;
-  collectionDate: string;
-  notes: string;
-  status: 'pendiente' | 'cobrado';
-}
 
 interface IncomeForm {
   name: string;
@@ -48,118 +39,6 @@ const defaultForm: IncomeForm = {
   status: 'pendiente',
 };
 
-const SYNC_WARNING = 'El ingreso se guardó, pero no se pudo registrar en Movimientos.';
-
-// All helpers throw a DataError on failure; [] only means "no income entries".
-async function getAll(): Promise<IncomeEntry[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('income_entries')
-    .select('*')
-    .order('collection_date', { ascending: true });
-  if (error) throw toDataError(error);
-  return (data || []).map((r) => ({
-    id: r.id,
-    name: r.name,
-    amount: r.amount,
-    category: r.category,
-    categoryIcon: r.category_icon,
-    collectionDate: r.collection_date,
-    notes: r.notes || '',
-    status: r.status,
-  }));
-}
-
-// Resolves with the saved entry plus whether the follow-up sync to `transactions`
-// failed (the entry itself is saved either way).
-async function createEntry(
-  entry: Omit<IncomeEntry, 'id'>
-): Promise<{ entry: IncomeEntry; syncFailed: boolean }> {
-  const supabase = createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError) throw toDataError(authError);
-  if (!user) throw authRequired();
-  const { data, error } = await supabase
-    .from('income_entries')
-    .insert({
-      user_id: user.id,
-      name: entry.name,
-      amount: entry.amount,
-      category: entry.category,
-      category_icon: entry.categoryIcon,
-      collection_date: entry.collectionDate,
-      notes: entry.notes,
-      status: entry.status,
-    })
-    .select()
-    .single();
-  if (error) throw toDataError(error);
-
-  // Only sync to transactions (movimientos) if already cobrado
-  let syncFailed = false;
-  if (entry.status === 'cobrado') {
-    const { error: syncError } = await supabase.from('transactions').insert({
-      user_id: user.id,
-      name: entry.name,
-      category: entry.category,
-      category_icon: entry.categoryIcon,
-      account_name: 'Ingresos',
-      amount: Math.abs(entry.amount),
-      transaction_date: entry.collectionDate || new Date().toISOString().split('T')[0],
-      transaction_time: new Date().toTimeString().slice(0, 5),
-      transaction_type: 'ingreso',
-      notes: entry.notes || '',
-    });
-    if (syncError) {
-      console.error('income → transactions sync failed:', syncError);
-      syncFailed = true;
-    }
-  }
-
-  return {
-    entry: {
-      id: data.id,
-      name: data.name,
-      amount: data.amount,
-      category: data.category,
-      categoryIcon: data.category_icon,
-      collectionDate: data.collection_date,
-      notes: data.notes,
-      status: data.status,
-    },
-    syncFailed,
-  };
-}
-
-async function updateEntry(id: string, entry: Partial<IncomeEntry>): Promise<void> {
-  const supabase = createClient();
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (entry.name !== undefined) updates.name = entry.name;
-  if (entry.amount !== undefined) updates.amount = entry.amount;
-  if (entry.category !== undefined) updates.category = entry.category;
-  if (entry.categoryIcon !== undefined) updates.category_icon = entry.categoryIcon;
-  if (entry.collectionDate !== undefined) updates.collection_date = entry.collectionDate;
-  if (entry.notes !== undefined) updates.notes = entry.notes;
-  if (entry.status !== undefined) updates.status = entry.status;
-  const { data, error } = await supabase
-    .from('income_entries')
-    .update(updates)
-    .eq('id', id)
-    .select('id');
-  if (error) throw toDataError(error);
-  assertAffected(data);
-}
-
-async function deleteEntry(id: string): Promise<void> {
-  const supabase = createClient();
-  const { data, error } = await supabase.from('income_entries').delete().eq('id', id).select('id');
-  if (error) throw toDataError(error);
-  assertAffected(data);
-}
-
 export default function IngresosPage() {
   const [entries, setEntries] = useState<IncomeEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,12 +49,15 @@ export default function IngresosPage() {
   const [form, setForm] = useState<IncomeForm>(defaultForm);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
+  // Entry waiting for the user to choose the account it is collected into.
+  const [picking, setPicking] = useState<IncomeEntry | null>(null);
   const toast = useToast();
 
   const load = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    getAll()
+    incomeService
+      .getAll()
       .then(setEntries)
       .catch(setLoadError)
       .finally(() => setLoading(false));
@@ -221,29 +103,39 @@ export default function IngresosPage() {
     setForm((f) => ({ ...f, category: label, categoryIcon: cat?.icon || '💰' }));
   };
 
+  const setStatus = (id: string, status: IncomeEntry['status'], transactionId: string | null) =>
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, status, transactionId } : e)));
+
   const handleSave = async () => {
     if (!form.name || !form.amount) return;
     setSaving(true);
     setFormError('');
     try {
-      const entryData: Omit<IncomeEntry, 'id'> = {
+      const entryData: NewIncome = {
         name: form.name,
         amount: parseFloat(form.amount) || 0,
         category: form.category,
         categoryIcon: form.categoryIcon,
         collectionDate: form.collectionDate,
         notes: form.notes,
-        status: form.status,
       };
       if (editingEntry) {
-        await updateEntry(editingEntry.id, entryData);
-        setEntries((prev) =>
-          prev.map((e) => (e.id === editingEntry.id ? { ...e, ...entryData } : e))
-        );
+        // Editing a collected entry also updates its movement (database trigger).
+        await incomeService.update(editingEntry.id, entryData);
+        const updated = { ...editingEntry, ...entryData };
+        setEntries((prev) => prev.map((e) => (e.id === editingEntry.id ? updated : e)));
+        if (form.status !== editingEntry.status) {
+          if (form.status === 'pendiente') {
+            await incomeService.markPending(editingEntry.id);
+            setStatus(editingEntry.id, 'pendiente', null);
+          } else {
+            setPicking(updated);
+          }
+        }
       } else {
-        const { entry: created, syncFailed } = await createEntry(entryData);
+        const created = await incomeService.create(entryData);
         setEntries((prev) => [...prev, created]);
-        if (syncFailed) toast.showError(SYNC_WARNING);
+        if (form.status === 'cobrado') setPicking(created);
       }
       setShowForm(false);
     } catch (err) {
@@ -256,69 +148,32 @@ export default function IngresosPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteEntry(id);
+      await incomeService.delete(id);
       setEntries((prev) => prev.filter((e) => e.id !== id));
     } catch (err) {
       toast.showError(err);
     }
   };
 
+  // Collecting asks for the account; going back to pending deletes its movement.
   const handleMarkCobrado = async (entry: IncomeEntry) => {
-    const newStatus = entry.status === 'cobrado' ? 'pendiente' : 'cobrado';
-    try {
-      await updateEntry(entry.id, { status: newStatus });
-    } catch (err) {
-      toast.showError(err);
+    if (entry.status !== 'cobrado') {
+      setPicking(entry);
       return;
     }
-    setEntries((prev) => prev.map((e) => (e.id === entry.id ? { ...e, status: newStatus } : e)));
-
-    // Create or delete transaction as needed
-    const syncWarning =
-      newStatus === 'cobrado'
-        ? SYNC_WARNING
-        : 'El ingreso volvió a pendiente, pero no se pudo actualizar Movimientos.';
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError) throw toDataError(authError);
-      if (!user) throw authRequired();
-
-      if (newStatus === 'cobrado') {
-        // Create transaction
-        const { error } = await supabase.from('transactions').insert({
-          user_id: user.id,
-          name: entry.name,
-          category: entry.category,
-          category_icon: entry.categoryIcon,
-          account_name: 'Ingresos',
-          amount: Math.abs(entry.amount),
-          transaction_date: entry.collectionDate || new Date().toISOString().split('T')[0],
-          transaction_time: new Date().toTimeString().slice(0, 5),
-          transaction_type: 'ingreso',
-          notes: entry.notes || '',
-        });
-        if (error) throw toDataError(error);
-      } else {
-        // Delete transaction by matching name+amount+type
-        // NOTE: known data-loss bug (audit C-08) — fixed separately, unchanged here.
-        const { error } = await supabase
-          .from('transactions')
-          .delete()
-          .match({
-            name: entry.name,
-            amount: Math.abs(entry.amount),
-            transaction_type: 'ingreso',
-          });
-        if (error) throw toDataError(error);
-      }
+      await incomeService.markPending(entry.id);
+      setStatus(entry.id, 'pendiente', null);
     } catch (err) {
-      console.error(err);
-      toast.showError(syncWarning);
+      toast.showError(err);
     }
+  };
+
+  const confirmCollected = async (accountId: string, accountAmount?: number) => {
+    if (!picking) return;
+    const transactionId = await incomeService.markCollected(picking.id, accountId, accountAmount);
+    setStatus(picking.id, 'cobrado', transactionId);
+    setPicking(null);
   };
 
   const formatDate = (dateStr: string) => {
@@ -343,8 +198,7 @@ export default function IngresosPage() {
 
   const isOverdue = (dateStr: string, status: string) => {
     if (!dateStr || status === 'cobrado') return false;
-    const today = new Date().toISOString().split('T')[0];
-    return dateStr < today;
+    return dateStr < todayLocal();
   };
 
   if (loadError) {
@@ -663,6 +517,15 @@ export default function IngresosPage() {
             </div>
           </div>
         </div>
+      )}
+      {picking && (
+        <AccountPickerModal
+          title={`¿En qué cuenta cobraste «${picking.name}»?`}
+          amount={picking.amount}
+          confirmLabel="Marcar cobrado"
+          onConfirm={confirmCollected}
+          onClose={() => setPicking(null)}
+        />
       )}
     </div>
   );

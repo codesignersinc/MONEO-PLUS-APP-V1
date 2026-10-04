@@ -26,7 +26,6 @@ import {
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import { useAuth } from '@/contexts/AuthContext';
-import { createClient } from '@/lib/supabase/client';
 import {
   transactionsService,
   accountsService,
@@ -36,11 +35,18 @@ import {
 import Icon from '@/components/ui/AppIcon';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useToast } from '@/components/ui/Toast';
-import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
+import { getErrorMessage } from '@/lib/dataError';
 import { buildCurrencyFields, getRateFromMap } from '@/lib/currency';
 import { getFxContext } from '@/lib/supabaseCurrency';
 import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
 import TransferForm from '@/components/finance/TransferForm';
+import {
+  AccountAmountFields,
+  EMPTY_ACCOUNT_CHOICE,
+  resolveAccountChoice,
+  type AccountChoice,
+} from '@/components/finance/AccountAmountPicker';
+import { incomeService, pagosService } from '@/lib/supabaseObligations';
 import type { Account } from '@/lib/financeStore';
 
 interface MobileNavProps {
@@ -287,6 +293,7 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const [collectionDate, setCollectionDate] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<'pendiente' | 'cobrado'>('cobrado');
+  const [choice, setChoice] = useState<AccountChoice>(EMPTY_ACCOUNT_CHOICE);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const toast = useToast();
@@ -302,50 +309,29 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       setError('Completa nombre y monto.');
       return;
     }
+    const account = status === 'cobrado' ? resolveAccountChoice(choice) : null;
+    if (account && 'error' in account) {
+      setError(account.error);
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError) throw toDataError(authError);
-      if (!user) throw authRequired();
-      const entryDate = collectionDate || new Date().toISOString().split('T')[0];
-      const { data, error: dbErr } = await supabase
-        .from('income_entries')
-        .insert({
-          user_id: user.id,
-          name: name.trim(),
-          amount: parseFloat(amount),
-          category,
-          category_icon: categoryIcon,
-          collection_date: entryDate,
-          notes,
-          status,
-        })
-        .select()
-        .single();
-      if (dbErr) throw toDataError(dbErr);
-      if (status === 'cobrado' && data) {
-        // The income entry is already saved: a sync failure is a warning, not a
-        // form error (retrying the form would duplicate the entry).
-        const { error: syncError } = await supabase.from('transactions').insert({
-          user_id: user.id,
-          name: name.trim(),
-          category,
-          category_icon: categoryIcon,
-          account_name: 'Ingresos',
-          amount: Math.abs(parseFloat(amount)),
-          transaction_date: entryDate,
-          transaction_time: new Date().toTimeString().slice(0, 5),
-          transaction_type: 'ingreso',
-          notes,
-        });
-        if (syncError) {
-          console.error('income → transactions sync failed:', syncError);
-          toast.showError('El ingreso se guardó, pero no se pudo registrar en Movimientos.');
+      const entry = await incomeService.create({
+        name: name.trim(),
+        amount: parseFloat(amount),
+        category,
+        categoryIcon,
+        collectionDate: collectionDate || todayLocal(),
+        notes,
+      });
+      if (account) {
+        try {
+          await incomeService.markCollected(entry.id, account.accountId, account.accountAmount);
+        } catch (err) {
+          // The entry is saved as pending: retrying the form would duplicate it.
+          console.error(err);
+          toast.showError('El ingreso se guardó como pendiente: no se pudo marcar como cobrado.');
         }
       }
       onSuccess();
@@ -395,6 +381,15 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
             ))}
           </div>
         </div>
+        {status === 'cobrado' && (
+          <AccountAmountFields
+            amount={parseFloat(amount) || 0}
+            value={choice}
+            onChange={setChoice}
+            label="Cuenta donde cobraste"
+            selectClassName="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none bg-white"
+          />
+        )}
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
             Fecha de cobro
@@ -452,6 +447,7 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
   const [paymentDate, setPaymentDate] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<'pendiente' | 'pagado'>('pendiente');
+  const [choice, setChoice] = useState<AccountChoice>(EMPTY_ACCOUNT_CHOICE);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const toast = useToast();
@@ -467,48 +463,32 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
       setError('Completa nombre y monto.');
       return;
     }
+    const account = status === 'pagado' ? resolveAccountChoice(choice) : null;
+    if (account && 'error' in account) {
+      setError(account.error);
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError) throw toDataError(authError);
-      if (!user) throw authRequired();
-      const pDate = paymentDate || new Date().toISOString().split('T')[0];
-      const paymentDay = new Date(pDate + 'T00:00:00').getDate();
-      const { error: dbErr } = await supabase.from('pagos').insert({
-        user_id: user.id,
+      const pDate = paymentDate || todayLocal();
+      const pago = await pagosService.create({
         name: name.trim(),
         amount: parseFloat(amount),
         category,
-        category_icon: categoryIcon,
-        payment_date: pDate,
+        categoryIcon,
+        paymentDate: pDate,
         notes,
-        status,
-        is_recurring: false,
-        payment_day: paymentDay,
+        isRecurring: false,
+        paymentDay: new Date(pDate + 'T00:00:00').getDate(),
       });
-      if (dbErr) throw toDataError(dbErr);
-      if (status === 'pagado') {
-        // The payment is already saved: a sync failure is a warning, not a form error.
-        const { error: syncError } = await supabase.from('transactions').insert({
-          user_id: user.id,
-          name: name.trim(),
-          category,
-          category_icon: categoryIcon,
-          account_name: 'Pagos',
-          amount: -Math.abs(parseFloat(amount)),
-          transaction_date: pDate,
-          transaction_time: new Date().toTimeString().slice(0, 5),
-          transaction_type: 'gasto',
-          notes,
-        });
-        if (syncError) {
-          console.error('pago → transactions sync failed:', syncError);
-          toast.showError('El pago se guardó, pero no se pudo registrar en Movimientos.');
+      if (account) {
+        try {
+          await pagosService.markPaid(pago.id, account.accountId, account.accountAmount);
+        } catch (err) {
+          // The payment is saved as pending: retrying the form would duplicate it.
+          console.error(err);
+          toast.showError('El pago se guardó como pendiente: no se pudo marcar como pagado.');
         }
       }
       onSuccess();
@@ -558,6 +538,15 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
             ))}
           </div>
         </div>
+        {status === 'pagado' && (
+          <AccountAmountFields
+            amount={parseFloat(amount) || 0}
+            value={choice}
+            onChange={setChoice}
+            label="Cuenta desde la que pagaste"
+            selectClassName="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none bg-white"
+          />
+        )}
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
             Fecha de pago
