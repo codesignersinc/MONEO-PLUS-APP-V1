@@ -8,23 +8,30 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#1a1a2e',
+  viewportFit: 'cover',
+  themeColor: '#070E14',
 };
 
 export const metadata: Metadata = {
-  title: 'Finanzas — Control financiero personal',
+  title: 'MONEO+ — Tu dinero, más simple.',
   description:
-    'Controla tus finanzas diarias, presupuesto mensual, ahorros, deudas e inversiones en un solo lugar.',
+    'Controla tus cuentas, movimientos, pagos, presupuesto, metas y juntas en un solo lugar.',
+  applicationName: 'MONEO+',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Finanzas',
+    title: 'MONEO+',
   },
   icons: {
-    icon: [{ url: '/assets/images/app_logo.png', type: 'image/png' }],
-    apple: [{ url: '/assets/images/app_logo.png', sizes: '180x180', type: 'image/png' }],
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48' },
+      { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
+  formatDetection: { telephone: false },
 };
 
 export default function RootLayout({
@@ -35,15 +42,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <meta name="application-name" content="Finanzas" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Finanzas" />
-        <meta name="msapplication-TileColor" content="#1a1a2e" />
+        <meta name="msapplication-TileColor" content="#070E14" />
         <meta name="msapplication-tap-highlight" content="no" />
-        <link rel="apple-touch-icon" href="/assets/images/app_logo.png" />
-        <link rel="apple-touch-startup-image" href="/assets/images/app_logo.png" />
       </head>
       <body>
         <AuthProvider>{children}</AuthProvider>

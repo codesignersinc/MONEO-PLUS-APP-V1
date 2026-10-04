@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#070E14" />
+    <title>Sin conexión · MONEO+</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        background: #FDD820; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #000; }
+      .card { background: #FDFBF3; border: 3px solid #000; border-radius: 28px; box-shadow: 8px 8px 0 #000;
+        padding: 32px 28px; max-width: 340px; margin: 24px; text-align: center; }
+      img { width: 72px; height: 72px; border-radius: 18px; }
+      h1 { font-size: 22px; margin: 16px 0 8px; }
+      p { color: #444; margin: 0 0 20px; line-height: 1.4; }
+      button { width: 100%; padding: 14px; border: 0; border-radius: 16px; background: #000; color: #fff;
+        font-size: 16px; font-weight: 600; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="/icons/icon-192.png" alt="MONEO+" />
+      <h1>Estás sin conexión</h1>
+      <p>Revisa tu internet. Tus datos están seguros y se mostrarán al volver a conectarte.</p>
+      <button onclick="location.reload()">Reintentar</button>
+    </div>
+  </body>
+</html>
