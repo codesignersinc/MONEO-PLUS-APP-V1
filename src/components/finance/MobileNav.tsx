@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -39,6 +39,9 @@ import { useToast } from '@/components/ui/Toast';
 import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
 import { buildCurrencyFields, getRateFromMap } from '@/lib/currency';
 import { getFxContext } from '@/lib/supabaseCurrency';
+import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
+import TransferForm from '@/components/finance/TransferForm';
+import type { Account } from '@/lib/financeStore';
 
 interface MobileNavProps {
   onFabClick: () => void;
@@ -162,10 +165,23 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Comida');
   const [categoryIcon, setCategoryIcon] = useState('🍽️');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal());
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [accounts, setAccounts] = useState<Account[] | null>(null);
+  const [accountId, setAccountId] = useState('');
+
+  useEffect(() => {
+    accountsService
+      .getAll()
+      .then(setAccounts)
+      .catch((err) => {
+        console.error(err);
+        setAccounts([]);
+        setError(getErrorMessage(err));
+      });
+  }, []);
 
   const handleCat = (label: string) => {
     const c = EXPENSE_CATEGORIES.find((x) => x.label === label);
@@ -178,11 +194,16 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
       setError('Completa nombre y monto.');
       return;
     }
+    const account = accounts?.find((a) => a.id === accountId);
+    if (!account) {
+      setError('Elige la cuenta de la que sale el gasto.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      const [accounts, fx] = await Promise.all([accountsService.getAll(), getFxContext()]);
-      const accCurrency = accounts[0]?.currency || 'PEN';
+      const fx = await getFxContext();
+      const accCurrency = account.currency || 'PEN';
       const amt = -Math.abs(parseFloat(amount));
       await transactionsService.create({
         name: name.trim(),
@@ -190,11 +211,11 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
         amount: amt,
         category,
         categoryIcon,
-        accountId: accounts[0]?.id || '',
-        account: accounts[0]?.name || '',
+        accountId: account.id,
+        account: account.name,
         notes,
-        date,
-        time: new Date().toTimeString().slice(0, 5),
+        date: localDateTimeToISO(date, nowTimeLocal()),
+        time: nowTimeLocal(),
         ...buildCurrencyFields({
           amount: amt,
           currency: accCurrency,
@@ -214,6 +235,28 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
 
   return (
     <FormWrapper title="Nuevo Gasto" emoji="🧾" accentBg="bg-[#fde899]" onClose={onClose}>
+      <div className="mb-3">
+        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Cuenta</label>
+        {accounts && accounts.length === 0 ? (
+          <p className="mt-1 text-xs font-semibold text-amber-700">
+            Primero agrega una cuenta en la sección Cuentas.
+          </p>
+        ) : (
+          <select
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            disabled={!accounts}
+            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none bg-white"
+          >
+            <option value="">{accounts ? 'Elige la cuenta' : 'Cargando cuentas…'}</option>
+            {accounts?.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.icon} {a.name} ({a.currency})
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
       <FormFields
         name={name}
         setName={setName}
@@ -665,73 +708,9 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
 }
 
 function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSave = async () => {
-    if (!name.trim() || !amount) {
-      setError('Completa nombre y monto.');
-      return;
-    }
-    setSaving(true);
-    setError('');
-    try {
-      const [accounts, fx] = await Promise.all([accountsService.getAll(), getFxContext()]);
-      const accCurrency = accounts[0]?.currency || 'PEN';
-      const amt = -Math.abs(parseFloat(amount));
-      await transactionsService.create({
-        name: name.trim(),
-        type: 'transferencia',
-        amount: amt,
-        category: 'Transferencia',
-        categoryIcon: '⇄',
-        accountId: accounts[0]?.id || '',
-        account: accounts[0]?.name || '',
-        notes,
-        date,
-        time: new Date().toTimeString().slice(0, 5),
-        ...buildCurrencyFields({
-          amount: amt,
-          currency: accCurrency,
-          baseCurrency: fx.baseCurrency,
-          rateToBase: getRateFromMap(fx.ratesMap, accCurrency, fx.baseCurrency),
-          date,
-        }),
-      });
-      onSuccess();
-    } catch (err) {
-      console.error(err);
-      setError(getErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <FormWrapper title="Nueva Transferencia" emoji="⇄" accentBg="bg-[#fe9a82]" onClose={onClose}>
-      <FormFields
-        name={name}
-        setName={setName}
-        amount={amount}
-        setAmount={setAmount}
-        date={date}
-        setDate={setDate}
-        notes={notes}
-        setNotes={setNotes}
-        categories={[]}
-        category=""
-        onCategoryChange={() => {}}
-        error={error}
-        saving={saving}
-        onSave={handleSave}
-        saveLabel="Registrar transferencia"
-        saveBg="bg-[#F97316] text-white"
-        hideCategories
-      />
+      <TransferForm onSaved={onSuccess} saveClassName="bg-[#F97316] text-white" />
     </FormWrapper>
   );
 }

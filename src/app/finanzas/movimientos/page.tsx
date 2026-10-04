@@ -18,6 +18,8 @@ import {
 } from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
+import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
+import TransferForm from '@/components/finance/TransferForm';
 import {
   Plus,
   Search,
@@ -117,8 +119,8 @@ export default function MovimientosPage() {
     accountId: '',
     account: '',
     notes: '',
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toTimeString().slice(0, 5),
+    date: todayLocal(),
+    time: nowTimeLocal(),
   });
 
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -157,9 +159,6 @@ export default function MovimientosPage() {
         setRatesMap(rates);
         setShowEquivalents(settings.showEquivalents);
         setPendingIncomes(pendingList);
-        if (accs.length > 0) {
-          setForm((f) => ({ ...f, accountId: accs[0].id, account: accs[0].name }));
-        }
       })
       .catch(setLoadError)
       .finally(() => setLoading(false));
@@ -262,11 +261,11 @@ export default function MovimientosPage() {
       amount: '',
       category: 'Comida',
       categoryIcon: '🍽️',
-      accountId: accounts[0]?.id || '',
-      account: accounts[0]?.name || '',
+      accountId: '',
+      account: '',
       notes: '',
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toTimeString().slice(0, 5),
+      date: todayLocal(),
+      time: nowTimeLocal(),
     });
     setFormError('');
     setShowForm(true);
@@ -283,7 +282,7 @@ export default function MovimientosPage() {
       accountId: tx.accountId,
       account: tx.account,
       notes: tx.notes || '',
-      date: tx.date.split('T')[0],
+      date: todayLocal(new Date(tx.date)),
       time: tx.time,
     });
     setFormError('');
@@ -299,6 +298,7 @@ export default function MovimientosPage() {
   // Transfers keep their amounts and accounts here (they are created with both accounts);
   // only the description, notes and date are editable from this form.
   const isTransferEdit = !!editingTx && editingTx.type === 'transferencia';
+  const TX_TYPES = ['gasto', 'ingreso', 'transferencia'] as const;
 
   const saveTransferDetails = async (tx: Transaction) => {
     if (tx.transferId) {
@@ -314,24 +314,23 @@ export default function MovimientosPage() {
         fromAmount: t.fromAmount,
         toAmount: t.toAmount,
         baseAmount: t.baseAmount,
-        date: new Date(`${form.date}T${form.time || '12:00'}:00`).toISOString(),
+        date: localDateTimeToISO(form.date, form.time),
         name: form.name,
         notes: form.notes,
       });
       load();
     } else {
       // Transferencia antigua (una sola fila): monto, cuenta y tipo no son editables.
+      const date = localDateTimeToISO(form.date, form.time);
       await transactionsService.update(tx.id, {
         name: form.name,
         notes: form.notes,
-        date: form.date,
+        date,
         time: form.time,
       });
       setTransactions((prev) =>
         prev.map((t) =>
-          t.id === tx.id
-            ? { ...t, name: form.name, notes: form.notes, date: form.date, time: form.time }
-            : t
+          t.id === tx.id ? { ...t, name: form.name, notes: form.notes, date, time: form.time } : t
         )
       );
     }
@@ -349,9 +348,17 @@ export default function MovimientosPage() {
       return;
     }
     if (!form.name || !form.amount) return;
+    // New movements always need an account; old ones without account can stay without one.
+    if (!form.accountId && (!editingTx || editingTx.accountId)) {
+      setFormError('Elige la cuenta del movimiento.');
+      return;
+    }
     setSaving(true);
     setFormError('');
     const amt = parseFloat(form.amount);
+    // transaction_date is a timestamptz: send the local day and time, not a bare date
+    // (YYYY-MM-DD would be read as midnight UTC, the previous day in Lima).
+    const txDate = localDateTimeToISO(form.date, form.time);
     const selectedAcc = accounts.find((a) => a.id === form.accountId);
     const accCurrency = selectedAcc?.currency || 'PEN';
     const signedAmt = form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt);
@@ -374,7 +381,7 @@ export default function MovimientosPage() {
           accountId: form.accountId,
           account: form.account,
           notes: form.notes,
-          date: form.date,
+          date: txDate,
           time: form.time,
           ...currencyFields,
         })
@@ -392,7 +399,7 @@ export default function MovimientosPage() {
                     accountId: form.accountId,
                     account: form.account,
                     notes: form.notes,
-                    date: form.date,
+                    date: txDate,
                     time: form.time,
                     ...currencyFields,
                   }
@@ -414,7 +421,7 @@ export default function MovimientosPage() {
           accountId: form.accountId,
           account: form.account,
           notes: form.notes,
-          date: form.date,
+          date: txDate,
           time: form.time,
           ...currencyFields,
         })
@@ -785,7 +792,7 @@ export default function MovimientosPage() {
               <div
                 className={`flex gap-1 bg-gray-100 rounded-xl p-1 ${isTransferEdit ? 'hidden' : ''}`}
               >
-                {(['gasto', 'ingreso'] as const).map((t) => (
+                {(editingTx ? (['gasto', 'ingreso'] as const) : TX_TYPES).map((t) => (
                   <button
                     key={t}
                     onClick={() => setForm((f) => ({ ...f, type: t }))}
@@ -795,145 +802,162 @@ export default function MovimientosPage() {
                   </button>
                 ))}
               </div>
-              {/* Account (first to detect currency) */}
-              {isTransferEdit ? null : accounts.length > 0 ? (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Cuenta</label>
+              {!editingTx && form.type === 'transferencia' ? (
+                <TransferForm
+                  saveLabel="Guardar"
+                  onSaved={() => {
+                    setShowForm(false);
+                    load();
+                  }}
+                />
+              ) : (
+                <>
+                  {/* Account (first to detect currency) */}
+                  {isTransferEdit ? null : accounts.length > 0 ? (
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Cuenta
+                      </label>
+                      <select
+                        value={form.accountId}
+                        onChange={(e) => {
+                          const acc = accounts.find((a) => a.id === e.target.value);
+                          setForm((f) => ({
+                            ...f,
+                            accountId: e.target.value,
+                            account: acc?.name || '',
+                          }));
+                        }}
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
+                      >
+                        <option value="">
+                          {editingTx && !editingTx.accountId ? 'Sin cuenta' : 'Elige la cuenta'}
+                        </option>
+                        {accounts.map((a) => {
+                          const ci = getCurrencyInfo(a.currency);
+                          return (
+                            <option key={a.id} value={a.id}>
+                              {a.icon} {a.name} ({ci.flag} {a.currency})
+                            </option>
+                          );
+                        })}
+                      </select>
+                      {(() => {
+                        const acc = accounts.find((a) => a.id === form.accountId);
+                        if (!acc || acc.currency === baseCurrency) return null;
+                        const ci = getCurrencyInfo(acc.currency);
+                        return (
+                          <p className="text-xs text-blue-600 mt-1 font-medium">
+                            {ci.flag} Esta cuenta está en {ci.name} ({acc.currency})
+                          </p>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-700">
+                      Primero agrega una cuenta en la sección Cuentas
+                    </div>
+                  )}
+                  {/* Amount */}
+                  <div className={isTransferEdit ? 'hidden' : ''}>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Monto</label>
+                    <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border">
+                      <span className="text-black font-semibold">
+                        {
+                          getCurrencyInfo(
+                            accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'
+                          ).symbol
+                        }
+                      </span>
+                      <input
+                        type="number"
+                        value={form.amount}
+                        onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="flex-1 bg-transparent text-xl font-manrope font-800 text-black outline-none"
+                      />
+                      <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
+                        {accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'}
+                      </span>
+                    </div>
+                    {(() => {
+                      const acc = accounts.find((a) => a.id === form.accountId);
+                      const amt = parseFloat(form.amount) || 0;
+                      if (!acc || acc.currency === baseCurrency || !amt) return null;
+                      const rate = getRateFromMap(ratesMap, acc.currency, baseCurrency);
+                      return (
+                        <p className="text-xs text-blue-600 mt-1">
+                          ≈ {formatCurrency(amt * rate, baseCurrency)} · 1 {acc.currency} ={' '}
+                          {formatCurrency(rate, baseCurrency)}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  {/* Name */}
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Descripción (ej: Almuerzo, Sueldo...)"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+                  />
+                  {/* Category */}
                   <select
-                    value={form.accountId}
+                    hidden={isTransferEdit}
+                    value={form.category}
                     onChange={(e) => {
-                      const acc = accounts.find((a) => a.id === e.target.value);
+                      const cat = CATEGORY_PRESETS.find((c) => c.label === e.target.value);
                       setForm((f) => ({
                         ...f,
-                        accountId: e.target.value,
-                        account: acc?.name || '',
+                        category: e.target.value,
+                        categoryIcon: cat?.icon || '📦',
                       }));
                     }}
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
                   >
-                    {accounts.map((a) => {
-                      const ci = getCurrencyInfo(a.currency);
-                      return (
-                        <option key={a.id} value={a.id}>
-                          {a.icon} {a.name} ({ci.flag} {a.currency})
-                        </option>
-                      );
-                    })}
+                    {CATEGORY_PRESETS.map((c) => (
+                      <option key={c.id} value={c.label}>
+                        {c.icon} {c.label}
+                      </option>
+                    ))}
                   </select>
-                  {(() => {
-                    const acc = accounts.find((a) => a.id === form.accountId);
-                    if (!acc || acc.currency === baseCurrency) return null;
-                    const ci = getCurrencyInfo(acc.currency);
-                    return (
-                      <p className="text-xs text-blue-600 mt-1 font-medium">
-                        {ci.flag} Esta cuenta está en {ci.name} ({acc.currency})
-                      </p>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="px-4 py-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-700">
-                  Primero agrega una cuenta en la sección Cuentas
-                </div>
-              )}
-              {/* Amount */}
-              <div className={isTransferEdit ? 'hidden' : ''}>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Monto</label>
-                <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border">
-                  <span className="text-black font-semibold">
-                    {
-                      getCurrencyInfo(
-                        accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'
-                      ).symbol
-                    }
-                  </span>
+                  {/* Date & Time */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                      className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
+                    />
+                    <input
+                      type="time"
+                      value={form.time}
+                      onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
+                      className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
+                    />
+                  </div>
+                  {/* Notes */}
                   <input
-                    type="number"
-                    value={form.amount}
-                    onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                    placeholder="0.00"
-                    className="flex-1 bg-transparent text-xl font-manrope font-800 text-black outline-none"
+                    type="text"
+                    value={form.notes}
+                    onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                    placeholder="Nota (opcional)"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
                   />
-                  <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
-                    {accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'}
-                  </span>
-                </div>
-                {(() => {
-                  const acc = accounts.find((a) => a.id === form.accountId);
-                  const amt = parseFloat(form.amount) || 0;
-                  if (!acc || acc.currency === baseCurrency || !amt) return null;
-                  const rate = getRateFromMap(ratesMap, acc.currency, baseCurrency);
-                  return (
-                    <p className="text-xs text-blue-600 mt-1">
-                      ≈ {formatCurrency(amt * rate, baseCurrency)} · 1 {acc.currency} ={' '}
-                      {formatCurrency(rate, baseCurrency)}
+                  {formError && (
+                    <p role="alert" className="text-sm font-semibold text-red-600">
+                      {formError}
                     </p>
-                  );
-                })()}
-              </div>
-              {/* Name */}
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="Descripción (ej: Almuerzo, Sueldo...)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
-              />
-              {/* Category */}
-              <select
-                hidden={isTransferEdit}
-                value={form.category}
-                onChange={(e) => {
-                  const cat = CATEGORY_PRESETS.find((c) => c.label === e.target.value);
-                  setForm((f) => ({
-                    ...f,
-                    category: e.target.value,
-                    categoryIcon: cat?.icon || '📦',
-                  }));
-                }}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
-              >
-                {CATEGORY_PRESETS.map((c) => (
-                  <option key={c.id} value={c.label}>
-                    {c.icon} {c.label}
-                  </option>
-                ))}
-              </select>
-              {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
-                />
-                <input
-                  type="time"
-                  value={form.time}
-                  onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                  className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
-                />
-              </div>
-              {/* Notes */}
-              <input
-                type="text"
-                value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                placeholder="Nota (opcional)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
-              />
-              {formError && (
-                <p role="alert" className="text-sm font-semibold text-red-600">
-                  {formError}
-                </p>
+                  )}
+                  <button
+                    onClick={handleSave}
+                    disabled={!form.name || !form.amount || saving}
+                    className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? 'Guardando...' : editingTx ? 'Guardar cambios' : 'Guardar'}
+                  </button>
+                </>
               )}
-              <button
-                onClick={handleSave}
-                disabled={!form.name || !form.amount || saving}
-                className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Guardando...' : editingTx ? 'Guardar cambios' : 'Guardar'}
-              </button>
             </div>
           </div>
         </div>

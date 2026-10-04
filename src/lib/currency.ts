@@ -158,6 +158,28 @@ export function buildCurrencyFields(params: {
   };
 }
 
+// Amounts of a transfer between two accounts, rounded to cents. `toAmount` defaults to
+// `fromAmount` converted with the user's rate (the user may override it with what the
+// bank really credited); `baseAmount` is the value in the base currency.
+export function buildTransferAmounts(params: {
+  fromAmount: number;
+  toAmount?: number;
+  fromCurrency: string;
+  toCurrency: string;
+  baseCurrency: string;
+  ratesMap: Record<string, number>;
+}): { fromAmount: number; toAmount: number; baseAmount: number } {
+  const { fromCurrency, toCurrency, baseCurrency, ratesMap } = params;
+  const fromAmount = round2(params.fromAmount);
+  const toAmount = round2(
+    fromCurrency === toCurrency
+      ? fromAmount
+      : (params.toAmount ?? fromAmount * getRateFromMap(ratesMap, fromCurrency, toCurrency))
+  );
+  const baseAmount = round2(fromAmount * getRateFromMap(ratesMap, fromCurrency, baseCurrency));
+  return { fromAmount, toAmount, baseAmount };
+}
+
 export function getRateFromMap(ratesMap: Record<string, number>, from: string, to: string): number {
   if (from === to) return 1;
   const key = buildRateKey(from, to);

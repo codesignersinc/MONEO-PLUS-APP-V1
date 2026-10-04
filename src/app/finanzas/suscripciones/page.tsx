@@ -172,7 +172,6 @@ export default function SuscripcionesPage() {
       .then(([accs, fx]) => {
         setPayAccounts(accs);
         setPayFx(fx);
-        setPayAccountId((prev) => prev ?? accs[0]?.id ?? null);
       })
       .catch(setPayLoadError)
       .finally(() => setPayLoading(false));
@@ -180,6 +179,7 @@ export default function SuscripcionesPage() {
 
   const openPay = (sub: Subscription) => {
     setPayingSub(sub);
+    setPayAccountId(null);
     setPayError('');
     loadPayData();
   };

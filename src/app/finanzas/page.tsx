@@ -24,6 +24,7 @@ import {
   Target,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
 import { userSettingsService, exchangeRatesService, getFxContext } from '@/lib/supabaseCurrency';
 import {
   buildCurrencyFields,
@@ -203,9 +204,9 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
     amount: '',
     category: 'Comida',
     categoryIcon: '🍽️',
-    account: data.accounts[0]?.name || '',
-    accountId: data.accounts[0]?.id || '',
-    date: new Date().toISOString().split('T')[0],
+    account: '',
+    accountId: '',
+    date: todayLocal(),
     notes: '',
   });
   const [saving, setSaving] = useState(false);
@@ -218,13 +219,17 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
     setForm((f) => ({ ...f, category: label, categoryIcon: preset?.icon || '📦' }));
   }
 
-  function handleAccountChange(name: string) {
-    const acc = data.accounts.find((a) => a.name === name);
-    setForm((f) => ({ ...f, account: name, accountId: acc?.id || '' }));
+  function handleAccountChange(id: string) {
+    const acc = data.accounts.find((a) => a.id === id);
+    setForm((f) => ({ ...f, account: acc?.name || '', accountId: acc?.id || '' }));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.accountId) {
+      setSaveError('Elige la cuenta del movimiento.');
+      return;
+    }
     setSaving(true);
     setSaveError('');
     const amount =
@@ -239,7 +244,7 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
           account: form.account,
           accountId: form.accountId,
           amount,
-          date: new Date(form.date).toISOString(),
+          date: localDateTimeToISO(form.date, nowTimeLocal()),
           time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
           type: type === 'gasto' ? 'gasto' : 'ingreso',
           notes: form.notes,
@@ -343,12 +348,13 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
                 </div>
               ) : (
                 <select
-                  value={form.account}
+                  value={form.accountId}
                   onChange={(e) => handleAccountChange(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border-[3px] border-black text-base font-medium focus:outline-none bg-white text-black"
                 >
+                  <option value="">Elige la cuenta</option>
                   {data.accounts.map((a) => (
-                    <option key={a.id} value={a.name}>
+                    <option key={a.id} value={a.id}>
                       {a.name}
                     </option>
                   ))}
