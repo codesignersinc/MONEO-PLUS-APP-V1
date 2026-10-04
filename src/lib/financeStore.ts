@@ -104,6 +104,8 @@ export interface Debt {
   type: string;
   color: string;
   interestRate: number;
+  // Monto inicial de la deuda (para la barra de avance: pagado = originalAmount - balance).
+  originalAmount?: number;
 }
 
 export interface Investment {

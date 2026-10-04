@@ -14,6 +14,8 @@ import {
   groupAccountsByCurrency,
 } from '@/lib/currency';
 import { Plus, X, Pencil, Trash2, ChevronRight } from 'lucide-react';
+import { PERUVIAN_BANKS } from '@/lib/brands';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 const ACCOUNT_TYPES = [
   { value: 'banco', label: 'Cuenta bancaria', icon: '🏦' },
@@ -21,65 +23,6 @@ const ACCOUNT_TYPES = [
   { value: 'digital', label: 'Billetera digital', icon: '📱' },
   { value: 'credito', label: 'Tarjeta de crédito', icon: '💳' },
   { value: 'inversion', label: 'Cuenta de inversión', icon: '📈' },
-];
-
-const PERUVIAN_BANKS = [
-  {
-    id: 'bcp',
-    name: 'BCP',
-    image: '/assets/images/bcp-1790986661188.jpg',
-    color: '#003087',
-    bg: '#E8F0FF',
-  },
-  {
-    id: 'interbank',
-    name: 'Interbank',
-    image: '/assets/images/interbank-1790986660881.png',
-    color: '#00A651',
-    bg: '#E6F7EE',
-  },
-  {
-    id: 'bbva',
-    name: 'BBVA',
-    image: '/assets/images/bbva-1790986661190.png',
-    color: '#004481',
-    bg: '#E6EEF7',
-  },
-  {
-    id: 'scotiabank',
-    name: 'Scotiabank',
-    image: '/assets/images/scotiabank-1790986661195.png',
-    color: '#CC0000',
-    bg: '#FFE6E6',
-  },
-  {
-    id: 'banbif',
-    name: 'BanBif',
-    image: '/assets/images/banbif-1790986684660.jpg',
-    color: '#E30613',
-    bg: '#FFE6E7',
-  },
-  {
-    id: 'nacion',
-    name: 'Banco de la Nación',
-    image: '/assets/images/banco_de_la_nacion-1790987077025.jpg',
-    color: '#C8102E',
-    bg: '#FFE6EA',
-  },
-  {
-    id: 'ripley',
-    name: 'Banco Ripley',
-    image: '/assets/images/bancoripley-1790987077028.jpg',
-    color: '#6B21A8',
-    bg: '#F3E8FF',
-  },
-  {
-    id: 'falabella',
-    name: 'Banco Falabella',
-    image: '/assets/images/falabella-1790987077026.png',
-    color: '#1D4ED8',
-    bg: '#DBEAFE',
-  },
 ];
 
 const COLOR_OPTIONS = [
@@ -410,12 +353,12 @@ export default function CuentasPage() {
                 className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-shadow group"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: acc.bgColor }}
-                  >
-                    {acc.icon}
-                  </div>
+                  <BrandLogo
+                    kind="account"
+                    name={acc.name}
+                    institution={acc.institution}
+                    type={acc.type}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-black text-black">{acc.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">

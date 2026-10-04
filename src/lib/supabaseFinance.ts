@@ -499,6 +499,7 @@ export const debtsService = {
       type: r.debt_type,
       color: r.color,
       interestRate: r.interest_rate,
+      originalAmount: Number(r.original_amount ?? r.balance),
     }));
   },
 
@@ -535,7 +536,29 @@ export const debtsService = {
       type: data.debt_type,
       color: data.color,
       interestRate: data.interest_rate,
+      originalAmount: Number(data.original_amount ?? data.balance),
     };
+  },
+
+  // Pays `amount` (base currency) of the debt from `accountId`: the database records the
+  // expense (moving the account balance), lowers the debt and keeps the payment history.
+  // For an account in another currency pass `accountAmount` (what it really debits).
+  // Resolves with the remaining debt balance.
+  async pay(
+    id: string,
+    accountId: string,
+    amount: number,
+    accountAmount?: number
+  ): Promise<number> {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('pay_debt', {
+      p_debt_id: id,
+      p_account_id: accountId,
+      p_amount: amount,
+      p_account_amount: accountAmount ?? null,
+    });
+    if (error) throw toDataError(error);
+    return Number(data);
   },
 
   async update(id: string, debt: Partial<Debt>): Promise<void> {

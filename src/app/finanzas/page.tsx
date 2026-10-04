@@ -36,6 +36,7 @@ import {
 import NotificationBell from '@/components/notifications/NotificationBell';
 import LoadError from '@/components/ui/LoadError';
 import { getErrorMessage } from '@/lib/dataError';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -554,15 +555,6 @@ export default function DashboardPage() {
     if (d.toDateString() === yesterday.toDateString()) return `Ayer, ${tx.time || ''}`;
     return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${tx.time || ''}`;
   };
-
-  // Payment icon colors
-  const paymentColors = [
-    'bg-red-600',
-    'bg-blue-600',
-    'bg-orange-500',
-    'bg-green-600',
-    'bg-yellow-500',
-  ];
 
   return (
     <>
@@ -1434,13 +1426,14 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {upcomingPayments.map((payment, i) => (
+                  {upcomingPayments.map((payment) => (
                     <div key={payment.id} className="flex items-center gap-2.5">
-                      <div
-                        className={`w-9 h-9 rounded-xl ${paymentColors[i % paymentColors.length]} flex items-center justify-center flex-shrink-0`}
-                      >
-                        <span className="text-base">{payment.icon}</span>
-                      </div>
+                      <BrandLogo
+                        kind="subscription"
+                        name={payment.name}
+                        color={payment.color}
+                        size="sm"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-black text-black truncate">{payment.name}</p>
                         <p className="text-[10px] text-gray-400">
@@ -1464,9 +1457,11 @@ export default function DashboardPage() {
                   <h3 className="text-xs font-black text-black">Próximo pago</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl border-[3px] border-black bg-black flex items-center justify-center text-xl flex-shrink-0">
-                    <span className="text-lg">{nextPayment.icon}</span>
-                  </div>
+                  <BrandLogo
+                    kind="subscription"
+                    name={nextPayment.name}
+                    color={nextPayment.color}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-black truncate">{nextPayment.name}</p>
                     <p className="text-[10px] text-gray-400">
@@ -1546,9 +1541,12 @@ export default function DashboardPage() {
               </div>
               {nextPayment ? (
                 <div className="flex flex-col gap-1.5">
-                  <div className="w-9 h-9 rounded-xl border-[3px] border-black bg-black flex items-center justify-center text-lg flex-shrink-0">
-                    <span className="text-base">{nextPayment.icon}</span>
-                  </div>
+                  <BrandLogo
+                    kind="subscription"
+                    name={nextPayment.name}
+                    color={nextPayment.color}
+                    size="sm"
+                  />
                   <div className="min-w-0">
                     <p className="text-[10px] font-black text-black truncate">{nextPayment.name}</p>
                     <p className="text-[9px] text-gray-400">

@@ -1,7 +1,9 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { debtsService, Debt } from '@/lib/supabaseFinance';
-import { Plus, X, Pencil, Trash2, CreditCard, AlertCircle } from 'lucide-react';
+import { Plus, X, Pencil, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import BrandLogo from '@/components/finance/BrandLogo';
+import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
@@ -22,6 +24,9 @@ export default function DeudasPage() {
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
+  // Debt being paid and the amount chosen in the pay modal.
+  const [paying, setPaying] = useState<Debt | null>(null);
+  const [payAmount, setPayAmount] = useState('');
   const toast = useToast();
   const [form, setForm] = useState({
     name: '',
@@ -124,6 +129,26 @@ export default function DeudasPage() {
     }
   };
 
+  const openPay = (debt: Debt) => {
+    setPaying(debt);
+    setPayAmount(String(Math.min(debt.monthlyPayment || debt.balance, debt.balance)));
+  };
+
+  const payAmountNum = Math.round((parseFloat(payAmount) || 0) * 100) / 100;
+
+  // The database records the expense in the chosen account and lowers the debt.
+  const confirmPay = async (accountId: string, accountAmount?: number) => {
+    if (!paying) return;
+    const newBalance = await debtsService.pay(paying.id, accountId, payAmountNum, accountAmount);
+    setDebts((prev) => prev.map((d) => (d.id === paying.id ? { ...d, balance: newBalance } : d)));
+    toast.showSuccess(
+      newBalance <= 0
+        ? `¡${paying.name} quedó pagada!`
+        : `Pago registrado. Saldo de ${paying.name}: S/ ${newBalance.toFixed(2)}`
+    );
+    setPaying(null);
+  };
+
   const handleDelete = async (id: string) => {
     try {
       await debtsService.delete(id);
@@ -156,7 +181,7 @@ export default function DeudasPage() {
         <h1 className="text-3xl font-black text-black leading-tight">Deudas</h1>
         <button
           onClick={openAdd}
-          className="group flex items-center gap-2 px-3 py-2 bg-fin-red text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-all duration-200"
+          className="group flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-all duration-200 bg-[#FFD43B] text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
         >
           <Plus
             className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
@@ -167,7 +192,7 @@ export default function DeudasPage() {
       </div>
 
       {debts.length > 0 && (
-        <div className="bg-white rounded-3xl border-[3px] border-red-100 p-5 mb-5 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+        <div className="bg-white rounded-3xl border-[3px] border-black p-5 mb-5 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center gap-2 mb-1">
             <AlertCircle className="w-4 h-4 text-red-500" strokeWidth={1.75} />
             <p className="text-sm text-gray-500">Total deudas</p>
@@ -184,24 +209,6 @@ export default function DeudasPage() {
         </div>
       )}
 
-      {debts.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <CreditCard className="w-12 h-12 text-gray-200 mb-3" strokeWidth={1.25} />
-          <p className="text-gray-500 font-medium mb-1">Sin deudas registradas</p>
-          <p className="text-sm text-gray-400 mb-4">Registra tus deudas para llevar un control</p>
-          <button
-            onClick={openAdd}
-            className="group flex items-center gap-2 px-4 py-2 bg-fin-red text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-all duration-200"
-          >
-            <Plus
-              className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
-              strokeWidth={2.5}
-            />
-            Agregar deuda
-          </button>
-        </div>
-      )}
-
       {debts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-3xl mb-4">
@@ -213,7 +220,7 @@ export default function DeudasPage() {
           </p>
           <button
             onClick={openAdd}
-            className="px-5 py-3 bg-fin-red text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-colors"
+            className="px-5 py-3 text-sm rounded-xl transition-all bg-[#FFD43B] text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             Agregar primera deuda
           </button>
@@ -228,12 +235,12 @@ export default function DeudasPage() {
                 className="bg-white rounded-3xl border-[3px] border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-shadow group"
               >
                 <div className="flex items-start gap-3 mb-4">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: '#FEE2E2' }}
-                  >
-                    {debt.icon}
-                  </div>
+                  <BrandLogo
+                    kind="debt"
+                    name={debt.name}
+                    institution={debt.institution}
+                    type={debt.type}
+                  />
                   <div className="flex-1">
                     <p className="font-black text-black">{debt.name}</p>
                     <p className="text-xs text-gray-500">
@@ -250,10 +257,7 @@ export default function DeudasPage() {
                         onClick={() => openEdit(debt)}
                         className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-gray-100 transition-all"
                       >
-                        <Pencil
-                          className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors"
-                          strokeWidth={1.75}
-                        />
+                        <Pencil className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
                       </button>
                       <button
                         onClick={() => handleDelete(debt.id)}
@@ -282,6 +286,47 @@ export default function DeudasPage() {
                     <p className="text-sm font-semibold text-black">{debt.dueDate || '—'}</p>
                   </div>
                 </div>
+                {(() => {
+                  const original = Math.max(debt.originalAmount ?? debt.balance, debt.balance);
+                  const paid = Math.max(original - debt.balance, 0);
+                  const pct = original > 0 ? Math.round((paid / original) * 100) : 0;
+                  const settled = debt.balance <= 0;
+                  return (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="font-bold text-gray-600">
+                          Pagado S/ {paid.toFixed(2)} de S/ {original.toFixed(2)}
+                        </span>
+                        <span className="font-black text-black">{pct}%</span>
+                      </div>
+                      <div
+                        className="h-3 bg-gray-100 border-[2px] border-black rounded-full overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={pct}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Avance de pago de ${debt.name}`}
+                      >
+                        <div
+                          className="h-full bg-[#4ADE80] rounded-full transition-all duration-700"
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                      {settled ? (
+                        <p className="mt-3 flex items-center justify-center gap-2 rounded-xl border-[2px] border-black bg-[#DCFCE7] py-2 text-sm font-black text-green-800">
+                          <CheckCircle2 className="w-4 h-4" strokeWidth={2.5} /> Deuda pagada
+                        </p>
+                      ) : (
+                        <button
+                          onClick={() => openPay(debt)}
+                          className="mt-3 w-full py-2.5 rounded-xl text-sm transition-all bg-[#FFD43B] text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
+                        >
+                          Registrar pago
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
                 {debt.limit > 0 && (
                   <div>
                     <div className="flex justify-between text-xs mb-1.5">
@@ -407,7 +452,7 @@ export default function DeudasPage() {
               <button
                 onClick={handleSave}
                 disabled={!form.name || saving}
-                className="w-full py-3.5 bg-fin-red text-white font-black rounded-xl hover:bg-red-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-[#FFD43B] text-black font-black rounded-xl border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Guardando...' : editingDebt ? 'Guardar cambios' : 'Agregar deuda'}
               </button>
@@ -415,6 +460,75 @@ export default function DeudasPage() {
           </div>
         </div>
       )}
+      {paying && (
+        <AccountPickerModal
+          title={`Pagar ${paying.name}`}
+          amount={payAmountNum}
+          confirmLabel={payAmountNum > 0 ? `Pagar S/ ${payAmountNum.toFixed(2)}` : 'Pagar'}
+          onConfirm={confirmPay}
+          onClose={() => setPaying(null)}
+          validate={() =>
+            payAmountNum > 0 && payAmountNum <= paying.balance
+              ? null
+              : `Ingresa un monto mayor que 0 y hasta S/ ${paying.balance.toFixed(2)}.`
+          }
+          header={<PayAmountChooser debt={paying} value={payAmount} onChange={setPayAmount} />}
+        />
+      )}
+    </div>
+  );
+}
+
+// Amount to pay: quick options (monthly installment / full balance) or any partial amount.
+function PayAmountChooser({
+  debt,
+  value,
+  onChange,
+}: {
+  debt: Debt;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const options = [
+    ...(debt.monthlyPayment > 0 && debt.monthlyPayment < debt.balance
+      ? [{ label: 'Cuota mensual', amount: debt.monthlyPayment }]
+      : []),
+    { label: 'Pago total', amount: debt.balance },
+  ];
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-gray-600">
+        Saldo actual: <span className="font-black text-black">S/ {debt.balance.toFixed(2)}</span>
+      </p>
+      <div className="flex gap-2">
+        {options.map((o) => (
+          <button
+            key={o.label}
+            type="button"
+            onClick={() => onChange(String(o.amount))}
+            className={`flex-1 py-2 rounded-xl border-[2px] text-xs font-black transition-all ${
+              parseFloat(value) === o.amount
+                ? 'bg-[#FFD43B] border-black text-black'
+                : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+            }`}
+          >
+            {o.label}
+            <span className="block font-bold">S/ {o.amount.toFixed(2)}</span>
+          </button>
+        ))}
+      </div>
+      <label className="block text-xs font-black text-black uppercase tracking-wide">
+        Monto a pagar (S/)
+      </label>
+      <input
+        type="number"
+        inputMode="decimal"
+        min="0"
+        step="0.01"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black font-bold outline-none focus:border-black transition-colors"
+      />
     </div>
   );
 }

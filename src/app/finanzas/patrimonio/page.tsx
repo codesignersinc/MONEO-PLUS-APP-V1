@@ -14,6 +14,7 @@ import {
   getRateFromMap,
   groupAccountsByCurrency,
 } from '@/lib/currency';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 export default function PatrimonioPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -232,7 +233,13 @@ export default function PatrimonioPage() {
                       key={a.id}
                       className={`flex items-center gap-3 px-4 py-3.5 ${i < positiveAccounts.length - 1 || totalSavings > 0 || totalInvestments > 0 ? 'border-b border-gray-50' : ''}`}
                     >
-                      <span className="text-xl w-8 flex-shrink-0">{a.icon}</span>
+                      <BrandLogo
+                        kind="account"
+                        name={a.name}
+                        institution={a.institution}
+                        type={a.type}
+                        size="sm"
+                      />
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-black">{a.name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -303,7 +310,13 @@ export default function PatrimonioPage() {
                       key={a.id}
                       className={`flex items-center gap-3 px-4 py-3.5 ${i < negativeAccounts.length - 1 || totalDebts > 0 ? 'border-b border-gray-50' : ''}`}
                     >
-                      <span className="text-xl w-8 flex-shrink-0">{a.icon}</span>
+                      <BrandLogo
+                        kind="account"
+                        name={a.name}
+                        institution={a.institution}
+                        type={a.type}
+                        size="sm"
+                      />
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-black">{a.name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -329,7 +342,13 @@ export default function PatrimonioPage() {
                     key={d.id}
                     className={`flex items-center gap-3 px-4 py-3.5 ${i < debts.length - 1 ? 'border-b border-gray-50' : ''}`}
                   >
-                    <span className="text-xl w-8 flex-shrink-0">{d.icon}</span>
+                    <BrandLogo
+                      kind="debt"
+                      name={d.name}
+                      institution={d.institution}
+                      type={d.type}
+                      size="sm"
+                    />
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-black">{d.name}</p>
                       <p className="text-xs text-gray-500">{d.institution}</p>

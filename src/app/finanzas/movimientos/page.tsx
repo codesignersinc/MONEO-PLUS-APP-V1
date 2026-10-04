@@ -540,14 +540,14 @@ export default function MovimientosPage() {
       {/* Summary */}
       {(transactions.length > 0 || pendingIncomes.length > 0) && (
         <div
-          className={`grid gap-3 mb-5 ${totalPorCobrar > 0 && (filter === 'todos' || filter === 'ingresos') ? 'grid-cols-3' : 'grid-cols-2'}`}
+          className={`grid gap-3 mb-5 ${totalPorCobrar > 0 && (filter === 'todos' || filter === 'ingresos') ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}
         >
           <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
             <div className="flex items-center gap-2 mb-1">
               <ArrowDownLeft className="w-4 h-4 text-green-600" strokeWidth={1.75} />
               <p className="text-xs text-gray-500 font-medium">Ingresos</p>
             </div>
-            <p className="text-xl font-bold text-green-700">
+            <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-green-700">
               {formatCurrency(totalIncome, baseCurrency)}
             </p>
             {currencyFilter !== 'todas' && (
@@ -559,7 +559,7 @@ export default function MovimientosPage() {
               <ArrowUpRight className="w-4 h-4 text-red-500" strokeWidth={1.75} />
               <p className="text-xs text-gray-500 font-medium">Pagos</p>
             </div>
-            <p className="text-xl font-bold text-red-600">
+            <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-red-600">
               {formatCurrency(totalExpense, baseCurrency)}
             </p>
             {currencyFilter !== 'todas' && (
@@ -572,7 +572,7 @@ export default function MovimientosPage() {
                 <Clock className="w-4 h-4 text-amber-500" strokeWidth={1.75} />
                 <p className="text-xs text-amber-600 font-medium">Por cobrar</p>
               </div>
-              <p className="text-xl font-bold text-amber-600">
+              <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-amber-600">
                 {formatCurrency(totalPorCobrar, baseCurrency)}
               </p>
             </div>
@@ -832,7 +832,7 @@ export default function MovimientosPage() {
                           const ci = getCurrencyInfo(a.currency);
                           return (
                             <option key={a.id} value={a.id}>
-                              {a.icon} {a.name} ({ci.flag} {a.currency})
+                              {a.name} ({ci.flag} {a.currency})
                             </option>
                           );
                         })}

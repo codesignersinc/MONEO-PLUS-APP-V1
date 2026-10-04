@@ -228,13 +228,15 @@ export default function IngresosPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
         <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-amber-500" strokeWidth={1.75} />
             <p className="text-xs text-gray-500 font-medium">Por cobrar</p>
           </div>
-          <p className="text-xl font-bold text-amber-600">S/ {totalPendiente.toFixed(2)}</p>
+          <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-amber-600">
+            S/ {totalPendiente.toFixed(2)}
+          </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {entries.filter((e) => e.status === 'pendiente').length} ingresos
           </p>
@@ -244,7 +246,9 @@ export default function IngresosPage() {
             <CheckCircle2 className="w-4 h-4 text-green-600" strokeWidth={1.75} />
             <p className="text-xs text-gray-500 font-medium">Cobrado</p>
           </div>
-          <p className="text-xl font-bold text-green-700">S/ {totalCobrado.toFixed(2)}</p>
+          <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-green-700">
+            S/ {totalCobrado.toFixed(2)}
+          </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {entries.filter((e) => e.status === 'cobrado').length} ingresos
           </p>

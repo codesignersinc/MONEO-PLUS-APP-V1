@@ -71,6 +71,16 @@ export function AccountAmountFields({
     load();
   }, [load]);
 
+  const selected = accounts?.find((a) => a.id === value.accountId);
+  // When the amount to pay changes, refresh the prefilled amount in the account currency.
+  useEffect(() => {
+    if (!selected || !value.foreign) return;
+    const converted = amount * getRateFromMap(ratesMap, baseCurrency, selected.currency);
+    const next = converted > 0 ? converted.toFixed(2) : '';
+    if (next !== value.accountAmount) onChange({ ...value, accountAmount: next });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount]);
+
   if (loadError) return <LoadError what="tus cuentas" error={loadError} onRetry={load} />;
   if (accounts && accounts.length === 0) {
     return (
@@ -80,7 +90,6 @@ export function AccountAmountFields({
     );
   }
 
-  const selected = accounts?.find((a) => a.id === value.accountId);
   const select = (id: string) => {
     const acc = accounts?.find((a) => a.id === id);
     const foreign = !!acc && (acc.currency || 'PEN') !== baseCurrency;
@@ -107,7 +116,7 @@ export function AccountAmountFields({
           <option value="">{accounts ? 'Elige la cuenta' : 'Cargando cuentas…'}</option>
           {accounts?.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.icon} {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency} ·{' '}
+              {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency} ·{' '}
               {formatCurrency(a.balance, a.currency)})
             </option>
           ))}
@@ -138,6 +147,10 @@ interface ModalProps {
   confirmLabel: string;
   onConfirm: (accountId: string, accountAmount?: number) => Promise<void>;
   onClose: () => void;
+  // Optional content above the account selector (e.g. the amount to pay) and a check
+  // run before confirming; it returns an error message or null.
+  header?: React.ReactNode;
+  validate?: () => string | null;
 }
 
 // Asks for the account before marking a payment as paid or an income as collected.
@@ -147,12 +160,19 @@ export function AccountPickerModal({
   confirmLabel,
   onConfirm,
   onClose,
+  header,
+  validate,
 }: ModalProps) {
   const [choice, setChoice] = useState<AccountChoice>(EMPTY_ACCOUNT_CHOICE);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const confirm = async () => {
+    const invalid = validate?.();
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     const r = resolveAccountChoice(choice);
     if ('error' in r) {
       setError(r.error);
@@ -177,6 +197,7 @@ export function AccountPickerModal({
       />
       <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-5 space-y-4">
         <h2 className="font-semibold text-black">{title}</h2>
+        {header}
         <AccountAmountFields amount={amount} value={choice} onChange={setChoice} />
         {error && (
           <p role="alert" className="text-sm font-semibold text-red-600">

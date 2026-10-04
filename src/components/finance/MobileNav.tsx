@@ -257,7 +257,7 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
             <option value="">{accounts ? 'Elige la cuenta' : 'Cargando cuentas…'}</option>
             {accounts?.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.icon} {a.name} ({a.currency})
+                {a.name} ({a.currency})
               </option>
             ))}
           </select>

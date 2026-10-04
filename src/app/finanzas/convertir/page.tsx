@@ -232,7 +232,7 @@ export default function ConvertirDineroPage() {
                 const ci = getCurrencyInfo(a.currency);
                 return (
                   <option key={a.id} value={a.id}>
-                    {a.icon} {a.name} ({ci.flag} {a.currency})
+                    {a.name} ({ci.flag} {a.currency})
                   </option>
                 );
               })}
@@ -283,7 +283,7 @@ export default function ConvertirDineroPage() {
                 const ci = getCurrencyInfo(a.currency);
                 return (
                   <option key={a.id} value={a.id}>
-                    {a.icon} {a.name} ({ci.flag} {a.currency})
+                    {a.name} ({ci.flag} {a.currency})
                   </option>
                 );
               })}

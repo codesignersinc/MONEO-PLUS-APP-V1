@@ -111,7 +111,7 @@ export default function TransferForm({
 
   const accountOption = (a: Account) => (
     <option key={a.id} value={a.id}>
-      {a.icon} {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency} ·{' '}
+      {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency} ·{' '}
       {formatCurrency(a.balance, a.currency)})
     </option>
   );

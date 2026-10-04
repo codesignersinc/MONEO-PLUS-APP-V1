@@ -29,6 +29,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import SubscriptionServicePicker from '@/components/finance/SubscriptionServicePicker';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 const SUB_CATEGORIES = [
   'Entretenimiento',
@@ -371,13 +372,8 @@ export default function SuscripcionesPage() {
     </>
   );
 
-  const subIcon = (sub: Subscription, paid = false) => (
-    <div
-      className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-      style={{ background: paid ? '#DCFCE7' : '#EDE9FE' }}
-    >
-      {sub.icon}
-    </div>
+  const subIcon = (sub: Subscription, _paid = false) => (
+    <BrandLogo kind="subscription" name={sub.name} color={sub.color} />
   );
 
   const sectionTitle = (icon: React.ReactNode, title: string, extra?: React.ReactNode) => (
@@ -695,9 +691,13 @@ export default function SuscripcionesPage() {
                         onClick={() => setPayAccountId(acc.id)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-[2.5px] text-left transition-all ${selected ? 'border-black bg-[#FFD43B]' : 'border-gray-300 bg-white hover:border-black'}`}
                       >
-                        <span className="text-xl">
-                          {acc.icon || <Wallet className="w-5 h-5" />}
-                        </span>
+                        <BrandLogo
+                          kind="account"
+                          name={acc.name}
+                          institution={acc.institution}
+                          type={acc.type}
+                          size="sm"
+                        />
                         <span className="flex-1 min-w-0">
                           <span className="block text-sm font-black text-black truncate">
                             {acc.name}
