@@ -72,7 +72,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   async function handleSignOut() {
     try {
       await signOut();
-      router.replace('/login');
+      router.replace('/');
     } catch (err) {
       toast.showError(err);
     }

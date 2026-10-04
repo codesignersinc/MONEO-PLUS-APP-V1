@@ -522,3 +522,50 @@ body::before {
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
 }
+
+/* ─── Landing ─── */
+.lp-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp-reveal[data-visible='true'] {
+  opacity: 1;
+  transform: none;
+}
+@keyframes lpFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(4deg);
+  }
+}
+.lp-float {
+  animation: lpFloat 5s ease-in-out infinite;
+}
+.lp-float-slow {
+  animation: lpFloat 7s ease-in-out infinite reverse;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .lp-float,
+  .lp-float-slow {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(#contenido) {
+    scroll-behavior: smooth;
+  }
+}

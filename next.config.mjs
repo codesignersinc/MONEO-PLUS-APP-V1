@@ -12,17 +12,12 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/',
-        destination: '/finanzas',
-        permanent: false,
-      },
-      {
         source: '/home',
-        destination: '/finanzas',
+        destination: '/',
         permanent: false,
       },
     ];
-  }
+  },
 };
 
 export default nextConfig;
