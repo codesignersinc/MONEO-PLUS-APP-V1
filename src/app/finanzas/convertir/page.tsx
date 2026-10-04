@@ -98,18 +98,30 @@ export default function ConvertirDineroPage() {
     setError('');
     try {
       const today = new Date().toISOString().split('T')[0];
+      const fromAmt = Math.round(fromAmountNum * 100) / 100;
+      const toAmt = Math.round(toAmountCalc * 100) / 100;
       await currencyExchangesService.create({
         fromAccountId,
         toAccountId,
         fromCurrency,
-        fromAmount: fromAmountNum,
+        fromAmount: fromAmt,
         toCurrency,
-        toAmount: toAmountCalc,
+        toAmount: toAmt,
         exchangeRate: rate,
         exchangeDate: today,
         notes,
       });
       // Only reached when the insert really succeeded (the service throws otherwise).
+      // The database moved both balances; mirror it locally.
+      setAccounts((prev) =>
+        prev.map((a) =>
+          a.id === fromAccountId
+            ? { ...a, balance: a.balance - fromAmt }
+            : a.id === toAccountId
+              ? { ...a, balance: a.balance + toAmt }
+              : a
+        )
+      );
       setSuccess(true);
       setFromAmount('');
       setNotes('');

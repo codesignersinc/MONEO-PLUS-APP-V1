@@ -3,7 +3,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
-import { transactionsService, accountsService, Transaction } from '@/lib/supabaseFinance';
+import {
+  transactionsService,
+  transfersService,
+  accountsService,
+  Transaction,
+} from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import {
   buildCurrencyFields,
@@ -291,7 +296,58 @@ export default function MovimientosPage() {
     setFormError(getErrorMessage(err));
   };
 
+  // Transfers keep their amounts and accounts here (they are created with both accounts);
+  // only the description, notes and date are editable from this form.
+  const isTransferEdit = !!editingTx && editingTx.type === 'transferencia';
+
+  const saveTransferDetails = async (tx: Transaction) => {
+    if (tx.transferId) {
+      const t = await transfersService.get(tx.transferId);
+      if (!t.fromAccountId || !t.toAccountId) {
+        throw new Error(
+          'Esta transferencia tiene una cuenta eliminada. Elimínala y vuelve a crearla.'
+        );
+      }
+      await transfersService.update(t.id, {
+        fromAccountId: t.fromAccountId,
+        toAccountId: t.toAccountId,
+        fromAmount: t.fromAmount,
+        toAmount: t.toAmount,
+        baseAmount: t.baseAmount,
+        date: new Date(`${form.date}T${form.time || '12:00'}:00`).toISOString(),
+        name: form.name,
+        notes: form.notes,
+      });
+      load();
+    } else {
+      // Transferencia antigua (una sola fila): monto, cuenta y tipo no son editables.
+      await transactionsService.update(tx.id, {
+        name: form.name,
+        notes: form.notes,
+        date: form.date,
+        time: form.time,
+      });
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === tx.id
+            ? { ...t, name: form.name, notes: form.notes, date: form.date, time: form.time }
+            : t
+        )
+      );
+    }
+  };
+
   const handleSave = () => {
+    if (editingTx && isTransferEdit) {
+      if (!form.name) return;
+      setSaving(true);
+      setFormError('');
+      saveTransferDetails(editingTx)
+        .then(() => setShowForm(false))
+        .catch(onSaveError)
+        .finally(() => setSaving(false));
+      return;
+    }
     if (!form.name || !form.amount) return;
     setSaving(true);
     setFormError('');
@@ -371,13 +427,15 @@ export default function MovimientosPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    transactionsService
-      .delete(id)
-      .then(() => {
-        setTransactions((prev) => prev.filter((t) => t.id !== id));
-      })
-      .catch((err) => toast.showError(err));
+  // A transfer leg is never deleted alone: deleting it deletes the whole transfer.
+  const handleDelete = (tx: Transaction) => {
+    const transferId = tx.transferId;
+    const op = transferId ? transfersService.delete(transferId) : transactionsService.delete(tx.id);
+    op.then(() => {
+      setTransactions((prev) =>
+        prev.filter((t) => (transferId ? t.transferId !== transferId : t.id !== tx.id))
+      );
+    }).catch((err) => toast.showError(err));
   };
 
   const baseCurrInfo = getCurrencyInfo(baseCurrency);
@@ -617,10 +675,15 @@ export default function MovimientosPage() {
               </p>
               <div className="bg-white rounded-2xl border border-fin-border shadow-fin-card overflow-hidden">
                 {txs.map((tx, i) => {
-                  const txCurrency = (tx as any).currencyCode || 'PEN';
+                  const txCurrency = tx.currencyCode || 'PEN';
                   const txCurrInfo = getCurrencyInfo(txCurrency);
-                  const rate = getRateFromMap(ratesMap, txCurrency, baseCurrency);
-                  const baseEquiv = Math.abs(tx.amount) * rate;
+                  const shownAmount = Math.abs(tx.originalAmount || tx.amount);
+                  const baseEquiv =
+                    tx.baseCurrencyCode === baseCurrency && tx.baseAmount
+                      ? Math.abs(tx.baseAmount)
+                      : shownAmount * getRateFromMap(ratesMap, txCurrency, baseCurrency);
+                  const isIncoming =
+                    tx.type === 'ingreso' || (tx.type === 'transferencia' && tx.amount > 0);
                   const showEquiv = showEquivalents && txCurrency !== baseCurrency;
                   return (
                     <div
@@ -647,10 +710,10 @@ export default function MovimientosPage() {
                       <div className="text-right flex-shrink-0 flex items-center gap-2">
                         <div>
                           <p
-                            className={`text-sm font-manrope font-700 ${tx.type === 'ingreso' ? 'text-fin-green' : 'text-fin-text'}`}
+                            className={`text-sm font-manrope font-700 ${isIncoming ? 'text-fin-green' : 'text-fin-text'}`}
                           >
-                            {tx.type === 'ingreso' ? '+' : '-'}
-                            {formatCurrency(Math.abs(tx.amount), txCurrency)}
+                            {isIncoming ? '+' : '-'}
+                            {formatCurrency(shownAmount, txCurrency)}
                           </p>
                           {showEquiv && (
                             <p className="text-xs text-fin-muted">
@@ -670,7 +733,7 @@ export default function MovimientosPage() {
                             />
                           </button>
                           <button
-                            onClick={() => handleDelete(tx.id)}
+                            onClick={() => handleDelete(tx)}
                             className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-fin-muted hover:text-fin-red transition-colors"
                           >
                             <Trash2
@@ -712,9 +775,17 @@ export default function MovimientosPage() {
               </button>
             </div>
             <div className="px-5 py-4 space-y-3 max-h-[80vh] overflow-y-auto">
+              {isTransferEdit && (
+                <div className="px-4 py-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-blue-700">
+                  Transferencia: aquí puedes cambiar la descripción, la fecha y la nota. Para
+                  cambiar el monto o las cuentas, elimínala y vuelve a crearla.
+                </div>
+              )}
               {/* Type tabs */}
-              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-                {(['gasto', 'ingreso', 'transferencia'] as const).map((t) => (
+              <div
+                className={`flex gap-1 bg-gray-100 rounded-xl p-1 ${isTransferEdit ? 'hidden' : ''}`}
+              >
+                {(['gasto', 'ingreso'] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setForm((f) => ({ ...f, type: t }))}
@@ -725,7 +796,7 @@ export default function MovimientosPage() {
                 ))}
               </div>
               {/* Account (first to detect currency) */}
-              {accounts.length > 0 ? (
+              {isTransferEdit ? null : accounts.length > 0 ? (
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Cuenta</label>
                   <select
@@ -766,7 +837,7 @@ export default function MovimientosPage() {
                 </div>
               )}
               {/* Amount */}
-              <div>
+              <div className={isTransferEdit ? 'hidden' : ''}>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Monto</label>
                 <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border">
                   <span className="text-black font-semibold">
@@ -810,6 +881,7 @@ export default function MovimientosPage() {
               />
               {/* Category */}
               <select
+                hidden={isTransferEdit}
                 value={form.category}
                 onChange={(e) => {
                   const cat = CATEGORY_PRESETS.find((c) => c.label === e.target.value);

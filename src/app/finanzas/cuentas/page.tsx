@@ -116,6 +116,7 @@ export default function CuentasPage() {
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
   const toast = useToast();
   const [form, setForm] = useState<AccountForm>({
     name: '',
@@ -195,23 +196,32 @@ export default function CuentasPage() {
       color: acc.color,
       bgColor: acc.bgColor,
     });
+    setAdjustReason('');
     setFormError('');
     setShowForm(true);
   };
+
+  const newBalance = Math.round((parseFloat(form.balance) || 0) * 100) / 100;
+  const balanceChanged = !!editingAcc && newBalance !== editingAcc.balance;
 
   const handleSave = async () => {
     if (!form.name) return;
     setSaving(true);
     setFormError('');
     try {
-      const accountData = { ...form, balance: parseFloat(form.balance) || 0 };
+      const { name, type, institution, currency, icon, color, bgColor } = form;
+      const details = { name, type, institution, currency, icon, color, bgColor };
       if (editingAcc) {
-        await accountsService.update(editingAcc.id, accountData);
+        await accountsService.update(editingAcc.id, details);
+        // The balance only changes through an audited adjustment; movements move it on their own.
+        const balance = balanceChanged
+          ? await accountsService.adjustBalance(editingAcc.id, newBalance, adjustReason.trim())
+          : editingAcc.balance;
         setAccounts((prev) =>
-          prev.map((a) => (a.id === editingAcc.id ? { ...a, ...accountData } : a))
+          prev.map((a) => (a.id === editingAcc.id ? { ...a, ...details, balance } : a))
         );
       } else {
-        const created = await accountsService.create(accountData);
+        const created = await accountsService.create({ ...details, balance: newBalance });
         setAccounts((prev) => [...prev, created]);
       }
       setShowForm(false);
@@ -686,6 +696,22 @@ export default function CuentasPage() {
                     />
                     <span className="text-xs text-fin-muted font-semibold">{form.currency}</span>
                   </div>
+                  {balanceChanged && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-fin-muted">
+                        Los movimientos actualizan el saldo solos. Este cambio se registrará como
+                        ajuste manual.
+                      </p>
+                      <input
+                        type="text"
+                        value={adjustReason}
+                        onChange={(e) => setAdjustReason(e.target.value)}
+                        placeholder="Motivo del ajuste (opcional)"
+                        maxLength={200}
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text outline-none"
+                      />
+                    </div>
+                  )}
                   <div>
                     <p className="text-xs text-fin-muted mb-2">Color</p>
                     <div className="flex gap-2">

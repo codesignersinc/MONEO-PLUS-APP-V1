@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { transactionsService, subscriptionsService } from '@/lib/supabaseFinance';
 import LoadError from '@/components/ui/LoadError';
 import { toDataError } from '@/lib/dataError';
-import { Transaction, Subscription } from '@/lib/financeStore';
+import { Transaction, Subscription, countsAsTransfer } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
@@ -150,8 +150,9 @@ export default function ReportesPage() {
     .filter((t) => t.type === 'gasto')
     .reduce((s, t) => s + Math.abs(t.amount), 0);
 
+  // Each transfer counts once: its outgoing leg.
   const totalTransferencias = monthTxs
-    .filter((t) => t.type === 'transferencia')
+    .filter(countsAsTransfer)
     .reduce((s, t) => s + Math.abs(t.amount), 0);
 
   const pagosPendientes = monthPagos.filter(
@@ -626,7 +627,7 @@ export default function ReportesPage() {
             </div>
             <div className="rounded-xl border-[2px] border-black p-3 bg-[#DBEAFE] shadow-[2px_2px_0px_#000]">
               <p className="text-lg font-black text-black">
-                {monthTxs.filter((t) => t.type === 'transferencia').length}
+                {monthTxs.filter(countsAsTransfer).length}
               </p>
               <p className="text-[9px] font-black uppercase text-black/60">Transfer.</p>
             </div>

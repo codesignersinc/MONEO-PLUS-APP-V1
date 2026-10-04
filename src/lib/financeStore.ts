@@ -34,6 +34,31 @@ export interface Transaction {
   baseAmount?: number;
   exchangeRate?: number;
   exchangeRateDate?: string;
+  // Transferencias: cada una tiene dos patas ('out' negativa en la cuenta origen, 'in'
+  // positiva en la destino) que solo se crean/editan/borran con transfersService.
+  transferId?: string;
+  transferLeg?: 'out' | 'in';
+}
+
+// Una transferencia cuenta una sola vez en totales y conteos: por su pata de salida
+// (las transferencias antiguas, sin patas, son una sola fila).
+export function countsAsTransfer(t: Pick<Transaction, 'type' | 'transferLeg'>): boolean {
+  return t.type === 'transferencia' && t.transferLeg !== 'in';
+}
+
+export interface Transfer {
+  id: string;
+  fromAccountId: string | null;
+  toAccountId: string | null;
+  fromAmount: number;
+  fromCurrency: string;
+  toAmount: number;
+  toCurrency: string;
+  baseCurrencyCode: string;
+  baseAmount: number;
+  date: string;
+  name: string;
+  notes: string;
 }
 
 export type TransactionCurrencyFields = Required<
