@@ -117,6 +117,9 @@ export default function CuentasPage() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
+  // Account waiting for delete confirmation.
+  const [deletingAcc, setDeletingAcc] = useState<Account | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const toast = useToast();
   const [form, setForm] = useState<AccountForm>({
     name: '',
@@ -233,12 +236,17 @@ export default function CuentasPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const confirmDelete = async () => {
+    if (!deletingAcc) return;
+    setDeleteBusy(true);
     try {
-      await accountsService.delete(id);
-      setAccounts((prev) => prev.filter((a) => a.id !== id));
+      await accountsService.delete(deletingAcc.id);
+      setAccounts((prev) => prev.filter((a) => a.id !== deletingAcc.id));
+      setDeletingAcc(null);
     } catch (err) {
       toast.showError(err);
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -448,7 +456,7 @@ export default function CuentasPage() {
                         />
                       </button>
                       <button
-                        onClick={() => handleDelete(acc.id)}
+                        onClick={() => setDeletingAcc(acc)}
                         className="group p-1.5 rounded-lg hover:bg-red-50 transition-all duration-150"
                       >
                         <Trash2
@@ -745,6 +753,44 @@ export default function CuentasPage() {
                   {saving ? 'Guardando...' : editingAcc ? 'Guardar cambios' : 'Agregar cuenta'}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {deletingAcc && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !deleteBusy && setDeletingAcc(null)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+            className="relative bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 space-y-4"
+          >
+            <h2 id="delete-account-title" className="font-semibold text-black">
+              ¿Eliminar la cuenta «{deletingAcc.name}»?
+            </h2>
+            <p className="text-sm text-gray-600">
+              Sus movimientos, transferencias y conversiones se conservan en tu historial, pero
+              quedarán sin cuenta. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeletingAcc(null)}
+                disabled={deleteBusy}
+                className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteBusy}
+                className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteBusy ? 'Eliminando...' : 'Eliminar'}
+              </button>
             </div>
           </div>
         </div>
