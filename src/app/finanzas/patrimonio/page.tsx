@@ -14,6 +14,7 @@ import {
   getRateFromMap,
   groupAccountsByCurrency,
 } from '@/lib/currency';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 export default function PatrimonioPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -68,7 +69,7 @@ export default function PatrimonioPage() {
   if (loadError) {
     return (
       <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Patrimonio neto</h1>
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">Patrimonio neto</h1>
         <LoadError what="tu patrimonio" error={loadError} onRetry={load} />
       </div>
     );
@@ -113,7 +114,7 @@ export default function PatrimonioPage() {
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text">Patrimonio neto</h1>
+        <h1 className="text-3xl font-black text-black leading-tight">Patrimonio neto</h1>
       </div>
 
       {isEmpty ? (
@@ -121,22 +122,20 @@ export default function PatrimonioPage() {
           <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center text-3xl mb-4">
             🏦
           </div>
-          <h2 className="text-lg font-manrope font-800 text-fin-text mb-2">
-            Sin datos de patrimonio
-          </h2>
-          <p className="text-sm text-fin-muted max-w-xs mb-6">
+          <h2 className="text-lg font-black text-black mb-2">Sin datos de patrimonio</h2>
+          <p className="text-sm text-gray-500 max-w-xs mb-6">
             Agrega cuentas, ahorros e inversiones para calcular tu patrimonio neto automáticamente.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <a
               href="/finanzas/cuentas"
-              className="px-5 py-3 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
+              className="px-5 py-3 bg-[#FFD43B] text-sm rounded-xl transition-colors text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
             >
               Agregar cuentas
             </a>
             <a
               href="/finanzas/inversiones"
-              className="px-5 py-3 border border-fin-border text-fin-text text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+              className="px-5 py-3 border border-black text-black text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors"
             >
               Agregar inversiones
             </a>
@@ -148,29 +147,29 @@ export default function PatrimonioPage() {
           <div
             className={`rounded-2xl p-5 mb-5 ${netWorth >= 0 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100' : 'bg-red-50 border border-red-100'}`}
           >
-            <p className="text-sm text-fin-muted mb-1">Patrimonio neto</p>
+            <p className="text-sm text-gray-500 mb-1">Patrimonio neto</p>
             <p
-              className={`text-4xl font-manrope font-800 ${netWorth >= 0 ? 'text-fin-green' : 'text-fin-red'}`}
+              className={`text-4xl font-black ${netWorth >= 0 ? 'text-fin-green' : 'text-fin-red'}`}
             >
               {netWorth < 0 ? '-' : ''}
               {formatCurrency(Math.abs(netWorth), baseCurrency)}
             </p>
-            <p className="text-sm text-fin-muted mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               Activos - Pasivos · en {baseCurrInfo.flag} {baseCurrency}
             </p>
           </div>
 
           {/* Summary */}
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="bg-white rounded-2xl border border-fin-border p-4 shadow-fin-card">
-              <p className="text-xs text-fin-muted mb-1">Total activos</p>
-              <p className="text-xl font-manrope font-800 text-fin-green">
+            <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+              <p className="text-xs text-gray-500 mb-1">Total activos</p>
+              <p className="text-xl font-black text-fin-green">
                 {formatCurrency(totalAssetsBase, baseCurrency)}
               </p>
             </div>
-            <div className="bg-white rounded-2xl border border-fin-border p-4 shadow-fin-card">
-              <p className="text-xs text-fin-muted mb-1">Total pasivos</p>
-              <p className="text-xl font-manrope font-800 text-fin-red">
+            <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+              <p className="text-xs text-gray-500 mb-1">Total pasivos</p>
+              <p className="text-xl font-black text-fin-red">
                 {formatCurrency(totalLiabilitiesBase, baseCurrency)}
               </p>
             </div>
@@ -178,8 +177,8 @@ export default function PatrimonioPage() {
 
           {/* Multimoneda breakdown */}
           {currencyGroups.length > 1 && (
-            <div className="bg-white rounded-2xl border border-fin-border p-4 shadow-fin-card mb-5">
-              <p className="text-xs font-semibold text-fin-muted uppercase tracking-wide mb-3">
+            <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 Desglose por moneda
               </p>
               <div className="space-y-3">
@@ -190,14 +189,14 @@ export default function PatrimonioPage() {
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                           <span className="text-base">{ci.flag}</span>
-                          <span className="text-sm font-semibold text-fin-text">{ci.name}</span>
+                          <span className="text-sm font-semibold text-black">{ci.name}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-fin-text">
+                          <p className="text-sm font-bold text-black">
                             {formatCurrency(g.totalOriginal, g.currencyCode)}
                           </p>
                           {g.currencyCode !== baseCurrency && (
-                            <p className="text-xs text-fin-muted">
+                            <p className="text-xs text-gray-500">
                               ≈ {formatCurrency(g.totalInBase, baseCurrency)}
                             </p>
                           )}
@@ -209,7 +208,7 @@ export default function PatrimonioPage() {
                           style={{ width: `${g.percentage}%` }}
                         />
                       </div>
-                      <p className="text-xs text-fin-muted text-right mt-0.5">{g.percentage}%</p>
+                      <p className="text-xs text-gray-500 text-right mt-0.5">{g.percentage}%</p>
                     </div>
                   );
                 })}
@@ -220,10 +219,10 @@ export default function PatrimonioPage() {
           {/* Assets breakdown */}
           {(positiveAccounts.length > 0 || totalSavings > 0 || totalInvestments > 0) && (
             <>
-              <p className="text-xs font-semibold text-fin-muted uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 Activos
               </p>
-              <div className="bg-white rounded-2xl border border-fin-border shadow-fin-card mb-4 overflow-hidden">
+              <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4 overflow-hidden">
                 {positiveAccounts.map((a, i) => {
                   const accCurrency = a.currency || 'PEN';
                   const ci = getCurrencyInfo(accCurrency);
@@ -234,23 +233,29 @@ export default function PatrimonioPage() {
                       key={a.id}
                       className={`flex items-center gap-3 px-4 py-3.5 ${i < positiveAccounts.length - 1 || totalSavings > 0 || totalInvestments > 0 ? 'border-b border-gray-50' : ''}`}
                     >
-                      <span className="text-xl w-8 flex-shrink-0">{a.icon}</span>
+                      <BrandLogo
+                        kind="account"
+                        name={a.name}
+                        institution={a.institution}
+                        type={a.type}
+                        size="sm"
+                      />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-fin-text">{a.name}</p>
+                        <p className="text-sm font-semibold text-black">{a.name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-xs">{ci.flag}</span>
-                          <span className="text-xs text-fin-muted">{accCurrency}</span>
+                          <span className="text-xs text-gray-500">{accCurrency}</span>
                           {a.institution && (
-                            <span className="text-xs text-fin-muted">· {a.institution}</span>
+                            <span className="text-xs text-gray-500">· {a.institution}</span>
                           )}
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-manrope font-700 text-fin-green">
+                        <p className="text-sm font-black text-fin-green">
                           {formatCurrency(a.balance, accCurrency)}
                         </p>
                         {showEquiv && (
-                          <p className="text-xs text-fin-muted">
+                          <p className="text-xs text-gray-500">
                             ≈ {formatCurrency(baseBalance, baseCurrency)}
                           </p>
                         )}
@@ -264,10 +269,10 @@ export default function PatrimonioPage() {
                   >
                     <span className="text-xl w-8 flex-shrink-0">🐷</span>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-fin-text">Ahorros</p>
-                      <p className="text-xs text-fin-muted">{savingsGoals.length} metas</p>
+                      <p className="text-sm font-semibold text-black">Ahorros</p>
+                      <p className="text-xs text-gray-500">{savingsGoals.length} metas</p>
                     </div>
-                    <p className="text-sm font-manrope font-700 text-fin-green">
+                    <p className="text-sm font-black text-fin-green">
                       {formatCurrency(totalSavings, baseCurrency)}
                     </p>
                   </div>
@@ -276,10 +281,10 @@ export default function PatrimonioPage() {
                   <div className="flex items-center gap-3 px-4 py-3.5">
                     <span className="text-xl w-8 flex-shrink-0">📈</span>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-fin-text">Inversiones</p>
-                      <p className="text-xs text-fin-muted">{investments.length} activos</p>
+                      <p className="text-sm font-semibold text-black">Inversiones</p>
+                      <p className="text-xs text-gray-500">{investments.length} activos</p>
                     </div>
-                    <p className="text-sm font-manrope font-700 text-fin-green">
+                    <p className="text-sm font-black text-fin-green">
                       {formatCurrency(totalInvestments, baseCurrency)}
                     </p>
                   </div>
@@ -291,10 +296,10 @@ export default function PatrimonioPage() {
           {/* Liabilities breakdown */}
           {(negativeAccounts.length > 0 || totalDebts > 0) && (
             <>
-              <p className="text-xs font-semibold text-fin-muted uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 Pasivos
               </p>
-              <div className="bg-white rounded-2xl border border-fin-border shadow-fin-card overflow-hidden">
+              <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] overflow-hidden">
                 {negativeAccounts.map((a, i) => {
                   const accCurrency = a.currency || 'PEN';
                   const ci = getCurrencyInfo(accCurrency);
@@ -305,20 +310,26 @@ export default function PatrimonioPage() {
                       key={a.id}
                       className={`flex items-center gap-3 px-4 py-3.5 ${i < negativeAccounts.length - 1 || totalDebts > 0 ? 'border-b border-gray-50' : ''}`}
                     >
-                      <span className="text-xl w-8 flex-shrink-0">{a.icon}</span>
+                      <BrandLogo
+                        kind="account"
+                        name={a.name}
+                        institution={a.institution}
+                        type={a.type}
+                        size="sm"
+                      />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-fin-text">{a.name}</p>
+                        <p className="text-sm font-semibold text-black">{a.name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-xs">{ci.flag}</span>
-                          <span className="text-xs text-fin-muted">{accCurrency}</span>
+                          <span className="text-xs text-gray-500">{accCurrency}</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-manrope font-700 text-fin-red">
+                        <p className="text-sm font-black text-fin-red">
                           {formatCurrency(Math.abs(a.balance), accCurrency)}
                         </p>
                         {showEquiv && (
-                          <p className="text-xs text-fin-muted">
+                          <p className="text-xs text-gray-500">
                             ≈ {formatCurrency(baseBalance, baseCurrency)}
                           </p>
                         )}
@@ -331,12 +342,18 @@ export default function PatrimonioPage() {
                     key={d.id}
                     className={`flex items-center gap-3 px-4 py-3.5 ${i < debts.length - 1 ? 'border-b border-gray-50' : ''}`}
                   >
-                    <span className="text-xl w-8 flex-shrink-0">{d.icon}</span>
+                    <BrandLogo
+                      kind="debt"
+                      name={d.name}
+                      institution={d.institution}
+                      type={d.type}
+                      size="sm"
+                    />
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-fin-text">{d.name}</p>
-                      <p className="text-xs text-fin-muted">{d.institution}</p>
+                      <p className="text-sm font-semibold text-black">{d.name}</p>
+                      <p className="text-xs text-gray-500">{d.institution}</p>
                     </div>
-                    <p className="text-sm font-manrope font-700 text-fin-red">
+                    <p className="text-sm font-black text-fin-red">
                       {formatCurrency(d.balance, baseCurrency)}
                     </p>
                   </div>

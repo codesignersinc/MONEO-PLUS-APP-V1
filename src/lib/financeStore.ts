@@ -26,7 +26,52 @@ export interface Transaction {
   time: string;
   type: 'gasto' | 'ingreso' | 'transferencia';
   notes?: string;
+  // Multimoneda (ver buildCurrencyFields): `amount` va en la moneda de la cuenta,
+  // `originalAmount` en `currencyCode` y `baseAmount` en `baseCurrencyCode`, todos con signo.
+  currencyCode?: string;
+  originalAmount?: number;
+  baseCurrencyCode?: string;
+  baseAmount?: number;
+  exchangeRate?: number;
+  exchangeRateDate?: string;
+  // Transferencias: cada una tiene dos patas ('out' negativa en la cuenta origen, 'in'
+  // positiva en la destino) que solo se crean/editan/borran con transfersService.
+  transferId?: string;
+  transferLeg?: 'out' | 'in';
 }
+
+// Una transferencia cuenta una sola vez en totales y conteos: por su pata de salida
+// (las transferencias antiguas, sin patas, son una sola fila).
+export function countsAsTransfer(t: Pick<Transaction, 'type' | 'transferLeg'>): boolean {
+  return t.type === 'transferencia' && t.transferLeg !== 'in';
+}
+
+export interface Transfer {
+  id: string;
+  fromAccountId: string | null;
+  toAccountId: string | null;
+  fromAmount: number;
+  fromCurrency: string;
+  toAmount: number;
+  toCurrency: string;
+  baseCurrencyCode: string;
+  baseAmount: number;
+  date: string;
+  name: string;
+  notes: string;
+}
+
+export type TransactionCurrencyFields = Required<
+  Pick<
+    Transaction,
+    | 'currencyCode'
+    | 'originalAmount'
+    | 'baseCurrencyCode'
+    | 'baseAmount'
+    | 'exchangeRate'
+    | 'exchangeRateDate'
+  >
+>;
 
 export interface BudgetCategory {
   id: string;
@@ -59,6 +104,8 @@ export interface Debt {
   type: string;
   color: string;
   interestRate: number;
+  // Monto inicial de la deuda (para la barra de avance: pagado = originalAmount - balance).
+  originalAmount?: number;
 }
 
 export interface Investment {

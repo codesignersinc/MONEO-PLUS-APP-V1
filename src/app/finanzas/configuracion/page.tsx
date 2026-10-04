@@ -5,6 +5,8 @@ import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage, toDataError } from '@/lib/dataError';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { deleteMyAccount } from '@/lib/accountDeletion';
 import {
   LogOut,
   Mail,
@@ -44,6 +46,10 @@ export default function ConfiguracionPage() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [settingsError, setSettingsError] = useState('');
   const [rateError, setRateError] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const toast = useToast();
 
   const fetchAll = useCallback(async () => {
@@ -130,6 +136,24 @@ export default function ConfiguracionPage() {
       // Keep the editor open so the user can retry.
       console.error(e);
       setRateError(getErrorMessage(e));
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await deleteMyAccount();
+      try {
+        await signOut();
+      } catch {
+        // The account no longer exists; the local session is cleared anyway.
+      }
+      router.replace('/login');
+    } catch (e) {
+      console.error(e);
+      setDeleteError(getErrorMessage(e));
+      setDeleting(false);
     }
   }
 
@@ -585,6 +609,70 @@ export default function ConfiguracionPage() {
         <LogOut className="w-5 h-5" strokeWidth={2.5} />
         CERRAR SESIÓN
       </button>
+
+      {/* Legal */}
+      <div className="flex justify-center gap-4 text-xs font-bold text-black/60">
+        <Link href="/privacidad" className="underline">
+          Política de privacidad
+        </Link>
+        <Link href="/terminos" className="underline">
+          Términos y condiciones
+        </Link>
+      </div>
+
+      {/* Delete account */}
+      <div className="rounded-2xl border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_#000] space-y-3">
+        <p className="text-xs font-black uppercase tracking-widest text-red-700">Eliminar cuenta</p>
+        <p className="text-sm text-black/70">
+          Se borrarán para siempre tu cuenta y todos tus datos: cuentas, movimientos,
+          transferencias, pagos, ingresos, metas y configuración. No se puede deshacer.
+        </p>
+        {!confirmingDelete ? (
+          <button
+            onClick={() => {
+              setConfirmingDelete(true);
+              setDeleteConfirmText('');
+              setDeleteError('');
+            }}
+            className="w-full py-3 rounded-xl border-[3px] border-red-700 text-red-700 font-black text-sm uppercase"
+          >
+            Eliminar mi cuenta
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-black/70">
+              Escribe ELIMINAR para confirmar
+            </label>
+            <input
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              autoComplete="off"
+              className="w-full px-3 py-2.5 rounded-xl border-[3px] border-black text-sm font-bold outline-none"
+            />
+            {deleteError && (
+              <p role="alert" className="text-sm font-semibold text-red-600">
+                {deleteError}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-xl border-[3px] border-black font-black text-sm disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting || deleteConfirmText.trim() !== 'ELIMINAR'}
+                className="flex-1 py-3 rounded-xl border-[3px] border-black bg-red-600 text-white font-black text-sm disabled:opacity-50"
+              >
+                {deleting ? 'Eliminando…' : 'Eliminar definitivamente'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

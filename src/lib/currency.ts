@@ -1,3 +1,5 @@
+import type { TransactionCurrencyFields } from './financeStore';
+
 // ─── Currency Constants & Types ───────────────────────────────────────────────
 
 export interface CurrencyInfo {
@@ -117,6 +119,65 @@ export interface ExchangeRate {
 
 export function buildRateKey(from: string, to: string): string {
   return `${from}_${to}`;
+}
+
+// ─── Transaction currency fields ─────────────────────────────────────────────
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+// Builds the multi-currency columns of a transaction. All amounts keep the sign of
+// the movement (gasto negativo, ingreso positivo):
+// - `amount` is in the account's currency (`currency`).
+// - `original` is the amount in the currency the movement was priced in, when it
+//   differs from the account's (e.g. a subscription priced in PEN paid from a USD
+//   account). Defaults to `amount` in `currency`.
+// - `rateToBase` converts the original currency into `baseCurrency`. It is stored as
+//   the historical rate; it is never recomputed with today's rates.
+// - `date` is the movement's day (YYYY-MM-DD).
+export function buildCurrencyFields(params: {
+  amount: number;
+  currency: string;
+  baseCurrency: string;
+  rateToBase: number;
+  date: string;
+  original?: { amount: number; currency: string };
+}): TransactionCurrencyFields {
+  const originalAmount = params.original?.amount ?? params.amount;
+  const originalCurrency = params.original?.currency ?? params.currency;
+  const rate = originalCurrency === params.baseCurrency ? 1 : params.rateToBase;
+  if (!(rate > 0)) throw new Error('Tipo de cambio inválido');
+  return {
+    currencyCode: originalCurrency,
+    originalAmount: round2(originalAmount),
+    baseCurrencyCode: params.baseCurrency,
+    baseAmount: round2(originalAmount * rate),
+    exchangeRate: rate,
+    exchangeRateDate: params.date.slice(0, 10),
+  };
+}
+
+// Amounts of a transfer between two accounts, rounded to cents. `toAmount` defaults to
+// `fromAmount` converted with the user's rate (the user may override it with what the
+// bank really credited); `baseAmount` is the value in the base currency.
+export function buildTransferAmounts(params: {
+  fromAmount: number;
+  toAmount?: number;
+  fromCurrency: string;
+  toCurrency: string;
+  baseCurrency: string;
+  ratesMap: Record<string, number>;
+}): { fromAmount: number; toAmount: number; baseAmount: number } {
+  const { fromCurrency, toCurrency, baseCurrency, ratesMap } = params;
+  const fromAmount = round2(params.fromAmount);
+  const toAmount = round2(
+    fromCurrency === toCurrency
+      ? fromAmount
+      : (params.toAmount ?? fromAmount * getRateFromMap(ratesMap, fromCurrency, toCurrency))
+  );
+  const baseAmount = round2(fromAmount * getRateFromMap(ratesMap, fromCurrency, baseCurrency));
+  return { fromAmount, toAmount, baseAmount };
 }
 
 export function getRateFromMap(ratesMap: Record<string, number>, from: string, to: string): number {

@@ -7,7 +7,7 @@ import {
   addMonthKeepingDay,
   Subscription,
 } from '@/lib/supabaseFinance';
-import { exchangeRatesService } from '@/lib/supabaseCurrency';
+import { getFxContext, type FxContext } from '@/lib/supabaseCurrency';
 import { formatCurrency, getRateFromMap } from '@/lib/currency';
 import type { Account } from '@/lib/financeStore';
 import LoadError from '@/components/ui/LoadError';
@@ -29,6 +29,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import SubscriptionServicePicker from '@/components/finance/SubscriptionServicePicker';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 const SUB_CATEGORIES = [
   'Entretenimiento',
@@ -122,7 +123,7 @@ export default function SuscripcionesPage() {
   // Pay modal
   const [payingSub, setPayingSub] = useState<Subscription | null>(null);
   const [payAccounts, setPayAccounts] = useState<Account[]>([]);
-  const [payRates, setPayRates] = useState<Record<string, number>>({});
+  const [payFx, setPayFx] = useState<FxContext>({ baseCurrency: 'PEN', ratesMap: {} });
   const [payAccountId, setPayAccountId] = useState<string | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [payLoadError, setPayLoadError] = useState<unknown>(null);
@@ -168,11 +169,10 @@ export default function SuscripcionesPage() {
   const loadPayData = useCallback(() => {
     setPayLoading(true);
     setPayLoadError(null);
-    Promise.all([accountsService.getAll(), exchangeRatesService.getRatesMap()])
-      .then(([accs, rates]) => {
+    Promise.all([accountsService.getAll(), getFxContext()])
+      .then(([accs, fx]) => {
         setPayAccounts(accs);
-        setPayRates(rates);
-        setPayAccountId((prev) => prev ?? accs[0]?.id ?? null);
+        setPayFx(fx);
       })
       .catch(setPayLoadError)
       .finally(() => setPayLoading(false));
@@ -180,6 +180,7 @@ export default function SuscripcionesPage() {
 
   const openPay = (sub: Subscription) => {
     setPayingSub(sub);
+    setPayAccountId(null);
     setPayError('');
     loadPayData();
   };
@@ -190,7 +191,7 @@ export default function SuscripcionesPage() {
   };
 
   const debitFor = (sub: Subscription, account: Account) =>
-    sub.amount * getRateFromMap(payRates, 'PEN', account.currency || 'PEN');
+    sub.amount * getRateFromMap(payFx.ratesMap, 'PEN', account.currency || 'PEN');
 
   const confirmPay = async () => {
     const sub = payingSub;
@@ -202,7 +203,8 @@ export default function SuscripcionesPage() {
       const { nextPaymentDate, newBalance } = await subscriptionsService.markAsPaid(
         sub,
         account,
-        debitFor(sub, account)
+        debitFor(sub, account),
+        payFx
       );
       setSubs((prev) =>
         prev.map((s) =>
@@ -352,7 +354,7 @@ export default function SuscripcionesPage() {
         onClick={() => openEdit(sub)}
         title="Editar"
         aria-label="Editar"
-        className="group p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150"
+        className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-gray-100 transition-all"
       >
         <Pencil
           className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors"
@@ -363,32 +365,22 @@ export default function SuscripcionesPage() {
         onClick={() => handleDelete(sub.id)}
         title="Eliminar"
         aria-label="Eliminar"
-        className="group p-1.5 rounded-lg hover:bg-red-50 transition-all duration-150"
+        className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-red-50 transition-all"
       >
-        <Trash2
-          className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500 transition-colors"
-          strokeWidth={1.75}
-        />
+        <Trash2 className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
       </button>
     </>
   );
 
-  const subIcon = (sub: Subscription, paid = false) => (
-    <div
-      className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-      style={{ background: paid ? '#DCFCE7' : '#EDE9FE' }}
-    >
-      {sub.icon}
-    </div>
+  const subIcon = (sub: Subscription, _paid = false) => (
+    <BrandLogo kind="subscription" name={sub.name} color={sub.color} />
   );
 
   const sectionTitle = (icon: React.ReactNode, title: string, extra?: React.ReactNode) => (
     <div className="flex items-center justify-between mb-2 mt-6">
       <div className="flex items-center gap-2">
         {icon}
-        <h2 className="text-sm font-manrope font-800 text-fin-text uppercase tracking-wide">
-          {title}
-        </h2>
+        <h2 className="text-sm font-black text-black uppercase tracking-wide">{title}</h2>
       </div>
       {extra}
     </div>
@@ -397,7 +389,7 @@ export default function SuscripcionesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#FFD43B] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -405,7 +397,7 @@ export default function SuscripcionesPage() {
   if (loadError) {
     return (
       <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Suscripciones</h1>
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">Suscripciones</h1>
         <LoadError what="tus suscripciones" error={loadError} onRetry={load} />
       </div>
     );
@@ -416,10 +408,10 @@ export default function SuscripcionesPage() {
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text">Suscripciones</h1>
+        <h1 className="text-3xl font-black text-black leading-tight">Suscripciones</h1>
         <button
           onClick={openAdd}
-          className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+          className="group flex items-center gap-2 px-3 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
         >
           <Plus
             className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
@@ -430,17 +422,15 @@ export default function SuscripcionesPage() {
       </div>
 
       {subs.length > 0 && (
-        <div className="bg-white rounded-2xl border border-fin-border p-5 shadow-fin-card mb-2">
+        <div className="bg-white rounded-3xl border-[3px] border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-2">
           <div className="flex items-center gap-2 mb-1">
             <RefreshCcw className="w-4 h-4 text-purple-500" strokeWidth={1.75} />
-            <p className="text-sm text-fin-muted">Gasto mensual en suscripciones</p>
+            <p className="text-sm text-gray-500">Gasto mensual en suscripciones</p>
           </div>
-          <p className="text-3xl font-manrope font-800 text-fin-text">
-            S/ {monthlyTotal.toFixed(2)}
-          </p>
-          <p className="text-sm text-fin-muted mt-1">
+          <p className="text-3xl font-black text-black">S/ {monthlyTotal.toFixed(2)}</p>
+          <p className="text-sm text-gray-500 mt-1">
             Proyección anual:{' '}
-            <span className="font-semibold text-fin-text">S/ {annualProjection.toFixed(2)}</span>
+            <span className="font-semibold text-black">S/ {annualProjection.toFixed(2)}</span>
           </p>
           {month.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
@@ -474,7 +464,7 @@ export default function SuscripcionesPage() {
           </p>
           <button
             onClick={openAdd}
-            className="group flex items-center gap-2 px-4 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+            className="group flex items-center gap-2 px-4 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             <Plus
               className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
@@ -493,7 +483,7 @@ export default function SuscripcionesPage() {
             monthLabel(currentMonth)
           )}
           {month.length === 0 ? (
-            <p className="text-sm text-fin-muted bg-white rounded-2xl border border-fin-border p-4">
+            <p className="text-sm text-gray-500 bg-white rounded-3xl border-[3px] border-black p-4">
               No tienes suscripciones por pagar este mes.
             </p>
           ) : (
@@ -502,20 +492,20 @@ export default function SuscripcionesPage() {
                 row.kind === 'paid' ? (
                   <div
                     key={`paid-${row.sub.id}`}
-                    className="bg-green-50 rounded-2xl border border-green-300 p-4 shadow-fin-card"
+                    className="bg-green-50 rounded-2xl border border-green-300 p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]"
                   >
                     <div className="flex items-center gap-3">
                       {subIcon(row.sub, true)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-manrope font-700 text-fin-text">{row.sub.name}</p>
+                          <p className="font-black text-black">{row.sub.name}</p>
                           {badge('paid')}
                         </div>
                         <p className="text-xs text-green-700 mt-0.5">
                           {row.sub.category} · Cuota del {formatDate(row.date)}
                         </p>
                       </div>
-                      <span className="text-sm font-manrope font-700 text-green-700 flex-shrink-0">
+                      <span className="text-sm font-black text-green-700 flex-shrink-0">
                         S/ {row.sub.amount.toFixed(2)}
                       </span>
                       <CheckCircle2
@@ -528,23 +518,23 @@ export default function SuscripcionesPage() {
                 ) : (
                   <div
                     key={`due-${row.sub.id}`}
-                    className={`bg-white rounded-2xl border p-4 shadow-fin-card transition-all ${row.status === 'overdue' ? 'border-red-200' : 'border-fin-border'}`}
+                    className={`bg-white rounded-3xl border-[3px] p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all ${row.status === 'overdue' ? 'border-red-200' : 'border-black'}`}
                   >
                     <div className="flex items-center gap-3">
                       {subIcon(row.sub)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-manrope font-700 text-fin-text">{row.sub.name}</p>
+                          <p className="font-black text-black">{row.sub.name}</p>
                           {badge(row.status)}
                         </div>
                         <p
-                          className={`text-xs font-medium mt-0.5 ${row.status === 'overdue' ? 'text-red-500' : 'text-fin-muted'}`}
+                          className={`text-xs font-medium mt-0.5 ${row.status === 'overdue' ? 'text-red-500' : 'text-gray-500'}`}
                         >
                           {row.sub.category} · Pago: {formatDate(row.date)}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <span className="text-sm font-manrope font-700 text-fin-text mr-1">
+                        <span className="text-sm font-black text-black mr-1">
                           S/ {row.sub.amount.toFixed(2)}
                         </span>
                         <button
@@ -585,13 +575,13 @@ export default function SuscripcionesPage() {
                 <div className="flex items-center gap-3">
                   {subIcon(sub)}
                   <div className="flex-1 min-w-0">
-                    <p className="font-manrope font-700 text-fin-text">{sub.name}</p>
-                    <p className="text-xs text-fin-muted mt-0.5">
+                    <p className="font-black text-black">{sub.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
                       {sub.category} · Renueva el {formatDate(sub.nextPaymentDate)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-sm font-manrope font-700 text-fin-muted mr-1">
+                    <span className="text-sm font-black text-gray-500 mr-1">
                       S/ {sub.amount.toFixed(2)}
                     </span>
                     {manageButtons(sub)}
@@ -614,16 +604,16 @@ export default function SuscripcionesPage() {
             {paused.map((sub) => (
               <div
                 key={`paused-${sub.id}`}
-                className="bg-white rounded-2xl border border-gray-100 px-4 py-3 opacity-60"
+                className="bg-white rounded-3xl border-[3px] border-black px-4 py-3 opacity-60"
               >
                 <div className="flex items-center gap-3">
                   {subIcon(sub)}
                   <div className="flex-1 min-w-0">
-                    <p className="font-manrope font-700 text-fin-text">{sub.name}</p>
-                    <p className="text-xs text-fin-muted mt-0.5">{sub.category}</p>
+                    <p className="font-black text-black">{sub.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{sub.category}</p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-sm font-manrope font-700 text-fin-muted mr-1">
+                    <span className="text-sm font-black text-gray-500 mr-1">
                       S/ {sub.amount.toFixed(2)}
                     </span>
                     {manageButtons(sub)}
@@ -675,7 +665,7 @@ export default function SuscripcionesPage() {
 
               {payLoading ? (
                 <div className="flex justify-center py-6">
-                  <div className="w-8 h-8 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-4 border-[#FFD43B] border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : payLoadError ? (
                 <LoadError what="tus cuentas" error={payLoadError} onRetry={loadPayData} />
@@ -701,9 +691,13 @@ export default function SuscripcionesPage() {
                         onClick={() => setPayAccountId(acc.id)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-[2.5px] text-left transition-all ${selected ? 'border-black bg-[#FFD43B]' : 'border-gray-300 bg-white hover:border-black'}`}
                       >
-                        <span className="text-xl">
-                          {acc.icon || <Wallet className="w-5 h-5" />}
-                        </span>
+                        <BrandLogo
+                          kind="account"
+                          name={acc.name}
+                          institution={acc.institution}
+                          type={acc.type}
+                          size="sm"
+                        />
                         <span className="flex-1 min-w-0">
                           <span className="block text-sm font-black text-black truncate">
                             {acc.name}
@@ -743,7 +737,7 @@ export default function SuscripcionesPage() {
               <button
                 onClick={confirmPay}
                 disabled={!payingAccount || paying || payLoading}
-                className="w-full py-3.5 bg-fin-green text-white border-[3px] border-black rounded-2xl font-black text-base shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:shadow-none active:translate-y-0 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                className="w-full py-3.5 bg-[#FFD43B] border-[3px] border-black rounded-2xl text-base shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:shadow-none active:translate-y-0 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0 text-black font-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)]"
               >
                 {paying ? 'Registrando pago...' : `Pagar S/ ${payingSub.amount.toFixed(2)}`}
               </button>

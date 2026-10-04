@@ -3,11 +3,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
-import { transactionsService, accountsService, Transaction } from '@/lib/supabaseFinance';
+import {
+  transactionsService,
+  transfersService,
+  accountsService,
+  Transaction,
+} from '@/lib/supabaseFinance';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
-import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
+import {
+  buildCurrencyFields,
+  getCurrencyInfo,
+  formatCurrency,
+  getRateFromMap,
+} from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
+import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
+import TransferForm from '@/components/finance/TransferForm';
 import {
   Plus,
   Search,
@@ -107,8 +119,8 @@ export default function MovimientosPage() {
     accountId: '',
     account: '',
     notes: '',
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toTimeString().slice(0, 5),
+    date: todayLocal(),
+    time: nowTimeLocal(),
   });
 
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -147,9 +159,6 @@ export default function MovimientosPage() {
         setRatesMap(rates);
         setShowEquivalents(settings.showEquivalents);
         setPendingIncomes(pendingList);
-        if (accs.length > 0) {
-          setForm((f) => ({ ...f, accountId: accs[0].id, account: accs[0].name }));
-        }
       })
       .catch(setLoadError)
       .finally(() => setLoading(false));
@@ -252,11 +261,11 @@ export default function MovimientosPage() {
       amount: '',
       category: 'Comida',
       categoryIcon: '🍽️',
-      accountId: accounts[0]?.id || '',
-      account: accounts[0]?.name || '',
+      accountId: '',
+      account: '',
       notes: '',
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toTimeString().slice(0, 5),
+      date: todayLocal(),
+      time: nowTimeLocal(),
     });
     setFormError('');
     setShowForm(true);
@@ -273,7 +282,7 @@ export default function MovimientosPage() {
       accountId: tx.accountId,
       account: tx.account,
       notes: tx.notes || '',
-      date: tx.date.split('T')[0],
+      date: todayLocal(new Date(tx.date)),
       time: tx.time,
     });
     setFormError('');
@@ -286,29 +295,95 @@ export default function MovimientosPage() {
     setFormError(getErrorMessage(err));
   };
 
+  // Transfers keep their amounts and accounts here (they are created with both accounts);
+  // only the description, notes and date are editable from this form.
+  const isTransferEdit = !!editingTx && editingTx.type === 'transferencia';
+  const TX_TYPES = ['gasto', 'ingreso', 'transferencia'] as const;
+
+  const saveTransferDetails = async (tx: Transaction) => {
+    if (tx.transferId) {
+      const t = await transfersService.get(tx.transferId);
+      if (!t.fromAccountId || !t.toAccountId) {
+        throw new Error(
+          'Esta transferencia tiene una cuenta eliminada. Elimínala y vuelve a crearla.'
+        );
+      }
+      await transfersService.update(t.id, {
+        fromAccountId: t.fromAccountId,
+        toAccountId: t.toAccountId,
+        fromAmount: t.fromAmount,
+        toAmount: t.toAmount,
+        baseAmount: t.baseAmount,
+        date: localDateTimeToISO(form.date, form.time),
+        name: form.name,
+        notes: form.notes,
+      });
+      load();
+    } else {
+      // Transferencia antigua (una sola fila): monto, cuenta y tipo no son editables.
+      const date = localDateTimeToISO(form.date, form.time);
+      await transactionsService.update(tx.id, {
+        name: form.name,
+        notes: form.notes,
+        date,
+        time: form.time,
+      });
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === tx.id ? { ...t, name: form.name, notes: form.notes, date, time: form.time } : t
+        )
+      );
+    }
+  };
+
   const handleSave = () => {
+    if (editingTx && isTransferEdit) {
+      if (!form.name) return;
+      setSaving(true);
+      setFormError('');
+      saveTransferDetails(editingTx)
+        .then(() => setShowForm(false))
+        .catch(onSaveError)
+        .finally(() => setSaving(false));
+      return;
+    }
     if (!form.name || !form.amount) return;
+    // New movements always need an account; old ones without account can stay without one.
+    if (!form.accountId && (!editingTx || editingTx.accountId)) {
+      setFormError('Elige la cuenta del movimiento.');
+      return;
+    }
     setSaving(true);
     setFormError('');
     const amt = parseFloat(form.amount);
+    // transaction_date is a timestamptz: send the local day and time, not a bare date
+    // (YYYY-MM-DD would be read as midnight UTC, the previous day in Lima).
+    const txDate = localDateTimeToISO(form.date, form.time);
     const selectedAcc = accounts.find((a) => a.id === form.accountId);
     const accCurrency = selectedAcc?.currency || 'PEN';
-    const rate = getRateFromMap(ratesMap, accCurrency, baseCurrency);
-    const baseAmt = Math.abs(amt) * rate;
+    const signedAmt = form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt);
+    const currencyFields = buildCurrencyFields({
+      amount: signedAmt,
+      currency: accCurrency,
+      baseCurrency,
+      rateToBase: getRateFromMap(ratesMap, accCurrency, baseCurrency),
+      date: form.date,
+    });
 
     if (editingTx) {
       transactionsService
         .update(editingTx.id, {
           name: form.name,
           type: form.type,
-          amount: form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt),
+          amount: signedAmt,
           category: form.category,
           categoryIcon: form.categoryIcon,
           accountId: form.accountId,
           account: form.account,
           notes: form.notes,
-          date: form.date,
+          date: txDate,
           time: form.time,
+          ...currencyFields,
         })
         .then(() => {
           setTransactions((prev) =>
@@ -318,14 +393,15 @@ export default function MovimientosPage() {
                     ...t,
                     name: form.name,
                     type: form.type,
-                    amount: form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt),
+                    amount: signedAmt,
                     category: form.category,
                     categoryIcon: form.categoryIcon,
                     accountId: form.accountId,
                     account: form.account,
                     notes: form.notes,
-                    date: form.date,
+                    date: txDate,
                     time: form.time,
+                    ...currencyFields,
                   }
                 : t
             )
@@ -339,21 +415,16 @@ export default function MovimientosPage() {
         .create({
           name: form.name,
           type: form.type,
-          amount: form.type === 'gasto' ? -Math.abs(amt) : Math.abs(amt),
+          amount: signedAmt,
           category: form.category,
           categoryIcon: form.categoryIcon,
           accountId: form.accountId,
           account: form.account,
           notes: form.notes,
-          date: form.date,
+          date: txDate,
           time: form.time,
-          currencyCode: accCurrency,
-          originalAmount: Math.abs(amt),
-          baseCurrencyCode: baseCurrency,
-          baseAmount: baseAmt,
-          exchangeRate: rate,
-          exchangeRateDate: form.date,
-        } as any)
+          ...currencyFields,
+        })
         .then((newTx) => {
           setTransactions((prev) => [newTx, ...prev]);
           setShowForm(false);
@@ -363,13 +434,15 @@ export default function MovimientosPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    transactionsService
-      .delete(id)
-      .then(() => {
-        setTransactions((prev) => prev.filter((t) => t.id !== id));
-      })
-      .catch((err) => toast.showError(err));
+  // A transfer leg is never deleted alone: deleting it deletes the whole transfer.
+  const handleDelete = (tx: Transaction) => {
+    const transferId = tx.transferId;
+    const op = transferId ? transfersService.delete(transferId) : transactionsService.delete(tx.id);
+    op.then(() => {
+      setTransactions((prev) =>
+        prev.filter((t) => (transferId ? t.transferId !== transferId : t.id !== tx.id))
+      );
+    }).catch((err) => toast.showError(err));
   };
 
   const baseCurrInfo = getCurrencyInfo(baseCurrency);
@@ -377,7 +450,7 @@ export default function MovimientosPage() {
   if (loadError) {
     return (
       <div className="px-4 lg:px-8 py-6 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Movimientos</h1>
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">Movimientos</h1>
         <LoadError what="tus movimientos" error={loadError} onRetry={load} />
       </div>
     );
@@ -387,23 +460,23 @@ export default function MovimientosPage() {
     <div className="px-4 lg:px-8 py-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text">Movimientos</h1>
+        <h1 className="text-3xl font-black text-black leading-tight">Movimientos</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowSearch((s) => !s)}
-            className="group w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-all duration-200"
+            className="w-9 h-9 rounded-xl border-[2px] border-black bg-white flex items-center justify-center text-black hover:bg-gray-50 transition-all duration-200"
           >
             <Search className="w-4 h-4" strokeWidth={1.75} />
           </button>
           <button
             onClick={() => setShowFilters((s) => !s)}
-            className={`group w-9 h-9 rounded-xl border flex items-center justify-center transition-all duration-200 ${showFilters || currencyFilter !== 'todas' ? 'border-fin-green bg-fin-green-light text-fin-green' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+            className={`w-9 h-9 rounded-xl border-[2px] border-black flex items-center justify-center text-black transition-all duration-200 ${showFilters || currencyFilter !== 'todas' ? 'bg-[#FFD43B]' : 'bg-white hover:bg-gray-50'}`}
           >
             <Filter className="w-4 h-4" strokeWidth={1.75} />
           </button>
           <button
             onClick={openAdd}
-            className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+            className="group flex items-center gap-2 px-3 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             <Plus className="w-4 h-4" strokeWidth={2.5} />
             Agregar
@@ -418,7 +491,7 @@ export default function MovimientosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar movimientos, categorías..."
-            className="w-full px-4 py-3 bg-white border border-fin-border rounded-xl text-sm text-fin-text placeholder-gray-400 outline-none focus:border-fin-green transition-colors shadow-fin-card"
+            className="w-full px-4 py-3 bg-white border-[2px] border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors shadow-[4px_4px_0px_rgba(0,0,0,1)]"
             autoFocus
           />
         </div>
@@ -426,9 +499,9 @@ export default function MovimientosPage() {
 
       {/* Currency filter panel */}
       {showFilters && (
-        <div className="mb-4 bg-white border border-fin-border rounded-2xl p-4 shadow-fin-card">
+        <div className="mb-4 bg-white border-[3px] border-black rounded-3xl p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-fin-muted uppercase tracking-wide">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
               Filtrar por moneda
             </p>
             {currencyFilter !== 'todas' && (
@@ -467,26 +540,26 @@ export default function MovimientosPage() {
       {/* Summary */}
       {(transactions.length > 0 || pendingIncomes.length > 0) && (
         <div
-          className={`grid gap-3 mb-5 ${totalPorCobrar > 0 && (filter === 'todos' || filter === 'ingresos') ? 'grid-cols-3' : 'grid-cols-2'}`}
+          className={`grid gap-3 mb-5 ${totalPorCobrar > 0 && (filter === 'todos' || filter === 'ingresos') ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}
         >
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+          <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
             <div className="flex items-center gap-2 mb-1">
               <ArrowDownLeft className="w-4 h-4 text-green-600" strokeWidth={1.75} />
               <p className="text-xs text-gray-500 font-medium">Ingresos</p>
             </div>
-            <p className="text-xl font-bold text-green-700">
+            <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-green-700">
               {formatCurrency(totalIncome, baseCurrency)}
             </p>
             {currencyFilter !== 'todas' && (
               <p className="text-xs text-gray-400 mt-0.5">{currencyFilter}</p>
             )}
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+          <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
             <div className="flex items-center gap-2 mb-1">
               <ArrowUpRight className="w-4 h-4 text-red-500" strokeWidth={1.75} />
               <p className="text-xs text-gray-500 font-medium">Pagos</p>
             </div>
-            <p className="text-xl font-bold text-red-600">
+            <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-red-600">
               {formatCurrency(totalExpense, baseCurrency)}
             </p>
             {currencyFilter !== 'todas' && (
@@ -494,12 +567,12 @@ export default function MovimientosPage() {
             )}
           </div>
           {totalPorCobrar > 0 && (filter === 'todos' || filter === 'ingresos') && (
-            <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4 shadow-sm">
+            <div className="bg-amber-50 rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="w-4 h-4 text-amber-500" strokeWidth={1.75} />
                 <p className="text-xs text-amber-600 font-medium">Por cobrar</p>
               </div>
-              <p className="text-xl font-bold text-amber-600">
+              <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-amber-600">
                 {formatCurrency(totalPorCobrar, baseCurrency)}
               </p>
             </div>
@@ -515,8 +588,8 @@ export default function MovimientosPage() {
             onClick={() => setFilter(f)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
               filter === f
-                ? 'bg-fin-green text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                ? 'bg-[#FFD43B] text-black border-[2px] border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                : 'bg-white border-[2px] border-black text-black hover:bg-gray-50'
             }`}
           >
             {f === 'todos' && <ArrowLeftRight className="w-3 h-3" strokeWidth={2} />}
@@ -542,7 +615,7 @@ export default function MovimientosPage() {
             <Clock className="w-3.5 h-3.5" strokeWidth={2} />
             Por cobrar
           </p>
-          <div className="bg-amber-50 rounded-2xl border border-amber-200 overflow-hidden">
+          <div className="bg-amber-50 rounded-3xl border-[3px] border-black overflow-hidden shadow-[4px_4px_0px_rgba(0,0,0,1)]">
             {filteredPending.map((p, i) => (
               <div
                 key={p.id}
@@ -553,7 +626,7 @@ export default function MovimientosPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-fin-text truncate">{p.name}</p>
+                    <p className="text-sm font-semibold text-black truncate">{p.name}</p>
                     <span className="text-[10px] px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded-full font-semibold shrink-0 flex items-center gap-0.5">
                       <Clock className="w-2.5 h-2.5" strokeWidth={2} />
                       Por cobrar
@@ -572,7 +645,7 @@ export default function MovimientosPage() {
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-manrope font-700 text-amber-600">
+                  <p className="text-sm font-black text-amber-600">
                     +{formatCurrency(p.amount, baseCurrency)}
                   </p>
                   <p className="text-[10px] text-amber-500 mt-0.5">No disponible</p>
@@ -586,16 +659,16 @@ export default function MovimientosPage() {
       {/* Transaction groups */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-6 h-6 border-2 border-fin-green border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#FFD43B] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : Object.keys(grouped).length === 0 && filteredPending.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-4xl mb-3">📋</p>
-          <p className="text-fin-muted font-medium mb-1">Sin movimientos</p>
-          <p className="text-xs text-fin-muted mb-4">Registra tu primer ingreso o pago</p>
+          <p className="text-gray-500 font-medium mb-1">Sin movimientos</p>
+          <p className="text-xs text-gray-500 mb-4">Registra tu primer ingreso o pago</p>
           <button
             onClick={openAdd}
-            className="px-5 py-2.5 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
+            className="px-5 py-2.5 bg-[#FFD43B] text-sm rounded-xl transition-colors text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             Agregar movimiento
           </button>
@@ -604,31 +677,36 @@ export default function MovimientosPage() {
         <div className="space-y-5">
           {Object.entries(grouped).map(([date, txs]) => (
             <div key={date}>
-              <p className="text-xs font-semibold text-fin-muted uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 {date}
               </p>
-              <div className="bg-white rounded-2xl border border-fin-border shadow-fin-card overflow-hidden">
+              <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] overflow-hidden">
                 {txs.map((tx, i) => {
-                  const txCurrency = (tx as any).currencyCode || 'PEN';
+                  const txCurrency = tx.currencyCode || 'PEN';
                   const txCurrInfo = getCurrencyInfo(txCurrency);
-                  const rate = getRateFromMap(ratesMap, txCurrency, baseCurrency);
-                  const baseEquiv = Math.abs(tx.amount) * rate;
+                  const shownAmount = Math.abs(tx.originalAmount || tx.amount);
+                  const baseEquiv =
+                    tx.baseCurrencyCode === baseCurrency && tx.baseAmount
+                      ? Math.abs(tx.baseAmount)
+                      : shownAmount * getRateFromMap(ratesMap, txCurrency, baseCurrency);
+                  const isIncoming =
+                    tx.type === 'ingreso' || (tx.type === 'transferencia' && tx.amount > 0);
                   const showEquiv = showEquivalents && txCurrency !== baseCurrency;
                   return (
                     <div
                       key={tx.id}
                       className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors group ${i < txs.length - 1 ? 'border-b border-gray-50' : ''}`}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-white border-[2px] border-black flex items-center justify-center text-lg flex-shrink-0">
                         {tx.categoryIcon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-fin-text truncate">{tx.name}</p>
+                        <p className="text-sm font-semibold text-black truncate">{tx.name}</p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-fin-muted">
+                          <span className="text-xs px-2 py-0.5 rounded-full text-gray-500 bg-white border-[1.5px] border-black font-bold">
                             {tx.category}
                           </span>
-                          <span className="text-xs text-fin-muted">{tx.account}</span>
+                          <span className="text-xs text-gray-500">{tx.account}</span>
                           {txCurrency !== 'PEN' && (
                             <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-full font-semibold flex items-center gap-0.5">
                               {txCurrInfo.flag} {txCurrency}
@@ -639,22 +717,22 @@ export default function MovimientosPage() {
                       <div className="text-right flex-shrink-0 flex items-center gap-2">
                         <div>
                           <p
-                            className={`text-sm font-manrope font-700 ${tx.type === 'ingreso' ? 'text-fin-green' : 'text-fin-text'}`}
+                            className={`text-sm font-black ${isIncoming ? 'text-fin-green' : 'text-black'}`}
                           >
-                            {tx.type === 'ingreso' ? '+' : '-'}
-                            {formatCurrency(Math.abs(tx.amount), txCurrency)}
+                            {isIncoming ? '+' : '-'}
+                            {formatCurrency(shownAmount, txCurrency)}
                           </p>
                           {showEquiv && (
-                            <p className="text-xs text-fin-muted">
+                            <p className="text-xs text-gray-500">
                               ≈ {formatCurrency(baseEquiv, baseCurrency)}
                             </p>
                           )}
-                          <p className="text-xs text-fin-muted">{tx.time}</p>
+                          <p className="text-xs text-gray-500">{tx.time}</p>
                         </div>
                         <div className="hidden group-hover:flex items-center gap-1 ml-2">
                           <button
                             onClick={() => openEdit(tx)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 text-fin-muted hover:text-blue-600 transition-colors"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors"
                           >
                             <Pencil
                               className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors"
@@ -662,13 +740,10 @@ export default function MovimientosPage() {
                             />
                           </button>
                           <button
-                            onClick={() => handleDelete(tx.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-fin-muted hover:text-fin-red transition-colors"
+                            onClick={() => handleDelete(tx)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-500 hover:text-fin-red transition-colors"
                           >
-                            <Trash2
-                              className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500 transition-colors"
-                              strokeWidth={1.75}
-                            />
+                            <Trash2 className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
                           </button>
                         </div>
                       </div>
@@ -689,171 +764,197 @@ export default function MovimientosPage() {
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div
-            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh]"
+            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col max-h-[92vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b-[3px] border-black">
               <h2 className="font-semibold text-black">
                 {editingTx ? 'Editar movimiento' : 'Nuevo movimiento'}
               </h2>
               <button
                 onClick={() => setShowForm(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-black hover:bg-gray-200 transition-all hover:rotate-90 duration-200"
+                className="w-8 h-8 flex items-center justify-center text-black transition-all hover:rotate-90 duration-200 rounded-xl hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="px-5 py-4 space-y-3 max-h-[80vh] overflow-y-auto">
+              {isTransferEdit && (
+                <div className="px-4 py-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-blue-700">
+                  Transferencia: aquí puedes cambiar la descripción, la fecha y la nota. Para
+                  cambiar el monto o las cuentas, elimínala y vuelve a crearla.
+                </div>
+              )}
               {/* Type tabs */}
-              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-                {(['gasto', 'ingreso', 'transferencia'] as const).map((t) => (
+              <div className={`flex gap-2 ${isTransferEdit ? 'hidden' : ''}`}>
+                {(editingTx ? (['gasto', 'ingreso'] as const) : TX_TYPES).map((t) => (
                   <button
                     key={t}
                     onClick={() => setForm((f) => ({ ...f, type: t }))}
-                    className={`flex-1 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${form.type === t ? 'bg-white shadow-sm text-black' : 'text-black'}`}
+                    className={`flex-1 py-2 rounded-xl border-[2px] text-xs font-black capitalize transition-all ${form.type === t ? 'bg-[#FFD43B] border-black text-black' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
                   >
                     {t === 'gasto' ? 'Pago' : t === 'ingreso' ? 'Ingreso' : 'Transferencia'}
                   </button>
                 ))}
               </div>
-              {/* Account (first to detect currency) */}
-              {accounts.length > 0 ? (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Cuenta</label>
+              {!editingTx && form.type === 'transferencia' ? (
+                <TransferForm
+                  saveLabel="Guardar"
+                  onSaved={() => {
+                    setShowForm(false);
+                    load();
+                  }}
+                />
+              ) : (
+                <>
+                  {/* Account (first to detect currency) */}
+                  {isTransferEdit ? null : accounts.length > 0 ? (
+                    <div>
+                      <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                        Cuenta
+                      </label>
+                      <select
+                        value={form.accountId}
+                        onChange={(e) => {
+                          const acc = accounts.find((a) => a.id === e.target.value);
+                          setForm((f) => ({
+                            ...f,
+                            accountId: e.target.value,
+                            account: acc?.name || '',
+                          }));
+                        }}
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                      >
+                        <option value="">
+                          {editingTx && !editingTx.accountId ? 'Sin cuenta' : 'Elige la cuenta'}
+                        </option>
+                        {accounts.map((a) => {
+                          const ci = getCurrencyInfo(a.currency);
+                          return (
+                            <option key={a.id} value={a.id}>
+                              {a.name} ({ci.flag} {a.currency})
+                            </option>
+                          );
+                        })}
+                      </select>
+                      {(() => {
+                        const acc = accounts.find((a) => a.id === form.accountId);
+                        if (!acc || acc.currency === baseCurrency) return null;
+                        const ci = getCurrencyInfo(acc.currency);
+                        return (
+                          <p className="text-xs text-blue-600 mt-1 font-medium">
+                            {ci.flag} Esta cuenta está en {ci.name} ({acc.currency})
+                          </p>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-700">
+                      Primero agrega una cuenta en la sección Cuentas
+                    </div>
+                  )}
+                  {/* Amount */}
+                  <div className={isTransferEdit ? 'hidden' : ''}>
+                    <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+                      Monto
+                    </label>
+                    <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                      <span className="text-black font-semibold">
+                        {
+                          getCurrencyInfo(
+                            accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'
+                          ).symbol
+                        }
+                      </span>
+                      <input
+                        type="number"
+                        value={form.amount}
+                        onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="flex-1 bg-transparent text-xl font-black text-black outline-none"
+                      />
+                      <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
+                        {accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'}
+                      </span>
+                    </div>
+                    {(() => {
+                      const acc = accounts.find((a) => a.id === form.accountId);
+                      const amt = parseFloat(form.amount) || 0;
+                      if (!acc || acc.currency === baseCurrency || !amt) return null;
+                      const rate = getRateFromMap(ratesMap, acc.currency, baseCurrency);
+                      return (
+                        <p className="text-xs text-blue-600 mt-1">
+                          ≈ {formatCurrency(amt * rate, baseCurrency)} · 1 {acc.currency} ={' '}
+                          {formatCurrency(rate, baseCurrency)}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  {/* Name */}
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Descripción (ej: Almuerzo, Sueldo...)"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                  />
+                  {/* Category */}
                   <select
-                    value={form.accountId}
+                    hidden={isTransferEdit}
+                    value={form.category}
                     onChange={(e) => {
-                      const acc = accounts.find((a) => a.id === e.target.value);
+                      const cat = CATEGORY_PRESETS.find((c) => c.label === e.target.value);
                       setForm((f) => ({
                         ...f,
-                        accountId: e.target.value,
-                        account: acc?.name || '',
+                        category: e.target.value,
+                        categoryIcon: cat?.icon || '📦',
                       }));
                     }}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
                   >
-                    {accounts.map((a) => {
-                      const ci = getCurrencyInfo(a.currency);
-                      return (
-                        <option key={a.id} value={a.id}>
-                          {a.icon} {a.name} ({ci.flag} {a.currency})
-                        </option>
-                      );
-                    })}
+                    {CATEGORY_PRESETS.map((c) => (
+                      <option key={c.id} value={c.label}>
+                        {c.icon} {c.label}
+                      </option>
+                    ))}
                   </select>
-                  {(() => {
-                    const acc = accounts.find((a) => a.id === form.accountId);
-                    if (!acc || acc.currency === baseCurrency) return null;
-                    const ci = getCurrencyInfo(acc.currency);
-                    return (
-                      <p className="text-xs text-blue-600 mt-1 font-medium">
-                        {ci.flag} Esta cuenta está en {ci.name} ({acc.currency})
-                      </p>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="px-4 py-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-700">
-                  Primero agrega una cuenta en la sección Cuentas
-                </div>
-              )}
-              {/* Amount */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Monto</label>
-                <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border">
-                  <span className="text-black font-semibold">
-                    {
-                      getCurrencyInfo(
-                        accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'
-                      ).symbol
-                    }
-                  </span>
+                  {/* Date & Time */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                      className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                    />
+                    <input
+                      type="time"
+                      value={form.time}
+                      onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
+                      className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                    />
+                  </div>
+                  {/* Notes */}
                   <input
-                    type="number"
-                    value={form.amount}
-                    onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                    placeholder="0.00"
-                    className="flex-1 bg-transparent text-xl font-manrope font-800 text-black outline-none"
+                    type="text"
+                    value={form.notes}
+                    onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                    placeholder="Nota (opcional)"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
                   />
-                  <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
-                    {accounts.find((a) => a.id === form.accountId)?.currency || 'PEN'}
-                  </span>
-                </div>
-                {(() => {
-                  const acc = accounts.find((a) => a.id === form.accountId);
-                  const amt = parseFloat(form.amount) || 0;
-                  if (!acc || acc.currency === baseCurrency || !amt) return null;
-                  const rate = getRateFromMap(ratesMap, acc.currency, baseCurrency);
-                  return (
-                    <p className="text-xs text-blue-600 mt-1">
-                      ≈ {formatCurrency(amt * rate, baseCurrency)} · 1 {acc.currency} ={' '}
-                      {formatCurrency(rate, baseCurrency)}
+                  {formError && (
+                    <p role="alert" className="text-sm font-semibold text-red-600">
+                      {formError}
                     </p>
-                  );
-                })()}
-              </div>
-              {/* Name */}
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="Descripción (ej: Almuerzo, Sueldo...)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
-              />
-              {/* Category */}
-              <select
-                value={form.category}
-                onChange={(e) => {
-                  const cat = CATEGORY_PRESETS.find((c) => c.label === e.target.value);
-                  setForm((f) => ({
-                    ...f,
-                    category: e.target.value,
-                    categoryIcon: cat?.icon || '📦',
-                  }));
-                }}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
-              >
-                {CATEGORY_PRESETS.map((c) => (
-                  <option key={c.id} value={c.label}>
-                    {c.icon} {c.label}
-                  </option>
-                ))}
-              </select>
-              {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
-                />
-                <input
-                  type="time"
-                  value={form.time}
-                  onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                  className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors"
-                />
-              </div>
-              {/* Notes */}
-              <input
-                type="text"
-                value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                placeholder="Nota (opcional)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
-              />
-              {formError && (
-                <p role="alert" className="text-sm font-semibold text-red-600">
-                  {formError}
-                </p>
+                  )}
+                  <button
+                    onClick={handleSave}
+                    disabled={!form.name || !form.amount || saving}
+                    className="w-full py-3.5 bg-[#FFD43B] rounded-xl transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
+                  >
+                    {saving ? 'Guardando...' : editingTx ? 'Guardar cambios' : 'Guardar'}
+                  </button>
+                </>
               )}
-              <button
-                onClick={handleSave}
-                disabled={!form.name || !form.amount || saving}
-                className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Guardando...' : editingTx ? 'Guardar cambios' : 'Guardar'}
-              </button>
             </div>
           </div>
         </div>

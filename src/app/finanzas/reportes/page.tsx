@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { transactionsService, subscriptionsService } from '@/lib/supabaseFinance';
 import LoadError from '@/components/ui/LoadError';
 import { toDataError } from '@/lib/dataError';
-import { Transaction, Subscription } from '@/lib/financeStore';
+import { Transaction, Subscription, countsAsTransfer } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
@@ -150,8 +150,9 @@ export default function ReportesPage() {
     .filter((t) => t.type === 'gasto')
     .reduce((s, t) => s + Math.abs(t.amount), 0);
 
+  // Each transfer counts once: its outgoing leg.
   const totalTransferencias = monthTxs
-    .filter((t) => t.type === 'transferencia')
+    .filter(countsAsTransfer)
     .reduce((s, t) => s + Math.abs(t.amount), 0);
 
   const pagosPendientes = monthPagos.filter(
@@ -303,12 +304,17 @@ export default function ReportesPage() {
         const monthGastos = monthTxs.filter((t) => t.type === 'gasto');
         const currencyGroups: Record<string, { amount: number; baseAmount: number }> = {};
         monthGastos.forEach((t) => {
-          const txCurrency = (t as any).currencyCode || baseCurrency;
-          const rate = getRateFromMap(ratesMap, txCurrency, baseCurrency);
-          const baseAmt = Math.abs(t.amount) * rate;
+          // Historical values: original currency/amount and the base amount stored at the
+          // time of the movement (never recomputed with today's rates).
+          const txCurrency = t.currencyCode || baseCurrency;
+          const origAmt = Math.abs(t.originalAmount ?? t.amount);
+          const baseAmt =
+            t.baseCurrencyCode === baseCurrency && t.baseAmount !== undefined
+              ? Math.abs(t.baseAmount)
+              : origAmt * getRateFromMap(ratesMap, txCurrency, baseCurrency);
           if (!currencyGroups[txCurrency])
             currencyGroups[txCurrency] = { amount: 0, baseAmount: 0 };
-          currencyGroups[txCurrency].amount += Math.abs(t.amount);
+          currencyGroups[txCurrency].amount += origAmt;
           currencyGroups[txCurrency].baseAmount += baseAmt;
         });
         const groups = Object.entries(currencyGroups);
@@ -621,7 +627,7 @@ export default function ReportesPage() {
             </div>
             <div className="rounded-xl border-[2px] border-black p-3 bg-[#DBEAFE] shadow-[2px_2px_0px_#000]">
               <p className="text-lg font-black text-black">
-                {monthTxs.filter((t) => t.type === 'transferencia').length}
+                {monthTxs.filter(countsAsTransfer).length}
               </p>
               <p className="text-[9px] font-black uppercase text-black/60">Transfer.</p>
             </div>

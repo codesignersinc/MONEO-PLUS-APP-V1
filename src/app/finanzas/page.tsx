@@ -24,8 +24,10 @@ import {
   Target,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
+import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
+import { userSettingsService, exchangeRatesService, getFxContext } from '@/lib/supabaseCurrency';
 import {
+  buildCurrencyFields,
   getCurrencyInfo,
   formatCurrency,
   getRateFromMap,
@@ -34,6 +36,7 @@ import {
 import NotificationBell from '@/components/notifications/NotificationBell';
 import LoadError from '@/components/ui/LoadError';
 import { getErrorMessage } from '@/lib/dataError';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -202,9 +205,9 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
     amount: '',
     category: 'Comida',
     categoryIcon: '🍽️',
-    account: data.accounts[0]?.name || '',
-    accountId: data.accounts[0]?.id || '',
-    date: new Date().toISOString().split('T')[0],
+    account: '',
+    accountId: '',
+    date: todayLocal(),
     notes: '',
   });
   const [saving, setSaving] = useState(false);
@@ -217,28 +220,44 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
     setForm((f) => ({ ...f, category: label, categoryIcon: preset?.icon || '📦' }));
   }
 
-  function handleAccountChange(name: string) {
-    const acc = data.accounts.find((a) => a.name === name);
-    setForm((f) => ({ ...f, account: name, accountId: acc?.id || '' }));
+  function handleAccountChange(id: string) {
+    const acc = data.accounts.find((a) => a.id === id);
+    setForm((f) => ({ ...f, account: acc?.name || '', accountId: acc?.id || '' }));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.accountId) {
+      setSaveError('Elige la cuenta del movimiento.');
+      return;
+    }
     setSaving(true);
     setSaveError('');
-    transactionsService
-      .create({
-        name: form.name,
-        category: form.category,
-        categoryIcon: form.categoryIcon,
-        account: form.account,
-        accountId: form.accountId,
-        amount: type === 'gasto' ? -Math.abs(parseFloat(form.amount)) : parseFloat(form.amount),
-        date: new Date(form.date).toISOString(),
-        time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
-        type: type === 'gasto' ? 'gasto' : 'ingreso',
-        notes: form.notes,
-      })
+    const amount =
+      type === 'gasto' ? -Math.abs(parseFloat(form.amount)) : Math.abs(parseFloat(form.amount));
+    const accCurrency = data.accounts.find((a) => a.id === form.accountId)?.currency || 'PEN';
+    getFxContext()
+      .then((fx) =>
+        transactionsService.create({
+          name: form.name,
+          category: form.category,
+          categoryIcon: form.categoryIcon,
+          account: form.account,
+          accountId: form.accountId,
+          amount,
+          date: localDateTimeToISO(form.date, nowTimeLocal()),
+          time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
+          type: type === 'gasto' ? 'gasto' : 'ingreso',
+          notes: form.notes,
+          ...buildCurrencyFields({
+            amount,
+            currency: accCurrency,
+            baseCurrency: fx.baseCurrency,
+            rateToBase: getRateFromMap(fx.ratesMap, accCurrency, fx.baseCurrency),
+            date: form.date,
+          }),
+        })
+      )
       .then((newTx) => {
         onSave({ ...data, transactions: [newTx, ...data.transactions] });
         setSaving(false);
@@ -330,12 +349,13 @@ function QuickAddModal({ type, data, onClose, onSave }: QuickAddModalProps) {
                 </div>
               ) : (
                 <select
-                  value={form.account}
+                  value={form.accountId}
                   onChange={(e) => handleAccountChange(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border-[3px] border-black text-base font-medium focus:outline-none bg-white text-black"
                 >
+                  <option value="">Elige la cuenta</option>
                   {data.accounts.map((a) => (
-                    <option key={a.id} value={a.name}>
+                    <option key={a.id} value={a.id}>
                       {a.name}
                     </option>
                   ))}
@@ -535,15 +555,6 @@ export default function DashboardPage() {
     if (d.toDateString() === yesterday.toDateString()) return `Ayer, ${tx.time || ''}`;
     return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${tx.time || ''}`;
   };
-
-  // Payment icon colors
-  const paymentColors = [
-    'bg-red-600',
-    'bg-blue-600',
-    'bg-orange-500',
-    'bg-green-600',
-    'bg-yellow-500',
-  ];
 
   return (
     <>
@@ -1415,13 +1426,14 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {upcomingPayments.map((payment, i) => (
+                  {upcomingPayments.map((payment) => (
                     <div key={payment.id} className="flex items-center gap-2.5">
-                      <div
-                        className={`w-9 h-9 rounded-xl ${paymentColors[i % paymentColors.length]} flex items-center justify-center flex-shrink-0`}
-                      >
-                        <span className="text-base">{payment.icon}</span>
-                      </div>
+                      <BrandLogo
+                        kind="subscription"
+                        name={payment.name}
+                        color={payment.color}
+                        size="sm"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-black text-black truncate">{payment.name}</p>
                         <p className="text-[10px] text-gray-400">
@@ -1445,9 +1457,11 @@ export default function DashboardPage() {
                   <h3 className="text-xs font-black text-black">Próximo pago</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl border-[3px] border-black bg-black flex items-center justify-center text-xl flex-shrink-0">
-                    <span className="text-lg">{nextPayment.icon}</span>
-                  </div>
+                  <BrandLogo
+                    kind="subscription"
+                    name={nextPayment.name}
+                    color={nextPayment.color}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-black truncate">{nextPayment.name}</p>
                     <p className="text-[10px] text-gray-400">
@@ -1527,9 +1541,12 @@ export default function DashboardPage() {
               </div>
               {nextPayment ? (
                 <div className="flex flex-col gap-1.5">
-                  <div className="w-9 h-9 rounded-xl border-[3px] border-black bg-black flex items-center justify-center text-lg flex-shrink-0">
-                    <span className="text-base">{nextPayment.icon}</span>
-                  </div>
+                  <BrandLogo
+                    kind="subscription"
+                    name={nextPayment.name}
+                    color={nextPayment.color}
+                    size="sm"
+                  />
                   <div className="min-w-0">
                     <p className="text-[10px] font-black text-black truncate">{nextPayment.name}</p>
                     <p className="text-[9px] text-gray-400">

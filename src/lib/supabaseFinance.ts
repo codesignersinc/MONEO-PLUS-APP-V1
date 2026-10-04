@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { assertAffected, authRequired, toDataError } from '@/lib/dataError';
+import { buildCurrencyFields, getRateFromMap } from '@/lib/currency';
+import type { FxContext } from '@/lib/supabaseCurrency';
 import type {
   Account,
   Transaction,
@@ -11,6 +13,8 @@ import type {
   Investment,
   Subscription,
   FinanceData,
+  TransactionCurrencyFields,
+  Transfer,
 } from './financeStore';
 
 // Every function below either resolves with real data or throws a DataError.
@@ -81,13 +85,14 @@ export const accountsService = {
     };
   },
 
-  async update(id: string, account: Partial<Account>): Promise<void> {
+  // The balance is not editable here: movements move it through the database engine
+  // and a manual correction goes through adjustBalance (audited).
+  async update(id: string, account: Partial<Omit<Account, 'balance'>>): Promise<void> {
     const supabase = createClient();
     const updates: any = {};
     if (account.name !== undefined) updates.name = account.name;
     if (account.type !== undefined) updates.account_type = account.type;
     if (account.institution !== undefined) updates.institution = account.institution;
-    if (account.balance !== undefined) updates.balance = account.balance;
     if (account.currency !== undefined) updates.currency = account.currency;
     if (account.icon !== undefined) updates.icon = account.icon;
     if (account.color !== undefined) updates.color = account.color;
@@ -102,6 +107,25 @@ export const accountsService = {
     assertAffected(data);
   },
 
+  // Sets the balance to `newBalance` and records the adjustment with its reason.
+  async adjustBalance(id: string, newBalance: number, reason: string): Promise<number> {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('adjust_account_balance', {
+      p_account_id: id,
+      p_new_balance: newBalance,
+      p_reason: reason,
+    });
+    if (error) throw toDataError(error);
+    return Number(data);
+  },
+
+  async getBalance(id: string): Promise<number> {
+    const supabase = createClient();
+    const { data, error } = await supabase.from('accounts').select('balance').eq('id', id).single();
+    if (error) throw toDataError(error);
+    return Number(data.balance);
+  },
+
   async delete(id: string): Promise<void> {
     const supabase = createClient();
     const { data, error } = await supabase.from('accounts').delete().eq('id', id).select('id');
@@ -111,6 +135,17 @@ export const accountsService = {
 };
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
+
+function currencyFieldsFromRow(r: any): TransactionCurrencyFields {
+  return {
+    currencyCode: r.currency_code,
+    originalAmount: Number(r.original_amount),
+    baseCurrencyCode: r.base_currency_code,
+    baseAmount: Number(r.base_amount),
+    exchangeRate: Number(r.exchange_rate),
+    exchangeRateDate: r.exchange_rate_date,
+  };
+}
 
 export const transactionsService = {
   async getAll(): Promise<Transaction[]> {
@@ -132,10 +167,15 @@ export const transactionsService = {
       time: r.transaction_time,
       type: r.transaction_type,
       notes: r.notes || '',
+      transferId: r.transfer_id || undefined,
+      transferLeg: r.transfer_leg || undefined,
+      ...currencyFieldsFromRow(r),
     }));
   },
 
-  async create(tx: Omit<Transaction, 'id'>): Promise<Transaction> {
+  // Every new transaction must carry its currency fields (see buildCurrencyFields);
+  // the database defaults (PEN / 0) would silently corrupt multi-currency reports.
+  async create(tx: Omit<Transaction, 'id'> & TransactionCurrencyFields): Promise<Transaction> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
     const { data, error } = await supabase
@@ -152,6 +192,12 @@ export const transactionsService = {
         transaction_time: tx.time,
         transaction_type: tx.type,
         notes: tx.notes || '',
+        currency_code: tx.currencyCode,
+        original_amount: tx.originalAmount,
+        base_currency_code: tx.baseCurrencyCode,
+        base_amount: tx.baseAmount,
+        exchange_rate: tx.exchangeRate,
+        exchange_rate_date: tx.exchangeRateDate,
       })
       .select()
       .single();
@@ -168,9 +214,11 @@ export const transactionsService = {
       time: data.transaction_time,
       type: data.transaction_type,
       notes: data.notes,
+      ...currencyFieldsFromRow(data),
     };
   },
 
+  // When `amount`, `type` or the account change, pass the recomputed currency fields too.
   async update(id: string, tx: Partial<Transaction>): Promise<void> {
     const supabase = createClient();
     const updates: any = { updated_at: new Date().toISOString() };
@@ -184,6 +232,12 @@ export const transactionsService = {
     if (tx.time !== undefined) updates.transaction_time = tx.time;
     if (tx.type !== undefined) updates.transaction_type = tx.type;
     if (tx.notes !== undefined) updates.notes = tx.notes;
+    if (tx.currencyCode !== undefined) updates.currency_code = tx.currencyCode;
+    if (tx.originalAmount !== undefined) updates.original_amount = tx.originalAmount;
+    if (tx.baseCurrencyCode !== undefined) updates.base_currency_code = tx.baseCurrencyCode;
+    if (tx.baseAmount !== undefined) updates.base_amount = tx.baseAmount;
+    if (tx.exchangeRate !== undefined) updates.exchange_rate = tx.exchangeRate;
+    if (tx.exchangeRateDate !== undefined) updates.exchange_rate_date = tx.exchangeRateDate;
     const { data, error } = await supabase
       .from('transactions')
       .update(updates)
@@ -198,6 +252,78 @@ export const transactionsService = {
     const { data, error } = await supabase.from('transactions').delete().eq('id', id).select('id');
     if (error) throw toDataError(error);
     assertAffected(data);
+  },
+};
+
+// ─── Transfers ────────────────────────────────────────────────────────────────
+
+// A transfer moves money between two of the user's accounts. The database creates,
+// updates and deletes its two legs (transactions) atomically and moves both balances.
+export interface TransferInput {
+  fromAccountId: string;
+  toAccountId: string;
+  fromAmount: number; // > 0, in the origin account's currency
+  toAmount: number; // > 0, in the destination account's currency
+  baseAmount: number; // > 0, value in the user's base currency
+  date: string; // ISO timestamp
+  name: string;
+  notes: string;
+}
+
+function transferRpcArgs(t: TransferInput) {
+  return {
+    p_from_account_id: t.fromAccountId,
+    p_to_account_id: t.toAccountId,
+    p_from_amount: t.fromAmount,
+    p_to_amount: t.toAmount,
+    p_base_amount: t.baseAmount,
+    p_transfer_date: t.date,
+    p_name: t.name,
+    p_notes: t.notes,
+  };
+}
+
+export const transfersService = {
+  async get(id: string): Promise<Transfer> {
+    const supabase = createClient();
+    const { data, error } = await supabase.from('transfers').select('*').eq('id', id).single();
+    if (error) throw toDataError(error);
+    return {
+      id: data.id,
+      fromAccountId: data.from_account_id,
+      toAccountId: data.to_account_id,
+      fromAmount: Number(data.from_amount),
+      fromCurrency: data.from_currency,
+      toAmount: Number(data.to_amount),
+      toCurrency: data.to_currency,
+      baseCurrencyCode: data.base_currency_code,
+      baseAmount: Number(data.base_amount),
+      date: data.transfer_date,
+      name: data.name,
+      notes: data.notes,
+    };
+  },
+
+  async create(t: TransferInput): Promise<string> {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('create_transfer', transferRpcArgs(t));
+    if (error) throw toDataError(error);
+    return data as string;
+  },
+
+  async update(id: string, t: TransferInput): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.rpc('update_transfer', {
+      p_transfer_id: id,
+      ...transferRpcArgs(t),
+    });
+    if (error) throw toDataError(error);
+  },
+
+  async delete(id: string): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.rpc('delete_transfer', { p_transfer_id: id });
+    if (error) throw toDataError(error);
   },
 };
 
@@ -373,6 +499,7 @@ export const debtsService = {
       type: r.debt_type,
       color: r.color,
       interestRate: r.interest_rate,
+      originalAmount: Number(r.original_amount ?? r.balance),
     }));
   },
 
@@ -409,7 +536,29 @@ export const debtsService = {
       type: data.debt_type,
       color: data.color,
       interestRate: data.interest_rate,
+      originalAmount: Number(data.original_amount ?? data.balance),
     };
+  },
+
+  // Pays `amount` (base currency) of the debt from `accountId`: the database records the
+  // expense (moving the account balance), lowers the debt and keeps the payment history.
+  // For an account in another currency pass `accountAmount` (what it really debits).
+  // Resolves with the remaining debt balance.
+  async pay(
+    id: string,
+    accountId: string,
+    amount: number,
+    accountAmount?: number
+  ): Promise<number> {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('pay_debt', {
+      p_debt_id: id,
+      p_account_id: accountId,
+      p_amount: amount,
+      p_account_amount: accountAmount ?? null,
+    });
+    if (error) throw toDataError(error);
+    return Number(data);
   },
 
   async update(id: string, debt: Partial<Debt>): Promise<void> {
@@ -617,13 +766,15 @@ export const subscriptionsService = {
 
   // Records the payment as an expense ("gasto") and advances next_payment_date
   // by one month from the current due date, keeping the same payment day.
-  // Pays the current cycle from `account`: records the expense, debits the account
-  // balance by `debitAmount` (in the account's currency), marks the subscription
+  // Pays the current cycle from `account`: records the expense of `debitAmount` (in the
+  // account's currency; the database debits the balance), marks the subscription
   // as paid and advances next_payment_date one month, keeping the payment day.
+  // Subscriptions are priced in PEN; `fx` records the historical rate to the base currency.
   async markAsPaid(
     sub: Subscription,
     account: Account,
-    debitAmount: number
+    debitAmount: number,
+    fx: FxContext
   ): Promise<{ nextPaymentDate: string; newBalance: number; transaction: Transaction }> {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -642,10 +793,18 @@ export const subscriptionsService = {
       notes: `Pago de suscripción${sub.nextPaymentDate ? ` (vencimiento ${sub.nextPaymentDate})` : ''}`,
       date: new Date(todayStr + 'T12:00:00').toISOString(),
       time: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      ...buildCurrencyFields({
+        amount: -amount,
+        currency: account.currency || 'PEN',
+        baseCurrency: fx.baseCurrency,
+        rateToBase: getRateFromMap(fx.ratesMap, 'PEN', fx.baseCurrency),
+        date: todayStr,
+        original: { amount: -Math.abs(sub.amount), currency: 'PEN' },
+      }),
     });
 
-    const newBalance = Math.round((account.balance - amount) * 100) / 100;
-    await accountsService.update(account.id, { balance: newBalance });
+    // The database engine debits the account when the expense is recorded.
+    const newBalance = await accountsService.getBalance(account.id);
 
     await subscriptionsService.update(sub.id, {
       paymentStatus: 'paid',

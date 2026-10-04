@@ -55,12 +55,6 @@ export default function ConvertirDineroPage() {
         setAccounts(opts);
         setBaseCurrency(settings.baseCurrencyCode);
         setRatesMap(rates);
-        if (opts.length >= 2) {
-          setFromAccountId(opts[0].id);
-          setToAccountId(opts[1].id);
-        } else if (opts.length === 1) {
-          setFromAccountId(opts[0].id);
-        }
       })
       .catch(setLoadError)
       .finally(() => setLoading(false));
@@ -98,18 +92,30 @@ export default function ConvertirDineroPage() {
     setError('');
     try {
       const today = new Date().toISOString().split('T')[0];
+      const fromAmt = Math.round(fromAmountNum * 100) / 100;
+      const toAmt = Math.round(toAmountCalc * 100) / 100;
       await currencyExchangesService.create({
         fromAccountId,
         toAccountId,
         fromCurrency,
-        fromAmount: fromAmountNum,
+        fromAmount: fromAmt,
         toCurrency,
-        toAmount: toAmountCalc,
+        toAmount: toAmt,
         exchangeRate: rate,
         exchangeDate: today,
         notes,
       });
       // Only reached when the insert really succeeded (the service throws otherwise).
+      // The database moved both balances; mirror it locally.
+      setAccounts((prev) =>
+        prev.map((a) =>
+          a.id === fromAccountId
+            ? { ...a, balance: a.balance - fromAmt }
+            : a.id === toAccountId
+              ? { ...a, balance: a.balance + toAmt }
+              : a
+        )
+      );
       setSuccess(true);
       setFromAmount('');
       setNotes('');
@@ -221,11 +227,12 @@ export default function ConvertirDineroPage() {
               onChange={(e) => setFromAccountId(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl border-[3px] border-black text-sm font-bold bg-white mb-3 outline-none"
             >
+              <option value="">Elige la cuenta de origen</option>
               {accounts.map((a) => {
                 const ci = getCurrencyInfo(a.currency);
                 return (
                   <option key={a.id} value={a.id}>
-                    {a.icon} {a.name} ({ci.flag} {a.currency})
+                    {a.name} ({ci.flag} {a.currency})
                   </option>
                 );
               })}
@@ -271,11 +278,12 @@ export default function ConvertirDineroPage() {
               onChange={(e) => setToAccountId(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl border-[3px] border-black text-sm font-bold bg-white mb-3 outline-none"
             >
+              <option value="">Elige la cuenta de destino</option>
               {accounts.map((a) => {
                 const ci = getCurrencyInfo(a.currency);
                 return (
                   <option key={a.id} value={a.id}>
-                    {a.icon} {a.name} ({ci.flag} {a.currency})
+                    {a.name} ({ci.flag} {a.currency})
                   </option>
                 );
               })}

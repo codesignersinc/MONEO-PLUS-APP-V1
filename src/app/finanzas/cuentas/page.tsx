@@ -14,6 +14,8 @@ import {
   groupAccountsByCurrency,
 } from '@/lib/currency';
 import { Plus, X, Pencil, Trash2, ChevronRight } from 'lucide-react';
+import { PERUVIAN_BANKS } from '@/lib/brands';
+import BrandLogo from '@/components/finance/BrandLogo';
 
 const ACCOUNT_TYPES = [
   { value: 'banco', label: 'Cuenta bancaria', icon: '🏦' },
@@ -21,65 +23,6 @@ const ACCOUNT_TYPES = [
   { value: 'digital', label: 'Billetera digital', icon: '📱' },
   { value: 'credito', label: 'Tarjeta de crédito', icon: '💳' },
   { value: 'inversion', label: 'Cuenta de inversión', icon: '📈' },
-];
-
-const PERUVIAN_BANKS = [
-  {
-    id: 'bcp',
-    name: 'BCP',
-    image: '/assets/images/bcp-1790986661188.jpg',
-    color: '#003087',
-    bg: '#E8F0FF',
-  },
-  {
-    id: 'interbank',
-    name: 'Interbank',
-    image: '/assets/images/interbank-1790986660881.png',
-    color: '#00A651',
-    bg: '#E6F7EE',
-  },
-  {
-    id: 'bbva',
-    name: 'BBVA',
-    image: '/assets/images/bbva-1790986661190.png',
-    color: '#004481',
-    bg: '#E6EEF7',
-  },
-  {
-    id: 'scotiabank',
-    name: 'Scotiabank',
-    image: '/assets/images/scotiabank-1790986661195.png',
-    color: '#CC0000',
-    bg: '#FFE6E6',
-  },
-  {
-    id: 'banbif',
-    name: 'BanBif',
-    image: '/assets/images/banbif-1790986684660.jpg',
-    color: '#E30613',
-    bg: '#FFE6E7',
-  },
-  {
-    id: 'nacion',
-    name: 'Banco de la Nación',
-    image: '/assets/images/banco_de_la_nacion-1790987077025.jpg',
-    color: '#C8102E',
-    bg: '#FFE6EA',
-  },
-  {
-    id: 'ripley',
-    name: 'Banco Ripley',
-    image: '/assets/images/bancoripley-1790987077028.jpg',
-    color: '#6B21A8',
-    bg: '#F3E8FF',
-  },
-  {
-    id: 'falabella',
-    name: 'Banco Falabella',
-    image: '/assets/images/falabella-1790987077026.png',
-    color: '#1D4ED8',
-    bg: '#DBEAFE',
-  },
 ];
 
 const COLOR_OPTIONS = [
@@ -116,6 +59,10 @@ export default function CuentasPage() {
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
+  // Account waiting for delete confirmation.
+  const [deletingAcc, setDeletingAcc] = useState<Account | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const toast = useToast();
   const [form, setForm] = useState<AccountForm>({
     name: '',
@@ -195,23 +142,32 @@ export default function CuentasPage() {
       color: acc.color,
       bgColor: acc.bgColor,
     });
+    setAdjustReason('');
     setFormError('');
     setShowForm(true);
   };
+
+  const newBalance = Math.round((parseFloat(form.balance) || 0) * 100) / 100;
+  const balanceChanged = !!editingAcc && newBalance !== editingAcc.balance;
 
   const handleSave = async () => {
     if (!form.name) return;
     setSaving(true);
     setFormError('');
     try {
-      const accountData = { ...form, balance: parseFloat(form.balance) || 0 };
+      const { name, type, institution, currency, icon, color, bgColor } = form;
+      const details = { name, type, institution, currency, icon, color, bgColor };
       if (editingAcc) {
-        await accountsService.update(editingAcc.id, accountData);
+        await accountsService.update(editingAcc.id, details);
+        // The balance only changes through an audited adjustment; movements move it on their own.
+        const balance = balanceChanged
+          ? await accountsService.adjustBalance(editingAcc.id, newBalance, adjustReason.trim())
+          : editingAcc.balance;
         setAccounts((prev) =>
-          prev.map((a) => (a.id === editingAcc.id ? { ...a, ...accountData } : a))
+          prev.map((a) => (a.id === editingAcc.id ? { ...a, ...details, balance } : a))
         );
       } else {
-        const created = await accountsService.create(accountData);
+        const created = await accountsService.create({ ...details, balance: newBalance });
         setAccounts((prev) => [...prev, created]);
       }
       setShowForm(false);
@@ -223,12 +179,17 @@ export default function CuentasPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const confirmDelete = async () => {
+    if (!deletingAcc) return;
+    setDeleteBusy(true);
     try {
-      await accountsService.delete(id);
-      setAccounts((prev) => prev.filter((a) => a.id !== id));
+      await accountsService.delete(deletingAcc.id);
+      setAccounts((prev) => prev.filter((a) => a.id !== deletingAcc.id));
+      setDeletingAcc(null);
     } catch (err) {
       toast.showError(err);
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -268,7 +229,7 @@ export default function CuentasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#FFD43B] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -276,7 +237,7 @@ export default function CuentasPage() {
   if (loadError) {
     return (
       <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Cuentas</h1>
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">Cuentas</h1>
         <LoadError what="tus cuentas" error={loadError} onRetry={load} />
       </div>
     );
@@ -286,16 +247,16 @@ export default function CuentasPage() {
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-manrope font-800 text-fin-text">Cuentas</h1>
+          <h1 className="text-3xl font-black text-black leading-tight">Cuentas</h1>
           {uniqueCurrencies.length > 1 && (
-            <p className="text-xs text-fin-muted mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5">
               {accounts.length} cuentas · {uniqueCurrencies.length} monedas
             </p>
           )}
         </div>
         <button
           onClick={openAdd}
-          className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+          className="group flex items-center gap-2 px-3 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
         >
           <Plus
             className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
@@ -307,21 +268,21 @@ export default function CuentasPage() {
 
       {accounts.length > 0 && (
         <>
-          <div className="bg-white rounded-2xl border border-fin-border p-4 shadow-fin-card mb-4">
+          <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-fin-muted">Saldo total</p>
-              <span className="text-xs font-semibold text-fin-muted">
+              <p className="text-xs text-gray-500">Saldo total</p>
+              <span className="text-xs font-semibold text-gray-500">
                 {baseCurrencyInfo.flag} {baseCurrency}
               </span>
             </div>
-            <p className="text-2xl font-manrope font-800 text-fin-text">
+            <p className="text-3xl font-black text-black leading-tight">
               {formatCurrency(totalInBase, baseCurrency)}
             </p>
           </div>
 
           {currencyGroups.length > 1 && (
-            <div className="bg-white rounded-2xl border border-fin-border p-4 shadow-fin-card mb-4">
-              <p className="text-xs font-semibold text-fin-muted uppercase tracking-wide mb-3">
+            <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 Desglose por moneda
               </p>
               <div className="space-y-2">
@@ -332,8 +293,8 @@ export default function CuentasPage() {
                       <span className="text-base">{info.flag}</span>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold text-fin-text">{info.name}</span>
-                          <span className="text-xs font-bold text-fin-text">
+                          <span className="text-xs font-semibold text-black">{info.name}</span>
+                          <span className="text-xs font-bold text-black">
                             {formatCurrency(g.totalOriginal, g.currencyCode)}
                           </span>
                         </div>
@@ -345,11 +306,11 @@ export default function CuentasPage() {
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
                           {g.currencyCode !== baseCurrency && (
-                            <span className="text-xs text-fin-muted">
+                            <span className="text-xs text-gray-500">
                               ≈ {formatCurrency(g.totalInBase, baseCurrency)}
                             </span>
                           )}
-                          <span className="text-xs text-fin-muted ml-auto">{g.percentage}%</span>
+                          <span className="text-xs text-gray-500 ml-auto">{g.percentage}%</span>
                         </div>
                       </div>
                     </div>
@@ -366,13 +327,13 @@ export default function CuentasPage() {
           <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-3xl mb-4">
             🏦
           </div>
-          <h2 className="text-lg font-manrope font-800 text-fin-text mb-2">Sin cuentas</h2>
-          <p className="text-sm text-fin-muted max-w-xs mb-6">
+          <h2 className="text-lg font-black text-black mb-2">Sin cuentas</h2>
+          <p className="text-sm text-gray-500 max-w-xs mb-6">
             Agrega tus cuentas bancarias, efectivo, billeteras digitales o tarjetas de crédito.
           </p>
           <button
             onClick={openAdd}
-            className="px-5 py-3 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
+            className="px-5 py-3 bg-[#FFD43B] text-sm rounded-xl transition-colors text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             Agregar primera cuenta
           </button>
@@ -389,26 +350,26 @@ export default function CuentasPage() {
             return (
               <div
                 key={acc.id}
-                className="bg-white rounded-2xl border border-fin-border p-4 shadow-fin-card hover:shadow-fin-card-hover transition-shadow group"
+                className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-shadow group"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: acc.bgColor }}
-                  >
-                    {acc.icon}
-                  </div>
+                  <BrandLogo
+                    kind="account"
+                    name={acc.name}
+                    institution={acc.institution}
+                    type={acc.type}
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="font-manrope font-700 text-fin-text">{acc.name}</p>
+                    <p className="font-black text-black">{acc.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs">{currInfo.flag}</span>
-                      <span className="text-xs text-fin-muted font-semibold">
+                      <span className="text-xs text-gray-500 font-semibold">
                         {acc.currency || 'PEN'}
                       </span>
                       {acc.institution && (
                         <>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
-                          <span className="text-xs text-fin-muted">{acc.institution}</span>
+                          <span className="text-xs text-gray-500">{acc.institution}</span>
                         </>
                       )}
                     </div>
@@ -416,13 +377,13 @@ export default function CuentasPage() {
                   <div className="flex items-center gap-2">
                     <div className="text-right">
                       <p
-                        className={`font-manrope font-700 text-base ${acc.balance < 0 ? 'text-fin-red' : 'text-fin-text'}`}
+                        className={`font-black text-base ${acc.balance < 0 ? 'text-fin-red' : 'text-black'}`}
                       >
                         {acc.balance < 0 ? '-' : ''}
                         {formatCurrency(Math.abs(acc.balance), acc.currency || 'PEN')}
                       </p>
                       {showEquiv && (
-                        <p className="text-xs text-fin-muted">
+                        <p className="text-xs text-gray-500">
                           ≈ {formatCurrency(Math.abs(baseEquiv), baseCurrency)}
                         </p>
                       )}
@@ -430,7 +391,7 @@ export default function CuentasPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEdit(acc)}
-                        className="group p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150"
+                        className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-gray-100 transition-all"
                       >
                         <Pencil
                           className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors"
@@ -438,20 +399,17 @@ export default function CuentasPage() {
                         />
                       </button>
                       <button
-                        onClick={() => handleDelete(acc.id)}
-                        className="group p-1.5 rounded-lg hover:bg-red-50 transition-all duration-150"
+                        onClick={() => setDeletingAcc(acc)}
+                        className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-red-50 transition-all"
                       >
-                        <Trash2
-                          className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500 transition-colors"
-                          strokeWidth={1.75}
-                        />
+                        <Trash2 className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
                       </button>
                     </div>
                   </div>
                 </div>
                 {showEquiv && acc.currency !== baseCurrency && (
                   <div className="mt-2 pt-2 border-t border-gray-50">
-                    <p className="text-xs text-fin-muted">
+                    <p className="text-xs text-gray-500">
                       1 {acc.currency} = {formatCurrency(rate, baseCurrency)}
                     </p>
                   </div>
@@ -470,16 +428,16 @@ export default function CuentasPage() {
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div
-            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh]"
+            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col max-h-[92vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b-[3px] border-black">
               <h2 className="font-semibold text-gray-900">
                 {editingAcc ? 'Editar cuenta' : 'Nueva cuenta'}
               </h2>
               <button
                 onClick={() => setShowForm(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-all hover:rotate-90 duration-200"
+                className="w-8 h-8 flex items-center justify-center transition-all hover:rotate-90 duration-200 rounded-xl text-black hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -517,7 +475,7 @@ export default function CuentasPage() {
                       <button
                         key={t.value}
                         onClick={() => handleTypeChange(t.value as Account['type'])}
-                        className={`flex items-center gap-2 p-3 rounded-xl border-2 text-sm font-semibold transition-all ${form.type === t.value ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}
+                        className={`flex items-center gap-2 p-3 rounded-xl border-2 text-sm font-semibold transition-all ${form.type === t.value ? 'border-black bg-[#FFD43B] text-black' : 'border-gray-200 bg-white text-black hover:border-gray-300'}`}
                       >
                         <span className="text-xl">{t.icon}</span>
                         <span className="text-xs">{t.label}</span>
@@ -588,14 +546,14 @@ export default function CuentasPage() {
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                     placeholder="Nombre de la cuenta (ej: BCP Ahorros)"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
                   />
                   <input
                     type="text"
                     value={form.institution}
                     onChange={(e) => setForm((f) => ({ ...f, institution: e.target.value }))}
                     placeholder="Institución (ej: BCP, Interbank, Yape)"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
                   />
                   {!editingAcc && (
                     <button
@@ -620,7 +578,7 @@ export default function CuentasPage() {
                     </p>
                   )}
                   {!editingAcc && (
-                    <p className="text-xs text-fin-muted">
+                    <p className="text-xs text-gray-500">
                       Puedes tener cuentas en diferentes monedas. MONEO las organizará
                       automáticamente.
                     </p>
@@ -633,12 +591,12 @@ export default function CuentasPage() {
                           setForm((f) => ({ ...f, currency: c.code }));
                           if (!editingAcc) setFormStep('saldo');
                         }}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${form.currency === c.code ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${form.currency === c.code ? 'border-black bg-[#FFD43B] text-black' : 'border-gray-200 bg-white text-black hover:border-gray-300'}`}
                       >
                         <span className="text-2xl">{c.flag}</span>
                         <div className="flex-1 text-left">
-                          <p className="text-sm font-semibold text-fin-text">{c.name}</p>
-                          <p className="text-xs text-fin-muted">
+                          <p className="text-sm font-semibold text-black">{c.name}</p>
+                          <p className="text-xs text-gray-500">
                             {c.code} · {c.symbol}
                           </p>
                         </div>
@@ -650,11 +608,11 @@ export default function CuentasPage() {
                   </div>
                   {editingAcc && (
                     <div className="pt-2">
-                      <p className="text-xs text-fin-muted mb-2">Más monedas</p>
+                      <p className="text-xs text-gray-500 mb-2">Más monedas</p>
                       <select
                         value={form.currency}
                         onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
-                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text outline-none focus:border-fin-green transition-colors"
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
                       >
                         {CURRENCIES.map((c) => (
                           <option key={c.code} value={c.code}>
@@ -673,8 +631,8 @@ export default function CuentasPage() {
                   {!editingAcc && (
                     <p className="text-sm font-bold text-gray-700">¿Cuál es el saldo actual?</p>
                   )}
-                  <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border">
-                    <span className="text-fin-muted font-semibold text-sm">
+                  <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                    <span className="text-gray-500 font-semibold text-sm">
                       {getCurrencyInfo(form.currency).symbol}
                     </span>
                     <input
@@ -682,12 +640,28 @@ export default function CuentasPage() {
                       value={form.balance}
                       onChange={(e) => setForm((f) => ({ ...f, balance: e.target.value }))}
                       placeholder="0.00"
-                      className="flex-1 bg-transparent text-sm font-semibold text-fin-text outline-none"
+                      className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
                     />
-                    <span className="text-xs text-fin-muted font-semibold">{form.currency}</span>
+                    <span className="text-xs text-gray-500 font-semibold">{form.currency}</span>
                   </div>
+                  {balanceChanged && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500">
+                        Los movimientos actualizan el saldo solos. Este cambio se registrará como
+                        ajuste manual.
+                      </p>
+                      <input
+                        type="text"
+                        value={adjustReason}
+                        onChange={(e) => setAdjustReason(e.target.value)}
+                        placeholder="Motivo del ajuste (opcional)"
+                        maxLength={200}
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none"
+                      />
+                    </div>
+                  )}
                   <div>
-                    <p className="text-xs text-fin-muted mb-2">Color</p>
+                    <p className="text-xs text-gray-500 mb-2">Color</p>
                     <div className="flex gap-2">
                       {COLOR_OPTIONS.map((opt) => (
                         <button
@@ -714,11 +688,49 @@ export default function CuentasPage() {
                 <button
                   onClick={handleSave}
                   disabled={!form.name || saving}
-                  className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3.5 bg-[#FFD43B] rounded-xl transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
                 >
                   {saving ? 'Guardando...' : editingAcc ? 'Guardar cambios' : 'Agregar cuenta'}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {deletingAcc && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !deleteBusy && setDeletingAcc(null)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+            className="relative bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-5 space-y-4"
+          >
+            <h2 id="delete-account-title" className="font-semibold text-black">
+              ¿Eliminar la cuenta «{deletingAcc.name}»?
+            </h2>
+            <p className="text-sm text-gray-600">
+              Sus movimientos, transferencias y conversiones se conservan en tu historial, pero
+              quedarán sin cuenta. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeletingAcc(null)}
+                disabled={deleteBusy}
+                className="flex-1 py-3 rounded-xl border-[2px] border-black text-sm font-semibold text-gray-700 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteBusy}
+                className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteBusy ? 'Eliminando...' : 'Eliminar'}
+              </button>
             </div>
           </div>
         </div>
