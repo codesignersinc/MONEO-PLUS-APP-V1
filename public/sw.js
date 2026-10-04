@@ -1,83 +1,61 @@
-const CACHE_NAME = 'finanzas-v1';
-const STATIC_ASSETS = [
-  '/finanzas',
-  '/manifest.json',
-  '/assets/images/app_logo.png',
-  '/favicon.ico',
-];
+// MONEO+ service worker.
+// - Pages (navigations): always from the network, so each deploy is seen right away;
+//   only when offline it shows /offline.html. Pages are never cached (they belong to a
+//   signed-in user).
+// - Static, versioned assets (/_next/static, icons, images, fonts): cache first.
+// - Supabase and any other origin: not handled.
+// Bump CACHE_NAME to drop old caches.
+const CACHE_NAME = 'moneo-v2';
+const PRECACHE = ['/offline.html', '/icons/icon-192.png', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch(() => {
-        // Silently fail for assets that can't be cached
-      });
-    })
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE)).catch(() => {}));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
-  if (event.request.method !== 'GET') return;
+function isStaticAsset(url) {
+  return (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/icons/') ||
+    url.pathname.startsWith('/assets/') ||
+    /\.(?:png|jpg|jpeg|webp|svg|ico|woff2?)$/.test(url.pathname)
+  );
+}
 
-  // Skip cross-origin requests and Supabase API calls
-  const url = new URL(event.request.url);
-  if (
-    url.origin !== self.location.origin ||
-    url.pathname.startsWith('/api/') ||
-    url.hostname.includes('supabase')
-  ) {
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(() => caches.match('/offline.html')));
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Return cached version and update in background
-        fetch(event.request)
-          .then((response) => {
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          fetch(request).then((response) => {
             if (response && response.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, response);
-              });
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
             }
-          })
-          .catch(() => {});
-        return cachedResponse;
-      }
-
-      // Network first for navigation requests
-      return fetch(event.request)
-        .then((response) => {
-          if (!response || response.status !== 200 || response.type === 'opaque') {
             return response;
-          }
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
-        })
-        .catch(() => {
-          // Return cached finanzas page as fallback for navigation
-          if (event.request.mode === 'navigate') {
-            return caches.match('/finanzas');
-          }
-        });
-    })
-  );
+          })
+      )
+    );
+  }
+  // Everything else (RSC payloads, API routes): network only.
 });

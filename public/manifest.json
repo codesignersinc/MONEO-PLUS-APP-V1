@@ -1,32 +1,26 @@
 {
-    "name": "Finanzas \u2014 Control Personal",
-    "short_name": "Finanzas",
-    "description": "Controla tus finanzas diarias, presupuesto mensual, ahorros, deudas e inversiones en un solo lugar.",
-    "start_url": "/finanzas",
-    "display": "standalone",
-    "background_color": "#F5F0E8",
-    "theme_color": "#1a1a2e",
-    "orientation": "portrait-primary",
-    "scope": "/",
-    "lang": "es",
-    "categories": [
-        "finance",
-        "productivity"
-    ],
-    "icons": [
-        {
-            "src": "/assets/images/app_logo.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/assets/images/app_logo.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ],
-    "screenshots": [],
-    "prefer_related_applications": false
+  "id": "/finanzas",
+  "name": "MONEO+ — Tu dinero, más simple.",
+  "short_name": "MONEO+",
+  "description": "Controla tus cuentas, movimientos, pagos, presupuesto, metas y juntas en un solo lugar.",
+  "start_url": "/finanzas",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070E14",
+  "theme_color": "#070E14",
+  "lang": "es-PE",
+  "dir": "ltr",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Movimientos", "url": "/finanzas/movimientos", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Pagos", "url": "/finanzas/pagos", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Cuentas", "url": "/finanzas/cuentas", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "prefer_related_applications": false
 }
