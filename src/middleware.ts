@@ -43,7 +43,8 @@ export async function middleware(request: NextRequest) {
   const isFinanzasRoute = request.nextUrl.pathname.startsWith('/finanzas');
   const isAuthRoute =
     request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/register');
+    request.nextUrl.pathname.startsWith('/register') ||
+    request.nextUrl.pathname.startsWith('/recuperar');
 
   if (!user && isFinanzasRoute) {
     const url = request.nextUrl.clone();

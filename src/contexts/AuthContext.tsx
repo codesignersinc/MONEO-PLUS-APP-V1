@@ -79,6 +79,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return data;
   };
 
+  // OAuth (Google / Apple). Redirects away; the session is created in /auth/callback.
+  const signInWithProvider = async (provider: 'google' | 'apple') => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) throw error;
+  };
+
+  // Sends the password-recovery email; its link opens /restablecer with a session.
+  const sendPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/restablecer`,
+    });
+    if (error) throw error;
+  };
+
+  // Sets a new password for the signed-in user (recovery session included).
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+  };
+
   // Sign Out
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -118,6 +141,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loading,
     signUp,
     signIn,
+    signInWithProvider,
+    sendPasswordReset,
+    updatePassword,
     signOut,
     getCurrentUser,
     isEmailVerified,
