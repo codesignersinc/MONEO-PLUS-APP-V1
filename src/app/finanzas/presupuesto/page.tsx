@@ -148,7 +148,7 @@ export default function PresupuestoPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-fin-green border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#FFD43B] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -156,7 +156,7 @@ export default function PresupuestoPage() {
   if (loadError) {
     return (
       <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Presupuesto</h1>
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">Presupuesto</h1>
         <LoadError what="tu presupuesto" error={loadError} onRetry={load} />
       </div>
     );
@@ -166,12 +166,12 @@ export default function PresupuestoPage() {
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-manrope font-800 text-fin-text">Presupuesto</h1>
-          <p className="text-sm text-fin-muted mt-0.5">{month}</p>
+          <h1 className="text-3xl font-black text-black leading-tight">Presupuesto</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{month}</p>
         </div>
         <button
           onClick={openAdd}
-          className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+          className="group flex items-center gap-2 px-3 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
         >
           <Plus
             className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
@@ -182,21 +182,19 @@ export default function PresupuestoPage() {
       </div>
 
       {categories.length > 0 && (
-        <div className="bg-white rounded-2xl border border-fin-border p-5 shadow-fin-card mb-5">
+        <div className="bg-white rounded-3xl border-[3px] border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-5">
           <div className="flex items-center gap-2 mb-1">
             <BarChart3 className="w-4 h-4 text-gray-500" strokeWidth={1.75} />
-            <p className="text-sm text-fin-muted">Presupuesto total</p>
+            <p className="text-sm text-gray-500">Presupuesto total</p>
           </div>
-          <p className="text-3xl font-manrope font-800 text-fin-text mb-3">
-            S/ {totalBudget.toFixed(2)}
-          </p>
+          <p className="text-3xl font-black text-black mb-3">S/ {totalBudget.toFixed(2)}</p>
           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2">
             <div
               className={`h-full rounded-full transition-all duration-500 ${totalPct > 90 ? 'bg-red-500' : totalPct > 70 ? 'bg-amber-400' : 'bg-fin-green'}`}
               style={{ width: `${Math.min(totalPct, 100)}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-fin-muted">
+          <div className="flex justify-between text-xs text-gray-500">
             <span>Gastado: S/ {totalSpent.toFixed(2)}</span>
             <span>{totalPct}% usado</span>
           </div>
@@ -210,7 +208,7 @@ export default function PresupuestoPage() {
           <p className="text-sm text-gray-400 mb-4">Agrega categorías para controlar tus gastos</p>
           <button
             onClick={openAdd}
-            className="group flex items-center gap-2 px-4 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+            className="group flex items-center gap-2 px-4 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             <Plus
               className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
@@ -226,13 +224,13 @@ export default function PresupuestoPage() {
           <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-3xl mb-4">
             📊
           </div>
-          <h2 className="text-lg font-manrope font-800 text-fin-text mb-2">Sin presupuesto</h2>
-          <p className="text-sm text-fin-muted max-w-xs mb-6">
+          <h2 className="text-lg font-black text-black mb-2">Sin presupuesto</h2>
+          <p className="text-sm text-gray-500 max-w-xs mb-6">
             Crea categorías de presupuesto para controlar cuánto gastas en cada área.
           </p>
           <button
             onClick={openAdd}
-            className="px-5 py-3 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
+            className="px-5 py-3 bg-[#FFD43B] text-sm rounded-xl transition-colors text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             Crear primera categoría
           </button>
@@ -248,7 +246,7 @@ export default function PresupuestoPage() {
             return (
               <div
                 key={cat.id}
-                className="bg-white rounded-2xl border border-fin-border p-4 shadow-fin-card hover:shadow-fin-card-hover transition-shadow group"
+                className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-shadow group"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div
@@ -259,7 +257,7 @@ export default function PresupuestoPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-fin-text">{cat.name}</span>
+                      <span className="text-sm font-semibold text-black">{cat.name}</span>
                       <div className="flex items-center gap-2">
                         {isOver && (
                           <span className="text-xs px-2 py-0.5 bg-red-50 text-fin-red rounded-full font-semibold">
@@ -274,7 +272,7 @@ export default function PresupuestoPage() {
                         <div className="hidden group-hover:flex items-center gap-1">
                           <button
                             onClick={() => openEdit(cat)}
-                            className="group p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150"
+                            className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-gray-100 transition-all"
                           >
                             <Pencil
                               className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors"
@@ -283,18 +281,15 @@ export default function PresupuestoPage() {
                           </button>
                           <button
                             onClick={() => handleDelete(cat.id)}
-                            className="group p-1.5 rounded-lg hover:bg-red-50 transition-all duration-150"
+                            className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-red-50 transition-all"
                           >
-                            <Trash2
-                              className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500 transition-colors"
-                              strokeWidth={1.75}
-                            />
+                            <Trash2 className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
                           </button>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
-                      <span className="text-xs text-fin-muted">
+                      <span className="text-xs text-gray-500">
                         S/ {spent.toFixed(2)} / S/ {cat.budget.toFixed(2)}
                       </span>
                       <span className="text-xs font-semibold" style={{ color: barColor }}>
@@ -309,7 +304,7 @@ export default function PresupuestoPage() {
                     style={{ width: `${Math.min(pct, 100)}%`, background: barColor }}
                   />
                 </div>
-                <p className="text-xs text-fin-muted mt-2">
+                <p className="text-xs text-gray-500 mt-2">
                   Restante: S/ {Math.max(cat.budget - spent, 0).toFixed(2)}
                 </p>
               </div>
@@ -320,7 +315,7 @@ export default function PresupuestoPage() {
 
       <button
         onClick={openAdd}
-        className="w-full mt-4 py-3 border-2 border-dashed border-fin-border rounded-2xl text-sm font-semibold text-fin-muted hover:border-fin-green hover:text-fin-green transition-colors flex items-center justify-center gap-2"
+        className="w-full mt-4 py-3 border-2 border-dashed border-black rounded-2xl text-sm font-semibold text-gray-500 hover:border-fin-green hover:text-fin-green transition-colors flex items-center justify-center gap-2"
       >
         <svg
           viewBox="0 0 24 24"
@@ -343,16 +338,16 @@ export default function PresupuestoPage() {
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div
-            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh]"
+            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col max-h-[92vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b-[3px] border-black">
               <h2 className="font-semibold text-gray-900">
                 {editingCat ? 'Editar categoría' : 'Nueva categoría'}
               </h2>
               <button
                 onClick={() => setShowForm(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-all hover:rotate-90 duration-200"
+                className="w-8 h-8 flex items-center justify-center transition-all hover:rotate-90 duration-200 rounded-xl text-black hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -361,7 +356,7 @@ export default function PresupuestoPage() {
               <select
                 value={form.name}
                 onChange={(e) => handleCategoryPreset(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text outline-none focus:border-fin-green transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
               >
                 {CATEGORY_PRESETS.map((c) => (
                   <option key={c.id} value={c.label}>
@@ -369,14 +364,14 @@ export default function PresupuestoPage() {
                   </option>
                 ))}
               </select>
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-fin-border">
-                <span className="text-fin-muted font-semibold text-sm">S/</span>
+              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                <span className="text-gray-500 font-semibold text-sm">S/</span>
                 <input
                   type="number"
                   value={form.budget}
                   onChange={(e) => setForm((f) => ({ ...f, budget: e.target.value }))}
                   placeholder="Presupuesto mensual"
-                  className="flex-1 bg-transparent text-sm font-semibold text-fin-text outline-none"
+                  className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
                 />
               </div>
               {formError && (
@@ -387,7 +382,7 @@ export default function PresupuestoPage() {
               <button
                 onClick={handleSave}
                 disabled={!form.name || !form.budget || saving}
-                className="w-full py-3.5 bg-fin-green text-white font-manrope font-700 rounded-xl hover:bg-green-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-[#FFD43B] rounded-xl transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
               >
                 {saving ? 'Guardando...' : editingCat ? 'Guardar cambios' : 'Agregar categoría'}
               </button>

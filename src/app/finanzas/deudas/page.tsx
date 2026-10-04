@@ -144,7 +144,7 @@ export default function DeudasPage() {
   if (loadError) {
     return (
       <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Deudas</h1>
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">Deudas</h1>
         <LoadError what="tus deudas" error={loadError} onRetry={load} />
       </div>
     );
@@ -153,7 +153,7 @@ export default function DeudasPage() {
   return (
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text">Deudas</h1>
+        <h1 className="text-3xl font-black text-black leading-tight">Deudas</h1>
         <button
           onClick={openAdd}
           className="group flex items-center gap-2 px-3 py-2 bg-fin-red text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-all duration-200"
@@ -167,16 +167,16 @@ export default function DeudasPage() {
       </div>
 
       {debts.length > 0 && (
-        <div className="bg-white rounded-2xl border border-red-100 p-5 mb-5 shadow-fin-card">
+        <div className="bg-white rounded-3xl border-[3px] border-red-100 p-5 mb-5 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center gap-2 mb-1">
             <AlertCircle className="w-4 h-4 text-red-500" strokeWidth={1.75} />
-            <p className="text-sm text-fin-muted">Total deudas</p>
+            <p className="text-sm text-gray-500">Total deudas</p>
           </div>
-          <p className="text-3xl font-manrope font-800 text-fin-red">S/ {totalDebt.toFixed(2)}</p>
+          <p className="text-3xl font-black text-fin-red">S/ {totalDebt.toFixed(2)}</p>
           {nextPayment && (
-            <p className="text-sm text-fin-muted mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               Próximo pago:{' '}
-              <span className="font-semibold text-fin-text">
+              <span className="font-semibold text-black">
                 {nextPayment.dueDate} · S/ {nextPayment.monthlyPayment.toFixed(2)}
               </span>
             </p>
@@ -207,10 +207,8 @@ export default function DeudasPage() {
           <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-3xl mb-4">
             💳
           </div>
-          <h2 className="text-lg font-manrope font-800 text-fin-text mb-2">
-            Sin deudas registradas
-          </h2>
-          <p className="text-sm text-fin-muted max-w-xs mb-6">
+          <h2 className="text-lg font-black text-black mb-2">Sin deudas registradas</h2>
+          <p className="text-sm text-gray-500 max-w-xs mb-6">
             Registra tus tarjetas de crédito y préstamos para hacer seguimiento de tus pagos.
           </p>
           <button
@@ -227,7 +225,7 @@ export default function DeudasPage() {
             return (
               <div
                 key={debt.id}
-                className="bg-white rounded-2xl border border-fin-border p-5 shadow-fin-card hover:shadow-fin-card-hover transition-shadow group"
+                className="bg-white rounded-3xl border-[3px] border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-shadow group"
               >
                 <div className="flex items-start gap-3 mb-4">
                   <div
@@ -237,22 +235,20 @@ export default function DeudasPage() {
                     {debt.icon}
                   </div>
                   <div className="flex-1">
-                    <p className="font-manrope font-700 text-fin-text">{debt.name}</p>
-                    <p className="text-xs text-fin-muted">
+                    <p className="font-black text-black">{debt.name}</p>
+                    <p className="text-xs text-gray-500">
                       {debt.institution} · {debt.type}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right">
-                      <p className="font-manrope font-700 text-fin-red">
-                        S/ {debt.balance.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-fin-muted">saldo</p>
+                      <p className="font-black text-fin-red">S/ {debt.balance.toFixed(2)}</p>
+                      <p className="text-xs text-gray-500">saldo</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEdit(debt)}
-                        className="group p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150"
+                        className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-gray-100 transition-all"
                       >
                         <Pencil
                           className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 transition-colors"
@@ -261,38 +257,35 @@ export default function DeudasPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(debt.id)}
-                        className="group p-1.5 rounded-lg hover:bg-red-50 transition-all duration-150"
+                        className="p-1.5 rounded-lg border-[2px] border-black bg-white hover:bg-red-50 transition-all"
                       >
-                        <Trash2
-                          className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500 transition-colors"
-                          strokeWidth={1.75}
-                        />
+                        <Trash2 className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
                       </button>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3 mb-4 py-3 border-y border-gray-50">
                   <div>
-                    <p className="text-xs text-fin-muted mb-1">Límite</p>
-                    <p className="text-sm font-semibold text-fin-text">
+                    <p className="text-xs text-gray-500 mb-1">Límite</p>
+                    <p className="text-sm font-semibold text-black">
                       S/ {debt.limit.toLocaleString('es-PE')}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-fin-muted mb-1">Pago mensual</p>
-                    <p className="text-sm font-semibold text-fin-text">
+                    <p className="text-xs text-gray-500 mb-1">Pago mensual</p>
+                    <p className="text-sm font-semibold text-black">
                       S/ {debt.monthlyPayment.toFixed(2)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-fin-muted mb-1">Vencimiento</p>
-                    <p className="text-sm font-semibold text-fin-text">{debt.dueDate || '—'}</p>
+                    <p className="text-xs text-gray-500 mb-1">Vencimiento</p>
+                    <p className="text-sm font-semibold text-black">{debt.dueDate || '—'}</p>
                   </div>
                 </div>
                 {debt.limit > 0 && (
                   <div>
                     <div className="flex justify-between text-xs mb-1.5">
-                      <span className="text-fin-muted">Uso del crédito</span>
+                      <span className="text-gray-500">Uso del crédito</span>
                       <span
                         className="font-semibold"
                         style={{ color: usedPct > 70 ? '#DC2626' : '#16A34A' }}
@@ -325,16 +318,16 @@ export default function DeudasPage() {
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div
-            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh]"
+            className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col max-h-[92vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b-[3px] border-black">
               <h2 className="font-semibold text-gray-900">
                 {editingDebt ? 'Editar deuda' : 'Nueva deuda'}
               </h2>
               <button
                 onClick={() => setShowForm(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-all hover:rotate-90 duration-200"
+                className="w-8 h-8 flex items-center justify-center transition-all hover:rotate-90 duration-200 rounded-xl text-black hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -345,19 +338,19 @@ export default function DeudasPage() {
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Nombre (ej: Tarjeta BCP Visa)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
               />
               <input
                 type="text"
                 value={form.institution}
                 onChange={(e) => setForm((f) => ({ ...f, institution: e.target.value }))}
                 placeholder="Institución (ej: BCP, Interbank)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
               />
               <select
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text outline-none focus:border-fin-green transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
               >
                 {DEBT_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -366,36 +359,36 @@ export default function DeudasPage() {
                 ))}
               </select>
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border border-fin-border">
-                  <span className="text-fin-muted text-xs">Saldo S/</span>
+                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                  <span className="text-gray-500 text-xs">Saldo S/</span>
                   <input
                     type="number"
                     value={form.balance}
                     onChange={(e) => setForm((f) => ({ ...f, balance: e.target.value }))}
                     placeholder="0"
-                    className="flex-1 bg-transparent text-sm font-semibold text-fin-text outline-none"
+                    className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border border-fin-border">
-                  <span className="text-fin-muted text-xs">Límite S/</span>
+                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                  <span className="text-gray-500 text-xs">Límite S/</span>
                   <input
                     type="number"
                     value={form.limit}
                     onChange={(e) => setForm((f) => ({ ...f, limit: e.target.value }))}
                     placeholder="0"
-                    className="flex-1 bg-transparent text-sm font-semibold text-fin-text outline-none"
+                    className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border border-fin-border">
-                  <span className="text-fin-muted text-xs">Pago S/</span>
+                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                  <span className="text-gray-500 text-xs">Pago S/</span>
                   <input
                     type="number"
                     value={form.monthlyPayment}
                     onChange={(e) => setForm((f) => ({ ...f, monthlyPayment: e.target.value }))}
                     placeholder="0"
-                    className="flex-1 bg-transparent text-sm font-semibold text-fin-text outline-none"
+                    className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
                   />
                 </div>
                 <input
@@ -403,7 +396,7 @@ export default function DeudasPage() {
                   value={form.dueDate}
                   onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
                   placeholder="Vencimiento (ej: 25 oct)"
-                  className="px-3 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-fin-text placeholder-gray-400 outline-none focus:border-fin-green transition-colors"
+                  className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
                 />
               </div>
               {formError && (
@@ -414,7 +407,7 @@ export default function DeudasPage() {
               <button
                 onClick={handleSave}
                 disabled={!form.name || saving}
-                className="w-full py-3.5 bg-fin-red text-white font-manrope font-700 rounded-xl hover:bg-red-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-fin-red text-white font-black rounded-xl hover:bg-red-700 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Guardando...' : editingDebt ? 'Guardar cambios' : 'Agregar deuda'}
               </button>

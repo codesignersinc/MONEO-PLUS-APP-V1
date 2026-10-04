@@ -15,7 +15,7 @@ interface TransferFormProps {
 }
 
 const inputClass =
-  'w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors';
+  'w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors';
 
 // Creates a transfer between two of the user's accounts. Both accounts are required
 // (never defaults to the first account); the database records both legs and moves
@@ -23,7 +23,7 @@ const inputClass =
 export default function TransferForm({
   onSaved,
   saveLabel = 'Registrar transferencia',
-  saveClassName = 'bg-fin-green text-white hover:bg-green-700',
+  saveClassName = 'bg-[#FFD43B] text-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5',
 }: TransferFormProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [fx, setFx] = useState<FxContext>({ baseCurrency: 'PEN', ratesMap: {} });
@@ -119,7 +119,9 @@ export default function TransferForm({
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
+        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+          Desde
+        </label>
         <select
           value={fromId}
           onChange={(e) => {
@@ -134,7 +136,9 @@ export default function TransferForm({
         </select>
       </div>
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">Hacia</label>
+        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+          Hacia
+        </label>
         <select
           value={toId}
           onChange={(e) => {
@@ -148,7 +152,7 @@ export default function TransferForm({
         </select>
       </div>
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">
+        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
           Monto enviado {from ? `(${fromCurrency})` : ''}
         </label>
         <input
@@ -163,7 +167,7 @@ export default function TransferForm({
       </div>
       {crossCurrency && (
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
+          <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
             Monto recibido ({toCurrency})
           </label>
           <input
@@ -209,7 +213,7 @@ export default function TransferForm({
       <button
         onClick={handleSave}
         disabled={saving || !fromId || !toId || amountNum <= 0}
-        className={`w-full py-3.5 font-manrope font-700 rounded-xl transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed ${saveClassName}`}
+        className={`w-full py-3.5 font-black rounded-xl transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed ${saveClassName}`}
       >
         {saving ? 'Guardando...' : saveLabel}
       </button>

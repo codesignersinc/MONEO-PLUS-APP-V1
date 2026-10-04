@@ -204,7 +204,7 @@ export default function IngresosPage() {
   if (loadError) {
     return (
       <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text mb-5">Ingresos</h1>
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">Ingresos</h1>
         <LoadError what="tus ingresos" error={loadError} onRetry={load} />
       </div>
     );
@@ -214,10 +214,10 @@ export default function IngresosPage() {
     <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-manrope font-800 text-fin-text">Ingresos</h1>
+        <h1 className="text-3xl font-black text-black leading-tight">Ingresos</h1>
         <button
           onClick={openAdd}
-          className="group flex items-center gap-2 px-3 py-2 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-all duration-200"
+          className="group flex items-center gap-2 px-3 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
         >
           <Plus
             className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90"
@@ -229,7 +229,7 @@ export default function IngresosPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-amber-500" strokeWidth={1.75} />
             <p className="text-xs text-gray-500 font-medium">Por cobrar</p>
@@ -239,7 +239,7 @@ export default function IngresosPage() {
             {entries.filter((e) => e.status === 'pendiente').length} ingresos
           </p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle2 className="w-4 h-4 text-green-600" strokeWidth={1.75} />
             <p className="text-xs text-gray-500 font-medium">Cobrado</p>
@@ -259,8 +259,8 @@ export default function IngresosPage() {
             onClick={() => setFilterStatus(f)}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
               filterStatus === f
-                ? 'bg-fin-green text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                ? 'bg-[#FFD43B] text-black border-[2px] border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                : 'bg-white border-[2px] border-black text-black hover:bg-gray-50'
             }`}
           >
             {f === 'todos' ? 'Todos' : f === 'pendiente' ? 'Por cobrar' : 'Cobrados'}
@@ -271,22 +271,22 @@ export default function IngresosPage() {
       {/* List */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-6 h-6 border-2 border-fin-green border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#FFD43B] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-4xl mb-3">💰</p>
-          <p className="text-fin-muted font-medium mb-1">Sin ingresos registrados</p>
-          <p className="text-xs text-fin-muted mb-4">Registra tus ingresos y su fecha de cobro</p>
+          <p className="text-gray-500 font-medium mb-1">Sin ingresos registrados</p>
+          <p className="text-xs text-gray-500 mb-4">Registra tus ingresos y su fecha de cobro</p>
           <button
             onClick={openAdd}
-            className="px-5 py-2.5 bg-fin-green text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
+            className="px-5 py-2.5 bg-[#FFD43B] text-sm rounded-xl transition-colors text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             Agregar ingreso
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-fin-border shadow-fin-card overflow-hidden">
+        <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] overflow-hidden">
           {filtered.map((entry, i) => (
             <div
               key={entry.id}
@@ -294,13 +294,13 @@ export default function IngresosPage() {
                 i < filtered.length - 1 ? 'border-b border-gray-50' : ''
               }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-white border-[2px] border-black flex items-center justify-center text-lg flex-shrink-0">
                 {entry.categoryIcon}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p
-                    className={`text-sm font-semibold truncate ${entry.status === 'cobrado' ? 'text-gray-400 line-through' : 'text-fin-text'}`}
+                    className={`text-sm font-semibold truncate ${entry.status === 'cobrado' ? 'text-gray-400 line-through' : 'text-black'}`}
                   >
                     {entry.name}
                   </p>
@@ -316,11 +316,11 @@ export default function IngresosPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-fin-muted">
+                  <span className="text-xs px-2 py-0.5 rounded-full text-gray-500 bg-white border-[1.5px] border-black font-bold">
                     {entry.category}
                   </span>
                   {entry.collectionDate && (
-                    <span className="flex items-center gap-1 text-xs text-fin-muted">
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
                       <Calendar className="w-3 h-3" strokeWidth={1.75} />
                       {formatDate(entry.collectionDate)}
                     </span>
@@ -329,7 +329,7 @@ export default function IngresosPage() {
               </div>
               <div className="text-right flex-shrink-0 flex items-center gap-2">
                 <p
-                  className={`text-sm font-manrope font-700 ${entry.status === 'cobrado' ? 'text-gray-400' : 'text-fin-green'}`}
+                  className={`text-sm font-black ${entry.status === 'cobrado' ? 'text-gray-400' : 'text-fin-green'}`}
                 >
                   +S/ {entry.amount.toFixed(2)}
                 </p>
@@ -337,30 +337,24 @@ export default function IngresosPage() {
                   <button
                     onClick={() => handleMarkCobrado(entry)}
                     title={entry.status === 'cobrado' ? 'Marcar pendiente' : 'Marcar cobrado'}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg border-[2px] border-black bg-white hover:bg-green-50 transition-colors"
                   >
                     <CheckCircle2
-                      className={`w-3.5 h-3.5 ${entry.status === 'cobrado' ? 'text-green-500' : 'text-gray-400 hover:text-green-600'}`}
+                      className={`w-3.5 h-3.5 ${entry.status === 'cobrado' ? 'text-green-500' : 'text-black'}`}
                       strokeWidth={1.75}
                     />
                   </button>
                   <button
                     onClick={() => openEdit(entry)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg border-[2px] border-black bg-white hover:bg-gray-100 transition-colors"
                   >
-                    <Pencil
-                      className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600 transition-colors"
-                      strokeWidth={1.75}
-                    />
+                    <Pencil className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
                   </button>
                   <button
                     onClick={() => handleDelete(entry.id)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg border-[2px] border-black bg-white hover:bg-red-50 transition-colors"
                   >
-                    <Trash2
-                      className="w-3.5 h-3.5 text-gray-400 hover:text-red-500 transition-colors"
-                      strokeWidth={1.75}
-                    />
+                    <Trash2 className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
                   </button>
                 </div>
               </div>

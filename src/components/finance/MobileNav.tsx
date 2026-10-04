@@ -699,7 +699,10 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
 function TransferenciaForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   return (
     <FormWrapper title="Nueva Transferencia" emoji="⇄" accentBg="bg-[#fe9a82]" onClose={onClose}>
-      <TransferForm onSaved={onSuccess} saveClassName="bg-[#F97316] text-white" />
+      <TransferForm
+        onSaved={onSuccess}
+        saveClassName="bg-[#F97316] text-white border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]"
+      />
     </FormWrapper>
   );
 }

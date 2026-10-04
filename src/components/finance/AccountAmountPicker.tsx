@@ -42,7 +42,7 @@ interface FieldsProps {
 }
 
 const defaultSelectClass =
-  'w-full px-4 py-3 bg-gray-50 rounded-xl border border-fin-border text-sm text-black outline-none focus:border-fin-green transition-colors';
+  'w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors';
 
 export function AccountAmountFields({
   amount,
@@ -95,7 +95,9 @@ export function AccountAmountFields({
   return (
     <div className="space-y-2">
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
+        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
+          {label}
+        </label>
         <select
           value={value.accountId}
           onChange={(e) => select(e.target.value)}
@@ -113,7 +115,7 @@ export function AccountAmountFields({
       </div>
       {selected && value.foreign && (
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
+          <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
             Monto en {selected.currency} ({formatCurrency(amount, baseCurrency)} {baseCurrency})
           </label>
           <input
@@ -173,7 +175,7 @@ export function AccountPickerModal({
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={() => !saving && onClose()}
       />
-      <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 space-y-4">
+      <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-5 space-y-4">
         <h2 className="font-semibold text-black">{title}</h2>
         <AccountAmountFields amount={amount} value={choice} onChange={setChoice} />
         {error && (
@@ -185,14 +187,14 @@ export function AccountPickerModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl border-[3px] border-black bg-white text-sm font-black text-black disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={confirm}
             disabled={saving || !choice.accountId}
-            className="flex-1 py-3 rounded-xl bg-fin-green text-white text-sm font-semibold disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl bg-[#FFD43B] text-sm disabled:opacity-50 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             {saving ? 'Guardando...' : confirmLabel}
           </button>
