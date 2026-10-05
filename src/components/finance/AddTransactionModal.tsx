@@ -11,6 +11,7 @@ import {
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
 import { getErrorMessage } from '@/lib/dataError';
 import TransferForm from '@/components/finance/TransferForm';
+import { notifyDataChanged } from '@/lib/dataSync';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -126,6 +127,7 @@ export default function AddTransactionModal({
         }),
       });
 
+      notifyDataChanged();
       onSaved?.();
       onClose();
       setAmount('');
@@ -182,6 +184,7 @@ export default function AddTransactionModal({
             <TransferForm
               saveLabel="Guardar"
               onSaved={() => {
+                notifyDataChanged();
                 onSaved?.();
                 onClose();
               }}

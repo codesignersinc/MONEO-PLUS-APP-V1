@@ -48,6 +48,7 @@ import {
 } from '@/components/finance/AccountAmountPicker';
 import { incomeService, pagosService } from '@/lib/supabaseObligations';
 import type { Account } from '@/lib/financeStore';
+import { notifyDataChanged } from '@/lib/dataSync';
 
 interface MobileNavProps {
   onFabClick: () => void;
@@ -1016,6 +1017,7 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
   }
 
   function handleFormSuccess() {
+    notifyDataChanged();
     setActiveForm(null);
     setSuccessMsg('¡Registrado con éxito! ✅');
     setTimeout(() => {

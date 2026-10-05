@@ -7,6 +7,7 @@ import { Transaction, Subscription, countsAsTransfer } from '@/lib/financeStore'
 import { createClient } from '@/lib/supabase/client';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
+import { useDataChanged } from '@/lib/dataSync';
 
 interface PagoEntry {
   id: string;
@@ -115,6 +116,9 @@ export default function ReportesPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

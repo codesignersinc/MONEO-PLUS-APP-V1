@@ -7,6 +7,7 @@ import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
+import { useDataChanged } from '@/lib/dataSync';
 
 const DEBT_TYPES = [
   'Tarjeta de crédito',
@@ -50,6 +51,9 @@ export default function DeudasPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

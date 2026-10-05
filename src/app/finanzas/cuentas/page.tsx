@@ -16,6 +16,7 @@ import {
 import { Plus, X, Pencil, Trash2, ChevronRight } from 'lucide-react';
 import { PERUVIAN_BANKS } from '@/lib/brands';
 import BrandLogo from '@/components/finance/BrandLogo';
+import { useDataChanged } from '@/lib/dataSync';
 
 const ACCOUNT_TYPES = [
   { value: 'banco', label: 'Cuenta bancaria', icon: '🏦' },
@@ -91,6 +92,9 @@ export default function CuentasPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

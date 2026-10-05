@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import SubscriptionServicePicker from '@/components/finance/SubscriptionServicePicker';
 import BrandLogo from '@/components/finance/BrandLogo';
+import { useDataChanged } from '@/lib/dataSync';
 
 const SUB_CATEGORIES = [
   'Entretenimiento',
@@ -139,6 +140,9 @@ export default function SuscripcionesPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

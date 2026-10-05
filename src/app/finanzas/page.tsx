@@ -37,6 +37,7 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 import LoadError from '@/components/ui/LoadError';
 import { getErrorMessage } from '@/lib/dataError';
 import BrandLogo from '@/components/finance/BrandLogo';
+import { useDataChanged } from '@/lib/dataSync';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -408,6 +409,9 @@ export default function DashboardPage() {
         setLoadError(err);
       });
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

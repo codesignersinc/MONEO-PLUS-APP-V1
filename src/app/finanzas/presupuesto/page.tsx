@@ -6,6 +6,7 @@ import { Plus, X, Pencil, Trash2, Wallet, BarChart3 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
+import { useDataChanged } from '@/lib/dataSync';
 
 export default function PresupuestoPage() {
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
@@ -68,6 +69,9 @@ export default function PresupuestoPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

@@ -15,6 +15,7 @@ import {
   groupAccountsByCurrency,
 } from '@/lib/currency';
 import BrandLogo from '@/components/finance/BrandLogo';
+import { useDataChanged } from '@/lib/dataSync';
 
 export default function PatrimonioPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -48,6 +49,9 @@ export default function PatrimonioPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();
