@@ -55,7 +55,7 @@ export default function WelcomeModal({ onStart, onLater }: Props) {
       aria-labelledby="welcome-title"
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onLater} />
-      <div className="animate-slide-up relative flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-[3px] border-black bg-[#FFFBEF] shadow-[8px_8px_0px_rgba(0,0,0,1)] sm:max-w-[920px] sm:flex-row sm:rounded-[28px]">
+      <div className="animate-slide-up relative flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-[3px] border-black bg-[#FEF8EA] shadow-[8px_8px_0px_rgba(0,0,0,1)] sm:max-w-[920px] sm:flex-row sm:rounded-[28px]">
         <button
           onClick={onLater}
           aria-label="Cerrar"
@@ -65,15 +65,15 @@ export default function WelcomeModal({ onStart, onLater }: Props) {
         </button>
 
         {/* Mascot panel: a short banner on phones, a full-height column from sm up. */}
-        <div className="relative h-44 shrink-0 overflow-hidden bg-[#FCD91F] sm:h-auto sm:w-[40%]">
-          <div className="absolute -right-24 top-1/3 hidden h-[28rem] w-[28rem] rounded-full bg-[#FFF3B0] opacity-70 sm:block" />
+        <div className="relative h-60 shrink-0 overflow-hidden bg-[#FFDF32] sm:h-auto sm:w-[40%]">
           <Image
             src="/assets/images/onboarding/moneo-hola.webp"
             alt="Moneo, la mascota de MONEO, te da la bienvenida"
             fill
             priority
             sizes="(min-width: 640px) 370px, 100vw"
-            className="object-contain object-bottom sm:object-cover sm:object-center"
+            quality={90}
+            className="object-cover object-[center_24%] sm:object-center"
           />
         </div>
 
