@@ -7,6 +7,7 @@ import { incomeService, type IncomeEntry, type NewIncome } from '@/lib/supabaseO
 import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
 import { todayLocal } from '@/lib/dates';
 import { Plus, X, Pencil, Trash2, Clock, CheckCircle2, Calendar } from 'lucide-react';
+import { useDataChanged } from '@/lib/dataSync';
 
 interface IncomeForm {
   name: string;
@@ -62,6 +63,9 @@ export default function IngresosPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

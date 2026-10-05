@@ -33,6 +33,7 @@ import {
   Calendar,
   Filter,
 } from 'lucide-react';
+import { useDataChanged } from '@/lib/dataSync';
 
 type FilterType = 'todos' | 'pagos' | 'ingresos';
 
@@ -163,6 +164,9 @@ export default function MovimientosPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

@@ -5,6 +5,7 @@ import { Plus, X, Pencil, Trash2, TrendingUp, TrendingDown, DollarSign } from 'l
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
+import { useDataChanged } from '@/lib/dataSync';
 
 const INVESTMENT_TYPES = ['Acciones', 'ETF', 'Fondo mutuo', 'Cripto', 'Bonos', 'Otro'];
 
@@ -37,6 +38,9 @@ export default function InversionesPage() {
       .catch(setLoadError)
       .finally(() => setLoading(false));
   }, []);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
 
   useEffect(() => {
     load();

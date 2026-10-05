@@ -5,6 +5,7 @@ import { transactionsService, subscriptionsService } from '@/lib/supabaseFinance
 import type { Transaction, Subscription } from '@/lib/financeStore';
 import LoadError from '@/components/ui/LoadError';
 import { toDataError } from '@/lib/dataError';
+import { useDataChanged } from '@/lib/dataSync';
 
 const DAYS_HEADER = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
@@ -211,6 +212,9 @@ export default function CalendarioPage() {
       setLoading(false);
     }
   }, [month, year]);
+
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(loadAllData);
 
   useEffect(() => {
     loadAllData();

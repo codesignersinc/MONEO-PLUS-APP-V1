@@ -16,6 +16,7 @@ import {
 import { Plus, X, Pencil, Trash2, ChevronRight } from 'lucide-react';
 import { PERUVIAN_BANKS } from '@/lib/brands';
 import BrandLogo from '@/components/finance/BrandLogo';
+import { useDataChanged } from '@/lib/dataSync';
 
 const ACCOUNT_TYPES = [
   { value: 'banco', label: 'Cuenta bancaria', icon: '🏦' },
@@ -92,6 +93,9 @@ export default function CuentasPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Reload when something is added from the quick-add sheet or the global modal.
+  useDataChanged(load);
+
   useEffect(() => {
     load();
   }, [load]);
@@ -128,6 +132,13 @@ export default function CuentasPage() {
     setFormError('');
     setShowForm(true);
   };
+  // Opened from the welcome modal ("Comenzar ahora"): start the new-account form.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('nueva') !== '1') return;
+    window.history.replaceState(null, '', window.location.pathname);
+    openAdd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openEdit = (acc: Account) => {
     setEditingAcc(acc);
