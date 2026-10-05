@@ -22,6 +22,7 @@ import {
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, CURRENCIES, getDefaultRate } from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
+import { adminService } from '@/lib/supabaseAdmin';
 
 export default function ConfiguracionPage() {
   const { user, signOut } = useAuth();
@@ -51,6 +52,14 @@ export default function ConfiguracionPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const toast = useToast();
+  // Administrators get a shortcut to the admin panel.
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    adminService
+      .isAdmin()
+      .then(setIsAdmin)
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
@@ -599,6 +608,15 @@ export default function ConfiguracionPage() {
             })}
           </div>
         </div>
+      )}
+
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-[3px] border-black bg-[#FFD43B] text-black font-black text-sm uppercase tracking-wide shadow-[6px_6px_0px_#000]"
+        >
+          Panel de administración
+        </Link>
       )}
 
       {/* Sign Out */}
