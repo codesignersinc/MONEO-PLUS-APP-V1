@@ -40,7 +40,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isFinanzasRoute = request.nextUrl.pathname.startsWith('/finanzas');
+  const isFinanzasRoute =
+    request.nextUrl.pathname.startsWith('/finanzas') ||
+    request.nextUrl.pathname.startsWith('/admin');
   const isAuthRoute =
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/register') ||
