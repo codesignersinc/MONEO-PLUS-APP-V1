@@ -132,6 +132,13 @@ export default function CuentasPage() {
     setFormError('');
     setShowForm(true);
   };
+  // Opened from the welcome modal ("Comenzar ahora"): start the new-account form.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('nueva') !== '1') return;
+    window.history.replaceState(null, '', window.location.pathname);
+    openAdd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openEdit = (acc: Account) => {
     setEditingAcc(acc);

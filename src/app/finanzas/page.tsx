@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { transactionsService, loadFinanceData } from '@/lib/supabaseFinance';
 import { FinanceData } from '@/lib/financeStore';
@@ -38,6 +39,8 @@ import LoadError from '@/components/ui/LoadError';
 import { getErrorMessage } from '@/lib/dataError';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { useDataChanged } from '@/lib/dataSync';
+import WelcomeModal from '@/components/finance/WelcomeModal';
+import { hasSeenWelcome, markWelcomeSeen } from '@/lib/onboarding';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -421,6 +424,21 @@ export default function DashboardPage() {
     setData(newData);
   }, []);
 
+  // One-time welcome for new users: shown on the first dashboard visit while they have no
+  // accounts yet; closing it in any way marks it as seen.
+  const router = useRouter();
+  const [welcomeClosed, setWelcomeClosed] = useState(false);
+  const showWelcome =
+    !welcomeClosed && !!user && !!data && data.accounts.length === 0 && !hasSeenWelcome(user);
+  const closeWelcome = useCallback(
+    (goToAccounts: boolean) => {
+      setWelcomeClosed(true);
+      if (user) markWelcomeSeen(user.id).catch((err) => console.error(err));
+      if (goToAccounts) router.push('/finanzas/cuentas?nueva=1');
+    },
+    [user, router]
+  );
+
   if (loadError)
     return (
       <div className="px-4 lg:px-8 py-10 max-w-md mx-auto">
@@ -562,6 +580,9 @@ export default function DashboardPage() {
 
   return (
     <>
+      {showWelcome && (
+        <WelcomeModal onStart={() => closeWelcome(true)} onLater={() => closeWelcome(false)} />
+      )}
       {modal && (
         <QuickAddModal
           type={modal}
