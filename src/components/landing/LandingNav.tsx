@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { track } from '@/lib/analytics';
+import MoneoLogo from '@/components/ui/MoneoLogo';
 import { btnPrimary } from './ui';
 
 const LINKS = [
@@ -14,20 +15,9 @@ const LINKS = [
   { href: '#preguntas', label: 'Preguntas' },
 ];
 
-export function Wordmark({ className = '' }: { className?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/icons/icon-192.png"
-        alt=""
-        width={36}
-        height={36}
-        className="h-9 w-9 rounded-xl border-2 border-[#111]"
-      />
-      <span className="font-poppins text-[22px] font-extrabold tracking-tight">MONEO</span>
-    </span>
-  );
+// Full MONEO logo (same SVG as the app sidebar), not the square icon.
+export function Wordmark({ width = 120 }: { width?: number }) {
+  return <MoneoLogo width={width} height={Math.round((width * 313.29) / 857.69)} />;
 }
 
 // Sticky top bar; on mobile the links live in a full-width drawer.

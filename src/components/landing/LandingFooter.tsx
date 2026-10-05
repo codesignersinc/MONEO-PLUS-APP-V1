@@ -54,7 +54,7 @@ export default function LandingFooter() {
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-[1.4fr_repeat(5,1fr)]">
           <div className="col-span-2 lg:col-span-1">
-            <Wordmark />
+            <Wordmark width={150} />
             <p className="mt-3 max-w-xs font-sans text-[14px] leading-relaxed text-[#444]">
               {SITE.tagline} Gastos, cuentas, metas y juntas en un solo lugar.
             </p>
