@@ -59,6 +59,13 @@ const FILLER = new Set(
 
 // Amount: "S/25", "s/ 12.50", "25 soles", "$10", "10 dólares", or a plain number "18" / "12,50".
 function findAmount(t: string): { amount: number; currency: 'PEN' | 'USD'; raw: string } | null {
+  // Spoken decimals: "12 con 50" (soles) → 12.50.
+  const spoken = t.match(/(?<![\d/:.,])(\d+)\s+con\s+(\d{1,2})\b/);
+  if (spoken) {
+    const amount = parseFloat(`${spoken[1]}.${spoken[2].padStart(2, '0')}`);
+    const currency = /\b(dolares|dolar|usd)\b|\$/.test(t) ? 'USD' : 'PEN';
+    if (amount > 0) return { amount, currency, raw: spoken[0] };
+  }
   const patterns: [RegExp, 'PEN' | 'USD'][] = [
     [/(?:us\$|\$)\s*(\d+(?:[.,]\d{1,2})?)/, 'USD'],
     [/(\d+(?:[.,]\d{1,2})?)\s*(?:dolares|dolar|usd)\b/, 'USD'],
