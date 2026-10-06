@@ -14,7 +14,8 @@
 // No card data is ever received or stored. Logs carry outcomes only.
 //
 // Secrets: MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, BILLING_SITE_URLS (comma-separated
-// allowed app origins, the first one is the default).
+// allowed app origins, the first one is the default); staging only: MP_TEST_PAYER_EMAIL
+// (email of the Mercado Pago buyer test account that pays every test checkout).
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 const MP_API = 'https://api.mercadopago.com';
@@ -336,6 +337,8 @@ async function checkout(req: Request, admin: SupabaseClient, user: Row, planCode
     .single();
   if (error || !row) return json({ error: 'checkout-failed' }, 500);
 
+  // Staging only: Mercado Pago test integrations must be paid by the buyer test account.
+  const payerEmail = Deno.env.get('MP_TEST_PAYER_EMAIL') || String(user.email);
   const site = siteUrl(req);
   const back = `${site}/empezar?paso=confirmando&checkout=${row.id}`;
   const notify = `${Deno.env.get('SUPABASE_URL')}/functions/v1/billing/webhook`;
@@ -347,7 +350,7 @@ async function checkout(req: Request, admin: SupabaseClient, user: Row, planCode
       body: JSON.stringify({
         reason: p.name,
         external_reference: row.id,
-        payer_email: user.email,
+        payer_email: payerEmail,
         back_url: back,
         status: 'pending',
         auto_recurring: {
@@ -374,7 +377,7 @@ async function checkout(req: Request, admin: SupabaseClient, user: Row, planCode
             currency_id: p.currency,
           },
         ],
-        payer: { email: user.email },
+        payer: { email: payerEmail },
         external_reference: row.id,
         back_urls: { success: back, pending: back, failure: back },
         auto_return: 'approved',
