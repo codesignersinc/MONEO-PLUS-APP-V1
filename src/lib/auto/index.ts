@@ -10,6 +10,7 @@ import { parseInterbank } from './banks/interbank';
 import { parseYape } from './banks/yape';
 import { sameMerchant } from './merchant';
 import { parseFreeText } from './freeText';
+import { parseReceipt } from './receipt';
 
 export type { BankMessage, ParsedMovement } from './types';
 
@@ -70,8 +71,14 @@ export function parseBankMessage(msg: BankMessage): ParsedMovement | null {
     const result = parse(msg);
     if (result) return result;
   }
+  if (msg.source !== 'text') return null;
+  // A receipt or ticket read from a photo/screenshot ("TOTAL S/ 45.90").
+  if (/\btotal\b/i.test(msg.text)) {
+    const receipt = parseReceipt(msg.text, msg.receivedAt);
+    if (receipt) return receipt;
+  }
   // Text the user typed or dictated: "gasté 25 en taxi", "almuerzo 18 bcp".
-  return msg.source === 'text' ? parseFreeText(msg.text, msg.receivedAt) : null;
+  return parseFreeText(msg.text, msg.receivedAt);
 }
 
 // Stable key for exact duplicates (same bank operation number).

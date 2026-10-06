@@ -84,6 +84,12 @@ function findAmount(t: string): { amount: number; currency: 'PEN' | 'USD'; raw: 
   return null;
 }
 
+// Category for everyday words in a text ("taxi" → Transporte), or null.
+export function conceptCategory(text: string): string | null {
+  const t = strip(text);
+  return CONCEPTS.find(([re]) => re.test(t))?.[1] ?? null;
+}
+
 export function parseFreeText(text: string, receivedAt: Date): ParsedMovement | null {
   const original = text.replace(/\s+/g, ' ').trim();
   if (!original || original.length > 160) return null;
