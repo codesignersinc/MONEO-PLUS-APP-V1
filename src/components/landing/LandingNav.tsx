@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import { track } from '@/lib/analytics';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import { btnPrimary } from './ui';
+import { SIGNUP_HREF } from '@/lib/site';
 
 const LINKS = [
   { href: '#inicio', label: 'Inicio' },
@@ -82,7 +83,7 @@ export default function LandingNav() {
             Iniciar sesión
           </Link>
           <Link
-            href="/register"
+            href={SIGNUP_HREF}
             onClick={() => track('register_click', { from: 'nav' })}
             className={`${btnPrimary} !px-4 !py-2 !text-[14px] !shadow-[3px_3px_0_#111]`}
           >
@@ -122,7 +123,7 @@ export default function LandingNav() {
           </ul>
           <div className="mt-4 grid gap-3">
             <Link
-              href="/register"
+              href={SIGNUP_HREF}
               onClick={() => track('register_click', { from: 'nav_mobile' })}
               className={`${btnPrimary} w-full`}
             >

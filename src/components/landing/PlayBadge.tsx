@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Globe } from 'lucide-react';
 import { track } from '@/lib/analytics';
-import { SITE } from '@/lib/site';
+import { SITE, SIGNUP_HREF } from '@/lib/site';
 
 function PlayIcon() {
   return (
@@ -63,7 +63,7 @@ export function GooglePlayBadge() {
 export function WebBadge() {
   return (
     <Link
-      href="/register"
+      href={SIGNUP_HREF}
       onClick={() => track('register_click', { from: 'final_web_badge' })}
       className={badge}
     >

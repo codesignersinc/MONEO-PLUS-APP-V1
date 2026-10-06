@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { SITE } from '@/lib/site';
+import { SITE, SIGNUP_HREF } from '@/lib/site';
 import { Wordmark } from './LandingNav';
 
 type FooterLink = { label: string; href?: string };
@@ -32,7 +32,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
     links: [
       { label: 'Preguntas frecuentes', href: '#preguntas' },
       { label: 'Iniciar sesión', href: '/login' },
-      { label: 'Crear cuenta', href: '/register' },
+      { label: 'Crear cuenta', href: SIGNUP_HREF },
     ],
   },
 ];

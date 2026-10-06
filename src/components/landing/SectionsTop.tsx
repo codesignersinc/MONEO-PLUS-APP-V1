@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Reveal, TrackLink } from './client';
+import { SIGNUP_HREF } from '@/lib/site';
 import {
   C,
   Coin,
@@ -64,7 +65,7 @@ export function Hero() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <TrackLink
-              href="/register"
+              href={SIGNUP_HREF}
               event="hero_cta_click"
               eventProps={{ cta: 'empezar_gratis' }}
               className={btnPrimary}
@@ -412,7 +413,7 @@ export function Features() {
             <li key={title} className="w-[78%] shrink-0 snap-start sm:w-auto">
               <Reveal delay={(i % 5) * 60} className="h-full">
                 <TrackLink
-                  href="/register"
+                  href={SIGNUP_HREF}
                   event="feature_click"
                   eventProps={{ feature: title }}
                   className="group flex h-full flex-col rounded-3xl border-[3px] border-[#111] bg-white p-5 shadow-[4px_4px_0_#111] transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0_#111]"
@@ -475,7 +476,7 @@ export function Juntas() {
             ))}
           </ul>
           <TrackLink
-            href="/register"
+            href={SIGNUP_HREF}
             event="juntas_click"
             eventProps={{ from: 'section' }}
             className={`${btnPrimary} mt-8`}

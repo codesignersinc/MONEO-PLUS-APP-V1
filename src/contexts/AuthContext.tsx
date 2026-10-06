@@ -80,10 +80,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // OAuth (Google / Apple). Redirects away; the session is created in /auth/callback.
-  const signInWithProvider = async (provider: 'google' | 'apple') => {
+  // `next`: same-site path to return to after signing in (e.g. the onboarding step).
+  const signInWithProvider = async (provider: 'google' | 'apple', next?: string) => {
+    const back = next && /^\/(?!\/)/.test(next) ? `?next=${encodeURIComponent(next)}` : '';
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback${back}` },
     });
     if (error) throw error;
   };
