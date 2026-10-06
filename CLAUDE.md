@@ -44,8 +44,10 @@ ejecuta en cada pull request (`.github/workflows/ci.yml`). Las pruebas SQL
   (auditado). Transferencias solo con `transfersService` (nunca editar/borrar una pata suelta).
   Pagos/ingresos: `status` y `transaction_id` solo cambian con `pagosService.markPaid`/
   `markPending` e `incomeService.markCollected`/`markPending`.
-- **Cuentas**: todo movimiento nuevo pide la cuenta explícitamente; nunca uses `accounts[0]`
-  por defecto.
+- **Cuentas**: todo selector de cuenta de un movimiento nuevo viene con la primera cuenta
+  registrada preseleccionada (`accountsService.getAll()` ordena por `created_at`), visible y
+  editable; en transferencias/conversiones el destino es otra cuenta. Al editar se conserva la
+  cuenta del movimiento.
 - **pg_trigger_depth()**: en triggers BEFORE distingue sentencia directa (= 1) de la hecha por
   el sistema (> 1, incluidas acciones referenciales). En triggers AFTER de una acción
   referencial vale 1: no lo uses ahí.

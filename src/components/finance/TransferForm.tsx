@@ -17,8 +17,8 @@ interface TransferFormProps {
 const inputClass =
   'w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow';
 
-// Creates a transfer between two of the user's accounts. Both accounts are required
-// (never defaults to the first account); the database records both legs and moves
+// Creates a transfer between two of the user's accounts. The first two registered accounts
+// come preselected (origin and destination); the database records both legs and moves
 // both balances atomically.
 export default function TransferForm({
   onSaved,
@@ -46,6 +46,10 @@ export default function TransferForm({
       .then(([accs, fxCtx]) => {
         setAccounts(accs);
         setFx(fxCtx);
+        // First registered account preselected as origin and the second as destination;
+        // the user can change both.
+        setFromId((cur) => cur || accs[0]?.id || '');
+        setToId((cur) => cur || accs[1]?.id || '');
       })
       .catch(setLoadError)
       .finally(() => setLoading(false));

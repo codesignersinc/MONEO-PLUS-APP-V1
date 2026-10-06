@@ -278,8 +278,9 @@ export default function MovimientosPage() {
       amount: '',
       category: 'Comida',
       categoryIcon: '🍽️',
-      accountId: '',
-      account: '',
+      // First registered account preselected; the user can change it.
+      accountId: accounts[0]?.id ?? '',
+      account: accounts[0]?.name ?? '',
       notes: '',
       date: todayLocal(),
       time: nowTimeLocal(),

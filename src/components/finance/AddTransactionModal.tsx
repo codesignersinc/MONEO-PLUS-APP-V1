@@ -73,6 +73,8 @@ export default function AddTransactionModal({
       ])
         .then(([accs, settings, rates]) => {
           setAccounts(accs);
+          // First registered account preselected; the user can change it.
+          setAccountId(accs[0]?.id ?? '');
           setBaseCurrency(settings.baseCurrencyCode);
           setRatesMap(rates);
         })

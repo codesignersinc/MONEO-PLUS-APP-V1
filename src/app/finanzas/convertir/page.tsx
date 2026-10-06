@@ -53,6 +53,19 @@ export default function ConvertirDineroPage() {
           bgColor: a.bgColor,
         }));
         setAccounts(opts);
+        // First registered account preselected as origin; destination: the first account in
+        // another currency (or the next one). The user can change both.
+        const first = opts[0];
+        setFromAccountId((cur) => cur || first?.id || '');
+        setToAccountId(
+          (cur) =>
+            cur ||
+            (
+              opts.find((a) => a.id !== first?.id && a.currency !== first?.currency) ??
+              opts.find((a) => a.id !== first?.id)
+            )?.id ||
+            ''
+        );
         setBaseCurrency(settings.baseCurrencyCode);
         setRatesMap(rates);
       })

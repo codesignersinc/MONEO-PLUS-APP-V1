@@ -476,8 +476,11 @@ function RegisterModal({
 }) {
   const defaults = suggestDefaults(s, rules, accounts);
   const [name, setName] = useState(s.merchant);
-  const [accountId, setAccountId] = useState(defaults.accountId);
-  const [toAccountId, setToAccountId] = useState('');
+  // Card rule first; otherwise the first registered account (the user can change it).
+  const [accountId, setAccountId] = useState(defaults.accountId || accounts[0]?.id || '');
+  const [toAccountId, setToAccountId] = useState(
+    () => accounts.find((a) => a.id !== (defaults.accountId || accounts[0]?.id))?.id ?? ''
+  );
   const [category, setCategory] = useState(defaults.categoryLabel);
   const [date, setDate] = useState(s.date);
   const [time, setTime] = useState(s.time ?? '');

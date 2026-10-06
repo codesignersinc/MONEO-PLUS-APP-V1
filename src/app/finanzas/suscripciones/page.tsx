@@ -177,6 +177,8 @@ export default function SuscripcionesPage() {
       .then(([accs, fx]) => {
         setPayAccounts(accs);
         setPayFx(fx);
+        // First registered account preselected; the user can change it.
+        setPayAccountId((cur) => cur ?? accs[0]?.id ?? null);
       })
       .catch(setPayLoadError)
       .finally(() => setPayLoading(false));

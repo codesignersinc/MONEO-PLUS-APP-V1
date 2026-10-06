@@ -218,7 +218,11 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   useEffect(() => {
     accountsService
       .getAll()
-      .then(setAccounts)
+      .then((accs) => {
+        setAccounts(accs);
+        // First registered account preselected; the user can change it.
+        setAccountId((cur) => cur || accs[0]?.id || '');
+      })
       .catch((err) => {
         console.error(err);
         setAccounts([]);
