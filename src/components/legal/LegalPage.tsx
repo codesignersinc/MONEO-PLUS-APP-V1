@@ -6,8 +6,7 @@ export interface LegalSection {
   paragraphs: string[];
 }
 
-// Static legal page. Both pages are drafts pending legal review: the banner
-// must stay until a lawyer approves the final text.
+// Static legal page (Privacy Policy and Terms). The owner's data lives in src/lib/legal.ts.
 export default function LegalPage({
   title,
   updated,
@@ -23,13 +22,6 @@ export default function LegalPage({
         <Link href="/" className="text-sm font-bold underline">
           ← Volver a MONEO+
         </Link>
-        <div
-          role="note"
-          className="rounded-2xl border-[3px] border-black bg-[#FDE68A] p-4 text-sm font-bold"
-        >
-          Borrador pendiente de revisión legal. Este texto puede cambiar antes de su versión
-          definitiva.
-        </div>
         <header>
           <h1 className="text-3xl font-black text-black">{title}</h1>
           <p className="text-xs font-bold text-black/60 mt-1">Última actualización: {updated}</p>

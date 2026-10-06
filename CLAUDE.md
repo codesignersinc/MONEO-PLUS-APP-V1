@@ -69,7 +69,8 @@ ejecuta en cada pull request (`.github/workflows/ci.yml`). Las pruebas SQL
   `AddTransactionModal`.
 - Quedan ~60 warnings de ESLint (sobre todo `no-explicit-any` y variables sin usar).
 - Las pruebas unitarias cubren utilidades puras; no hay pruebas de componentes ni E2E.
-- `/privacidad` y `/terminos` son borradores pendientes de revisión legal.
+- `/privacidad` y `/terminos` tienen texto completo (titular en `src/lib/legal.ts`), pero aún no
+  tienen revisión de un abogado. Actualízalos si cambia el tratamiento de datos o los planes.
 - `next build` falla al prerenderizar si faltan `NEXT_PUBLIC_SUPABASE_URL` /
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` (el cliente de Supabase se crea durante el render). En
   Vercel deben estar definidas también para el entorno **Preview**, no solo Production.
