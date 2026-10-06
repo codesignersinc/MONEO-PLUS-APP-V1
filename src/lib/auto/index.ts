@@ -9,6 +9,7 @@ import { parseBbva } from './banks/bbva';
 import { parseInterbank } from './banks/interbank';
 import { parseYape } from './banks/yape';
 import { sameMerchant } from './merchant';
+import { parseFreeText } from './freeText';
 
 export type { BankMessage, ParsedMovement } from './types';
 
@@ -29,6 +30,8 @@ const PARSERS: Record<BankId, BankParser[]> = {
   interbank: [parseInterbank],
   yape: [parseYape],
   plin: [parseInterbank],
+  scotiabank: [],
+  otro: [],
 };
 
 export function bankForEmail(sender: string | undefined): BankId | null {
@@ -67,7 +70,8 @@ export function parseBankMessage(msg: BankMessage): ParsedMovement | null {
     const result = parse(msg);
     if (result) return result;
   }
-  return null;
+  // Text the user typed or dictated: "gasté 25 en taxi", "almuerzo 18 bcp".
+  return msg.source === 'text' ? parseFreeText(msg.text, msg.receivedAt) : null;
 }
 
 // Stable key for exact duplicates (same bank operation number).

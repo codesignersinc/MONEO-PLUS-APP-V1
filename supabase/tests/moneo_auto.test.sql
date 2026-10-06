@@ -1,5 +1,5 @@
 -- ============================================================
--- Pruebas de MONEO AUTO fase A (migración 20261006120000).
+-- Pruebas de MONEO AUTO (migraciones 20261006120000 y 20261006130000).
 --
 -- Ejecutar SOLO contra staging, como postgres (SQL Editor o psql). Todo ocurre
 -- en una transacción que termina en ROLLBACK: no deja usuarios ni datos.
@@ -81,6 +81,11 @@ BEGIN
     VALUES ('text', 'bcp', 'consumo', 'gasto', -3, '2026-10-04')$q$, 'check constraint', 'monto positivo');
   PERFORM moneo_test.fails(ua, $q$INSERT INTO public.auto_suggestions (source, bank, kind, movement_type, amount, occurred_date, card_last4)
     VALUES ('text', 'bcp', 'consumo', 'gasto', 3, '2026-10-04', '4111111111111111')$q$, 'check constraint', 'solo últimos 4 dígitos');
+
+  PERFORM moneo_test.ok(moneo_test.run(ua, $q$INSERT INTO public.auto_suggestions (source, bank, kind, movement_type, amount, merchant, occurred_date)
+    VALUES ('text', 'otro', 'texto', 'gasto', 25, 'Taxi', '2026-10-06') RETURNING 'ok'$q$) = 'ok', 'escritura rápida: banco otro, tipo texto');
+  PERFORM moneo_test.fails(ua, $q$INSERT INTO public.auto_suggestions (source, bank, kind, movement_type, amount, occurred_date)
+    VALUES ('text', 'banco-falso', 'texto', 'gasto', 1, '2026-10-06')$q$, 'check constraint', 'banco desconocido rechazado');
 
   PERFORM moneo_test.ok(moneo_test.run(ua, format($q$INSERT INTO public.auto_rules (rule_type, match_key, account_id) VALUES ('card', '4821', %L) RETURNING 'ok'$q$, acc_a)) = 'ok', 'A guarda regla tarjeta → cuenta');
   PERFORM moneo_test.fails(ua, format($q$INSERT INTO public.auto_rules (rule_type, match_key, account_id) VALUES ('card', '9999', %L)$q$, acc_b), 'Cuenta no encontrada', 'no se usa la cuenta de otro usuario');

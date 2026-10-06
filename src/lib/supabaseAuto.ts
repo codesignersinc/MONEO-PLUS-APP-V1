@@ -108,7 +108,13 @@ export const autoService = {
       .lte('occurred_date', shiftDate(parsed.date, 1))
       .neq('status', 'ignorada');
     if (nearError) throw toDataError(nearError);
-    const existing = (near || []).map(fromRow).find((s) => isLikelyDuplicate(s, parsed));
+    // Typed entries are deliberate: two "taxi 12" the same day are two taxis. They are
+    // still matched against bank notices, so the email of the same charge is not added twice.
+    const existing = (near || [])
+      .map(fromRow)
+      .find(
+        (s) => !(s.kind === 'texto' && parsed.kind === 'texto') && isLikelyDuplicate(s, parsed)
+      );
     if (existing) return { status: 'duplicate', existing };
 
     const opKey = operationKey(parsed);
@@ -305,6 +311,15 @@ export const rulesService = {
   },
 };
 
+const BANK_WORDS: Partial<Record<BankId, string>> = {
+  bcp: 'bcp',
+  bbva: 'bbva',
+  interbank: 'interbank',
+  yape: 'yape',
+  plin: 'plin',
+  scotiabank: 'scotia',
+};
+
 // Account and category to preselect for a suggestion, from learned rules first.
 export function suggestDefaults(
   s: ParsedMovement,
@@ -312,7 +327,17 @@ export function suggestDefaults(
   accounts: Account[]
 ): { accountId: string; categoryLabel: string } {
   const byCard = s.cardLast4 ? rules.cardAccount[s.cardLast4] : undefined;
-  const accountId = byCard && accounts.some((a) => a.id === byCard) ? byCard : '';
+  // Otherwise, the only account of the bank named in the message ("almuerzo 18 bcp").
+  const bankWord = BANK_WORDS[s.bank];
+  const ofBank = bankWord
+    ? accounts.filter((a) => `${a.institution ?? ''} ${a.name}`.toLowerCase().includes(bankWord))
+    : [];
+  const accountId =
+    byCard && accounts.some((a) => a.id === byCard)
+      ? byCard
+      : ofBank.length === 1
+        ? ofBank[0].id
+        : '';
   const learned = rules.merchantCategory[merchantKey(s.merchant).slice(0, 80)];
   const categoryLabel =
     learned ??

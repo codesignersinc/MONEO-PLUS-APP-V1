@@ -6,7 +6,7 @@
 
 export type AutoSource = 'email' | 'notification' | 'sms' | 'text';
 
-export type BankId = 'bcp' | 'bbva' | 'interbank' | 'yape' | 'plin';
+export type BankId = 'bcp' | 'bbva' | 'interbank' | 'yape' | 'plin' | 'scotiabank' | 'otro';
 
 export interface BankMessage {
   source: AutoSource;
@@ -25,7 +25,8 @@ export type MovementKind =
   | 'yape_enviado'
   | 'yape_recibido'
   | 'plin_recibido'
-  | 'transferencia';
+  | 'transferencia'
+  | 'texto'; // typed by the user ("gasté 25 en taxi")
 
 export interface ParsedMovement {
   bank: BankId;

@@ -34,6 +34,8 @@ const BANK_LABEL: Record<string, string> = {
   interbank: 'Interbank',
   yape: 'Yape',
   plin: 'Plin',
+  scotiabank: 'Scotiabank',
+  otro: 'Manual',
 };
 
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -111,7 +113,7 @@ export default function MoneoAutoPage() {
     if (!parsed) {
       setPasteMsg({
         ok: false,
-        text: 'No reconocimos este aviso. Por ahora entendemos avisos de BCP, BBVA, Interbank, Yape y Plin.',
+        text: 'No encontramos un monto. Prueba con «gasté 25 en taxi» o pega el aviso de tu banco (BCP, BBVA, Interbank, Yape o Plin).',
       });
       return;
     }
@@ -175,11 +177,11 @@ export default function MoneoAutoPage() {
       <section className="mb-6 rounded-3xl border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
         <div className="mb-2 flex items-center gap-2">
           <ClipboardPaste className="h-5 w-5" />
-          <h2 className="font-black text-black">Pegar aviso</h2>
+          <h2 className="font-black text-black">Escribe o pega un aviso</h2>
         </div>
         <p className="mb-3 text-xs text-gray-600">
-          Copia el texto de un correo o notificación de tu banco (BCP, BBVA, Interbank, Yape o Plin)
-          y pégalo aquí.
+          Escribe como hablas («gasté 25 en taxi», «almuerzo 18 bcp», «me pagaron 1500») o pega el
+          texto de un correo o notificación de tu banco.
         </p>
         <textarea
           value={text}
@@ -187,8 +189,14 @@ export default function MoneoAutoPage() {
             setText(e.target.value);
             setPasteMsg(null);
           }}
-          rows={4}
-          placeholder="Ej.: Realizaste un consumo de S/.21.00 en IZI*YOPO con tu Tarjeta de Débito."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && text.trim() && !adding) {
+              e.preventDefault();
+              handlePaste();
+            }
+          }}
+          rows={3}
+          placeholder="Ej.: gasté 25 en taxi"
           className={`${inputClass} resize-y`}
         />
         {pasteMsg && (
@@ -201,7 +209,7 @@ export default function MoneoAutoPage() {
         )}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="flex items-center gap-1.5 text-[11px] text-gray-500">
-            <ShieldCheck className="h-3.5 w-3.5" /> El texto no se guarda: solo monto, comercio,
+            <ShieldCheck className="h-3.5 w-3.5" /> El texto no se guarda: solo monto, concepto,
             fecha y últimos 4 dígitos.
           </p>
           <button
@@ -226,7 +234,7 @@ export default function MoneoAutoPage() {
       ) : pending.length === 0 ? (
         <div className="mb-6 rounded-3xl border-[3px] border-dashed border-gray-300 px-4 py-10 text-center">
           <p className="font-bold text-gray-600">No tienes movimientos por revisar.</p>
-          <p className="mt-1 text-xs text-gray-500">Pega un aviso de tu banco para probar.</p>
+          <p className="mt-1 text-xs text-gray-500">Escribe «gasté 25 en taxi» para probar.</p>
         </div>
       ) : (
         <ul className="mb-6 space-y-3">
