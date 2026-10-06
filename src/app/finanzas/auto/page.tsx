@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
 import BrandLogo from '@/components/finance/BrandLogo';
+import VoiceButton from '@/components/finance/VoiceButton';
 import { useToast } from '@/components/ui/Toast';
 import { parseBankMessage } from '@/lib/auto';
 import {
@@ -108,8 +109,8 @@ export default function MoneoAutoPage() {
   );
 
   // The pasted text is interpreted here, in the browser; only the result is saved.
-  const handlePaste = async () => {
-    const parsed = parseBankMessage({ source: 'text', text, receivedAt: new Date() });
+  const handlePaste = async (input: string = text) => {
+    const parsed = parseBankMessage({ source: 'text', text: input, receivedAt: new Date() });
     if (!parsed) {
       setPasteMsg({
         ok: false,
@@ -177,11 +178,11 @@ export default function MoneoAutoPage() {
       <section className="mb-6 rounded-3xl border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
         <div className="mb-2 flex items-center gap-2">
           <ClipboardPaste className="h-5 w-5" />
-          <h2 className="font-black text-black">Escribe o pega un aviso</h2>
+          <h2 className="font-black text-black">Escribe, dicta o pega un aviso</h2>
         </div>
         <p className="mb-3 text-xs text-gray-600">
-          Escribe como hablas («gasté 25 en taxi», «almuerzo 18 bcp», «me pagaron 1500») o pega el
-          texto de un correo o notificación de tu banco.
+          Escribe o dicta como hablas («gasté 25 en taxi», «almuerzo 18 bcp», «me pagaron 1500») o
+          pega el texto de un correo o notificación de tu banco.
         </p>
         <textarea
           value={text}
@@ -209,16 +210,30 @@ export default function MoneoAutoPage() {
         )}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="flex items-center gap-1.5 text-[11px] text-gray-500">
-            <ShieldCheck className="h-3.5 w-3.5" /> El texto no se guarda: solo monto, concepto,
-            fecha y últimos 4 dígitos.
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" /> El texto no se guarda: solo monto,
+            concepto, fecha y últimos 4 dígitos. El dictado lo transcribe tu navegador.
           </p>
-          <button
-            onClick={handlePaste}
-            disabled={adding || !text.trim()}
-            className="flex items-center gap-2 rounded-xl border-[3px] border-black bg-[#FFD43B] px-4 py-2 text-sm font-black text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 disabled:opacity-50"
-          >
-            <Sparkles className="h-4 w-4" /> {adding ? 'Leyendo…' : 'Interpretar'}
-          </button>
+          <div className="flex items-center gap-2">
+            <VoiceButton
+              disabled={adding}
+              onPartial={(t) => {
+                setText(t);
+                setPasteMsg(null);
+              }}
+              onFinal={(t) => {
+                setText(t);
+                handlePaste(t);
+              }}
+              onError={(m) => setPasteMsg({ ok: false, text: m })}
+            />
+            <button
+              onClick={() => handlePaste()}
+              disabled={adding || !text.trim()}
+              className="flex items-center gap-2 rounded-xl border-[3px] border-black bg-[#FFD43B] px-4 py-2 text-sm font-black text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 disabled:opacity-50"
+            >
+              <Sparkles className="h-4 w-4" /> {adding ? 'Leyendo…' : 'Interpretar'}
+            </button>
+          </div>
         </div>
       </section>
 

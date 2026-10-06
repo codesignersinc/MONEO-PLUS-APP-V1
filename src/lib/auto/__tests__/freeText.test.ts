@@ -65,6 +65,11 @@ describe('free text (escritura rápida)', () => {
     });
   });
 
+  it('spoken decimals (voice): "12 con 50"', () => {
+    expect(p('gasté 12 con 50 en taxi')).toMatchObject({ amount: 12.5, merchant: 'Taxi' });
+    expect(p('almuerzo 18 con 5 soles')).toMatchObject({ amount: 18.05, merchant: 'Almuerzo' });
+  });
+
   it('dates: ayer, anteayer, dd/mm', () => {
     expect(p('Wong 92.50 ayer')).toMatchObject({
       amount: 92.5,
