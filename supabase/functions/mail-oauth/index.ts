@@ -165,9 +165,26 @@ async function gmail(accessToken: string, path: string): Promise<Row> {
   return body;
 }
 
+// Gmail is for paying MONEO PLUS users only (subscription, pass or lifetime, including a
+// card subscription still in its trial): every connection uses one of the 100 places Google
+// allows while the app is unverified. The free trial without card does not include it.
+async function paidPlus(admin: SupabaseClient, userId: string): Promise<boolean> {
+  const { data } = await admin
+    .from('user_entitlements')
+    .select('status, current_period_end, plan:billing_plans(kind)')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!data) return false;
+  const kind = (data.plan as { kind?: string } | null)?.kind;
+  if (kind === 'one_time') return data.status === 'active';
+  if (kind !== 'subscription' && kind !== 'pass') return false;
+  return Boolean(data.current_period_end && Date.parse(data.current_period_end) > Date.now());
+}
+
 async function connect(req: Request, admin: SupabaseClient, user: Row): Promise<Response> {
   if (!googleConfigured()) return json({ error: 'not-configured' }, 503);
   const userId = String(user.id);
+  if (!(await paidPlus(admin, userId))) return json({ error: 'plus-required' }, 402);
 
   // Google allows 100 users while the app is unverified: keep a margin.
   const cap = Number(Deno.env.get('MAIL_GOOGLE_USER_CAP') ?? 95);
@@ -271,6 +288,10 @@ async function callback(req: Request, admin: SupabaseClient): Promise<Response> 
       return back(origin, 'permiso');
     }
     if (typeof tok.refresh_token !== 'string') throw new Error('no-refresh-token');
+    if (!(await paidPlus(admin, String(row.user_id)))) {
+      log('callback plus-required');
+      return back(origin, 'plus');
+    }
     const access = String(tok.access_token);
     const profile = await gmail(access, '/profile');
     const now = new Date();
@@ -494,6 +515,14 @@ async function cron(admin: SupabaseClient): Promise<Response> {
   let synced = 0;
   for (const conn of (data ?? []) as Row[]) {
     if (Date.now() > deadline) break;
+    // Without paid PLUS the mailbox is not read (the connection stays, to resume later).
+    if (!(await paidPlus(admin, String(conn.user_id)))) {
+      await admin
+        .from('mail_connections')
+        .update({ last_sync_at: new Date().toISOString(), last_error: 'plus-required' })
+        .eq('id', conn.id);
+      continue;
+    }
     await syncConnection(admin, conn);
     synced++;
   }
@@ -590,6 +619,7 @@ Deno.serve(async (req) => {
     if (body.action === 'status') {
       return json({
         configured: googleConfigured(),
+        plus: await paidPlus(admin, userId),
         connection: publicConnection(await ownConnection(admin, userId)),
       });
     }
@@ -598,6 +628,7 @@ Deno.serve(async (req) => {
     if (body.action === 'sync') {
       const conn = await ownConnection(admin, userId);
       if (!conn || conn.status !== 'active') return json({ error: 'not-connected' }, 409);
+      if (!(await paidPlus(admin, userId))) return json({ error: 'plus-required' }, 402);
       // At most once a minute per user.
       const last = conn.last_sync_at ? Date.parse(String(conn.last_sync_at)) : 0;
       if (Date.now() - last < 60_000) return json({ found: 0, throttled: true });

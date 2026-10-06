@@ -8,20 +8,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        void:    '#09090B',
-        violet:  {
+        void: '#09090B',
+        violet: {
           DEFAULT: '#7C3AED',
-          light:   '#A78BFA',
-          dim:     '#4C1D95',
-          glow:    '#6D28D9',
+          light: '#A78BFA',
+          dim: '#4C1D95',
+          glow: '#6D28D9',
         },
         graphite: {
           DEFAULT: '#1E1E24',
-          light:   '#2A2A32',
+          light: '#2A2A32',
         },
         phosphor: {
           DEFAULT: '#EDEEF0',
-          muted:   '#9CA3AF',
+          muted: '#9CA3AF',
         },
         // Finance app colors
         fin: {
@@ -63,21 +63,21 @@ module.exports = {
         poppins: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       fontWeight: {
-        '700': '700',
-        '800': '800',
+        700: '700',
+        800: '800',
       },
       scale: {
-        '98': '0.98',
+        98: '0.98',
       },
       borderRadius: {
-        'fin': '16px',
+        fin: '16px',
       },
       boxShadow: {
         'fin-card': '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
         'fin-card-hover': '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
         'violet-glow': '0 0 40px rgba(124, 58, 237, 0.5)',
-        'violet-sm':   '0 0 16px rgba(124, 58, 237, 0.3)',
-        'card':        '0 24px 80px rgba(0,0,0,0.6)',
+        'violet-sm': '0 0 16px rgba(124, 58, 237, 0.3)',
+        card: '0 24px 80px rgba(0,0,0,0.6)',
       },
       animation: {
         'float-slow': 'floatCard 6s ease-in-out infinite',
@@ -88,11 +88,13 @@ module.exports = {
         'sort-slide': 'sortSlide 0.4s ease-out forwards',
         'slide-up': 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
         'fade-in': 'fadeIn 0.2s ease-out',
+        'bar-shine': 'barShine 1.8s linear infinite',
+        heartbeat: 'heartbeat 1.6s ease-in-out infinite',
       },
       keyframes: {
         floatCard: {
           '0%, 100%': { transform: 'var(--card-base-transform) translateY(0px)' },
-          '50%':       { transform: 'var(--card-base-transform) translateY(-6px)' },
+          '50%': { transform: 'var(--card-base-transform) translateY(-6px)' },
         },
         slideUp: {
           from: { opacity: '0', transform: 'translateY(20px)' },
@@ -101,6 +103,16 @@ module.exports = {
         fadeIn: {
           from: { opacity: '0' },
           to: { opacity: '1' },
+        },
+        barShine: {
+          from: { backgroundPosition: '0 0' },
+          to: { backgroundPosition: '28px 0' },
+        },
+        heartbeat: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '12%': { transform: 'scale(1.06)' },
+          '24%': { transform: 'scale(1)' },
+          '36%': { transform: 'scale(1.04)' },
         },
       },
       backdropBlur: {

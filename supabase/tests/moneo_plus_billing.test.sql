@@ -50,12 +50,12 @@ BEGIN
   INSERT INTO auth.users (id, email) VALUES (ua, 'a@test.local'), (ub, 'b@test.local');
 
   -- Catálogo
-  PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT count(*) FROM public.billing_plans') = '4', 'se ven los 4 planes');
+  PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT count(*) FROM public.billing_plans') = '6', 'se ven los 6 planes a la venta (la prueba gratis no se lista)');
   PERFORM moneo_test.ok(moneo_test.run(ua, $$SELECT price FROM public.billing_plans WHERE code = 'plus_yearly'$$) = '97.50', 'anual S/ 97.50');
   UPDATE public.billing_plans SET active = false WHERE code = 'founder';
-  PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT count(*) FROM public.billing_plans') = '3', 'Fundador apagado deja de mostrarse');
+  PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT count(*) FROM public.billing_plans') = '5', 'Fundador apagado deja de mostrarse');
   UPDATE public.billing_plans SET active = true, available_until = now() - interval '1 minute' WHERE code = 'founder';
-  PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT count(*) FROM public.billing_plans') = '3', 'Fundador vencido deja de mostrarse');
+  PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT count(*) FROM public.billing_plans') = '5', 'Fundador vencido deja de mostrarse');
   PERFORM moneo_test.fails(ua, $$UPDATE public.billing_plans SET price = 1 WHERE code = 'plus_monthly' RETURNING 1$$, 'permission denied', 'un usuario no puede cambiar precios');
 
   -- Sin entitlement: FREE

@@ -17,7 +17,7 @@ import WelcomeModal from '@/components/finance/WelcomeModal';
 import AddTransactionModal from '@/components/finance/AddTransactionModal';
 import { hasSeenWelcome, markWelcomeSeen } from '@/lib/onboarding';
 import { ONBOARDING_V2 } from '@/lib/onboardingFlow';
-import { entitlementService, type Entitlement } from '@/lib/billing';
+import { usePlus } from '@/contexts/PlusContext';
 import { track } from '@/lib/analytics';
 import {
   MONTH_NAMES,
@@ -110,7 +110,7 @@ export default function DashboardPage() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [pagos, setPagos] = useState<PagoEntry[]>([]);
   const [pagosError, setPagosError] = useState(false);
-  const [ent, setEnt] = useState<Entitlement | null | undefined>(undefined);
+  const { ent, plansLive } = usePlus();
   const [hidden, toggleHidden] = useHiddenAmounts();
   const isDesktop = useIsDesktop();
   const [modalTab, setModalTab] = useState<TxTab | null>(null);
@@ -145,15 +145,6 @@ export default function DashboardPage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  // MONEO PLUS status (only where the plans are live).
-  useEffect(() => {
-    if (!ONBOARDING_V2 || !user) return;
-    entitlementService
-      .get()
-      .then(setEnt)
-      .catch(() => setEnt(undefined));
-  }, [user]);
 
   // One-time welcome for new users without accounts; closing it marks it as seen.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
@@ -464,7 +455,7 @@ export default function DashboardPage() {
     />
   );
   const insight = <MoneoInsight insight={view.insight} />;
-  const plus = ONBOARDING_V2 && ent !== undefined ? <PlusCard ent={ent} variant="rail" /> : null;
+  const plus = plansLive && ent !== undefined ? <PlusCard ent={ent} variant="rail" /> : null;
 
   return (
     <>

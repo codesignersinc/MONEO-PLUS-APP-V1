@@ -1,6 +1,7 @@
 'use client';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, Loader2, Mail, RefreshCw, ShieldCheck, X } from 'lucide-react';
+import Link from 'next/link';
+import { Check, Crown, Loader2, Mail, RefreshCw, ShieldCheck, X } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { notifyAutoSuggestion } from '@/lib/dataSync';
 import { MAIL_RETURN_MESSAGES, mailService, type MailStatus } from '@/lib/mailConnect';
@@ -117,7 +118,7 @@ export default function AutoGmailCard() {
     try {
       const s = await mailService.status();
       setStatus(s);
-      if (syncNow && s.connection?.status === 'active') {
+      if (syncNow && s.plus && s.connection?.status === 'active') {
         // Opening MONEO AUTO reads new emails right away (the server throttles it).
         const found = await mailService.sync().catch(() => 0);
         if (found > 0) {
@@ -211,7 +212,23 @@ export default function AutoGmailCard() {
             </span>
           </div>
 
-          {!conn && (
+          {!status.plus && (
+            <>
+              <p className="mt-1 text-[13px] text-gray-800">
+                {conn?.status === 'active'
+                  ? `En pausa: ${conn.emailHint} sigue conectado, pero solo leemos tu Gmail con un plan pagado de MONEO PLUS.`
+                  : 'Conecta tu Gmail y los avisos de BCP, BBVA, Interbank y Yape aparecerán aquí solos. Disponible con un plan pagado de MONEO PLUS (no incluido en la prueba gratis).'}
+              </p>
+              <Link
+                href="/finanzas/plus"
+                className={`${BTN} mt-3 inline-flex bg-[#FFD43B] text-black`}
+              >
+                <Crown className="h-4 w-4" /> Ver planes
+              </Link>
+            </>
+          )}
+
+          {status.plus && !conn && (
             <>
               <p className="mt-1 text-[13px] text-gray-800">
                 Conecta tu Gmail y los movimientos de tus avisos de BCP, BBVA, Interbank y Yape
@@ -227,7 +244,7 @@ export default function AutoGmailCard() {
             </>
           )}
 
-          {conn?.status === 'active' && (
+          {status.plus && conn?.status === 'active' && (
             <>
               <p className="mt-1 flex items-center gap-1.5 text-[13px] text-gray-800">
                 <Check className="h-4 w-4 text-green-600" /> Conectado: <b>{conn.emailHint}</b>
@@ -262,7 +279,7 @@ export default function AutoGmailCard() {
             </>
           )}
 
-          {conn?.status === 'revoked' && (
+          {status.plus && conn?.status === 'revoked' && (
             <>
               <p className="mt-1 text-[13px] text-gray-800">
                 Se perdió el acceso a <b>{conn.emailHint}</b> (se retiró el permiso en Google).

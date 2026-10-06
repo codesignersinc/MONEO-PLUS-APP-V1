@@ -264,7 +264,17 @@ export function plusStatus(ent: Entitlement | null): { active: boolean; line: st
   if (ent.lifetime) return { active: ent.status === 'active', line: 'Plan de por vida' };
   const end = ent.currentPeriodEnd ? new Date(ent.currentPeriodEnd) : null;
   const days = end ? Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400e3)) : 0;
-  if (!end || days === 0) return { active: false, line: 'Tu plan terminó · Reactívalo' };
+  if (!end || days === 0)
+    return {
+      active: false,
+      line:
+        ent.kind === 'trial' ? 'Tu prueba terminó · Elige un plan' : 'Tu plan terminó · Reactívalo',
+    };
+  if (ent.kind === 'pass')
+    return {
+      active: true,
+      line: `Activo hasta el ${end.getDate()} ${MONTHS_SHORT[end.getMonth()]}.`,
+    };
   if (ent.status === 'trialing')
     return {
       active: true,
@@ -290,7 +300,7 @@ export function PlusCard({
   variant: 'rail' | 'sidebar';
 }) {
   const { active, line } = plusStatus(ent);
-  const href = active ? '/finanzas/configuracion' : '/empezar?paso=planes';
+  const href = '/finanzas/plus';
   if (variant === 'sidebar') {
     return (
       <div className="rounded-[18px] border-2 border-[#111] bg-white p-3 text-[#111] shadow-[0_3px_0_#111]">
@@ -317,7 +327,7 @@ export function PlusCard({
           href={href}
           className="mt-2.5 flex items-center justify-center gap-1 rounded-xl border-2 border-[#111] bg-[#FFD83D] py-1.5 text-[13px] font-black shadow-[0_2px_0_#111] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#75B8FF]"
         >
-          {active ? 'Ver mi plan' : 'Probar gratis'} →
+          {active ? (ent?.kind === 'trial' ? 'Mantener PLUS' : 'Ver mi plan') : 'Elegir plan'} →
         </Link>
       </div>
     );
@@ -332,7 +342,11 @@ export function PlusCard({
         <span className="block text-[22px] font-black leading-tight">MONEO PLUS</span>
         <span className="block text-[15px] font-black">{line}</span>
         <span className="mt-1 block text-[12px] font-semibold text-gray-700">
-          {active ? 'Gracias por apoyar MONEO.' : 'Aprovecha todas las funciones premium.'}
+          {ent?.kind === 'trial' && active
+            ? 'Elige cómo seguir antes de que termine.'
+            : active
+              ? 'Gracias por apoyar MONEO.'
+              : 'Aprovecha todas las funciones premium.'}
         </span>
       </span>
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#111] text-white">

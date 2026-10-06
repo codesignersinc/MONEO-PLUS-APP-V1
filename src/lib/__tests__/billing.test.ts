@@ -8,6 +8,7 @@ const base: Entitlement = {
   trialEndsAt: null,
   hadTrial: false,
   lifetime: false,
+  kind: 'subscription',
 };
 const inDays = (d: number) => new Date(Date.now() + d * 86400e3).toISOString();
 

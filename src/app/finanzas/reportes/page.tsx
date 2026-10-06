@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { transactionsService, subscriptionsService } from '@/lib/supabaseFinance';
 import LoadError from '@/components/ui/LoadError';
+import PlusGate from '@/components/billing/PlusGate';
 import { toDataError } from '@/lib/dataError';
 import { Transaction, Subscription, countsAsTransfer } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
@@ -490,51 +491,57 @@ export default function ReportesPage() {
       </div>
 
       {/* ── Tendencia últimos 6 meses ── */}
-      <div className="rounded-2xl border-[3px] border-black bg-[#F3E8FF] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
-        <div className="border-b-[3px] border-black px-4 py-2 bg-black rounded-t-xl">
-          <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-            📈 TENDENCIA 6 MESES
-          </p>
-        </div>
-        <div className="p-4">
-          <div className="flex items-end gap-2 h-24">
-            {trendMonths.map((m, i) => {
-              const ingPct = Math.round((m.cobrado / maxTrend) * 100);
-              const gasPct = Math.round((m.gastos / maxTrend) * 100);
-              const isSelected = i === 5;
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full flex gap-0.5 items-end h-16">
-                    <div
-                      className={`flex-1 rounded-t border-[2px] border-black ${isSelected ? 'bg-[#16A34A]' : 'bg-[#d4edda]'} transition-all`}
-                      style={{ height: `${Math.max(ingPct, 4)}%` }}
-                    />
-                    <div
-                      className={`flex-1 rounded-t border-[2px] border-black ${isSelected ? 'bg-[#DC2626]' : 'bg-[#f8d7da]'} transition-all`}
-                      style={{ height: `${Math.max(gasPct, 4)}%` }}
-                    />
+      <PlusGate
+        compact
+        feature="La tendencia de 6 meses"
+        description="Compara tus ingresos y gastos mes a mes para ver hacia dónde va tu dinero."
+      >
+        <div className="rounded-2xl border-[3px] border-black bg-[#F3E8FF] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
+          <div className="border-b-[3px] border-black px-4 py-2 bg-black rounded-t-xl">
+            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
+              📈 TENDENCIA 6 MESES
+            </p>
+          </div>
+          <div className="p-4">
+            <div className="flex items-end gap-2 h-24">
+              {trendMonths.map((m, i) => {
+                const ingPct = Math.round((m.cobrado / maxTrend) * 100);
+                const gasPct = Math.round((m.gastos / maxTrend) * 100);
+                const isSelected = i === 5;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full flex gap-0.5 items-end h-16">
+                      <div
+                        className={`flex-1 rounded-t border-[2px] border-black ${isSelected ? 'bg-[#16A34A]' : 'bg-[#d4edda]'} transition-all`}
+                        style={{ height: `${Math.max(ingPct, 4)}%` }}
+                      />
+                      <div
+                        className={`flex-1 rounded-t border-[2px] border-black ${isSelected ? 'bg-[#DC2626]' : 'bg-[#f8d7da]'} transition-all`}
+                        style={{ height: `${Math.max(gasPct, 4)}%` }}
+                      />
+                    </div>
+                    <span
+                      className={`text-[9px] font-black uppercase ${isSelected ? 'text-black' : 'text-black/40'}`}
+                    >
+                      {m.label}
+                    </span>
                   </div>
-                  <span
-                    className={`text-[9px] font-black uppercase ${isSelected ? 'text-black' : 'text-black/40'}`}
-                  >
-                    {m.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex gap-4 mt-3 pt-2 border-t-[2px] border-dashed border-black/20">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded border-[2px] border-black bg-[#d4edda]" />
-              <span className="text-[10px] font-black uppercase text-black/60">Cobrado</span>
+                );
+              })}
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded border-[2px] border-black bg-[#f8d7da]" />
-              <span className="text-[10px] font-black uppercase text-black/60">Gastos</span>
+            <div className="flex gap-4 mt-3 pt-2 border-t-[2px] border-dashed border-black/20">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded border-[2px] border-black bg-[#d4edda]" />
+                <span className="text-[10px] font-black uppercase text-black/60">Cobrado</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded border-[2px] border-black bg-[#f8d7da]" />
+                <span className="text-[10px] font-black uppercase text-black/60">Gastos</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </PlusGate>
 
       {/* ── Gastos por categoría ── */}
       {categoryData.length > 0 && (
