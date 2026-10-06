@@ -186,6 +186,24 @@ async function applyPayment(admin: SupabaseClient, payment: Row): Promise<string
 
   const userId = checkout.user_id as string;
   const current = await currentEntitlement(admin, userId);
+  // A one-time payment link can be paid more than once (reopened, paid again, or an old
+  // link of someone who already has lifetime). Only the first approved payment counts;
+  // any other one is refunded at once, never kept.
+  if (
+    isLifetime(current) &&
+    current?.provider_payment_id &&
+    current.provider_payment_id !== String(payment.id)
+  ) {
+    if (payment.status === 'approved' && !(payment.refunds as unknown[] | undefined)?.length) {
+      await mp(`/v1/payments/${encodeURIComponent(String(payment.id))}/refunds`, {
+        method: 'POST',
+        headers: { 'X-Idempotency-Key': `refund-${payment.id}` },
+        body: JSON.stringify({}),
+      });
+      return 'duplicate-refunded';
+    }
+    return 'duplicate-ignored';
+  }
   const { error } = await admin.from('user_entitlements').upsert({
     user_id: userId,
     plan_code: checkout.plan.code,
@@ -365,9 +383,14 @@ async function checkout(req: Request, admin: SupabaseClient, user: Row, planCode
     providerId = String(pre.id);
     url = String(pre.init_point);
   } else {
+    // The payment link expires in 24 h so an old link cannot be paid later.
+    const expires = new Date(Date.now() + 24 * 3600e3).toISOString();
     const pref = await mp('/checkout/preferences', {
       method: 'POST',
+      headers: { 'X-Idempotency-Key': `pref-${row.id}` },
       body: JSON.stringify({
+        expires: true,
+        expiration_date_to: expires,
         items: [
           {
             id: p.code,
