@@ -24,7 +24,11 @@ export const parseInterbank: BankParser = (msg) => {
   }
 
   // Email: "Conoce el detalle: Tarjeta: ****1997 Comercio: … Monto: S/. 103.71 Fecha: … Hora: …"
-  if (isEmail && /Comercio\s*:/i.test(msg.text) && /Monto\s*:/i.test(msg.text)) {
+  // Also accepted as pasted text when it clearly comes from Interbank.
+  const detailBlock = /Comercio\s*:/i.test(msg.text) && /Monto\s*:/i.test(msg.text);
+  const fromInterbank =
+    isEmail || /interbank/i.test(flat) || /Tarjeta\s*:\s*\*{4}\d{4}/i.test(msg.text);
+  if (detailBlock && fromInterbank) {
     const amt = parseAmount(valueAfter(msg.text, /Monto/) ?? '');
     const comercio = valueAfter(msg.text, /Comercio/);
     if (!amt || !comercio) return null;

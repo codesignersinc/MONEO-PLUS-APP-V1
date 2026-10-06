@@ -98,6 +98,15 @@ describe('Interbank', () => {
     });
   });
 
+  it('pasted email text (no sender) is recognized too', () => {
+    const r = parseBankMessage({
+      source: 'text',
+      text: F.INTERBANK_EMAIL_CONSUMO.text,
+      receivedAt: new Date(2026, 9, 5),
+    });
+    expect(r).toMatchObject({ bank: 'interbank', amount: 40, cardLast4: '4821' });
+  });
+
   it('notification: Plin received is income', () => {
     expect(parse(push(F.IB_PUSH_PLIN, new Date(2026, 9, 5, 20, 43)))).toMatchObject({
       kind: 'plin_recibido',
