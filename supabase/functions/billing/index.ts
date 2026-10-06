@@ -62,7 +62,13 @@ async function mp(path: string, init: RequestInit = {}): Promise<Row> {
     },
   });
   const body = (await res.json().catch(() => ({}))) as Row;
-  if (!res.ok) throw new Error(`mp-${res.status}`);
+  if (!res.ok) {
+    // Keep Mercado Pago's reason (without emails) to diagnose rejected checkouts.
+    const reason = String(body.message ?? body.error ?? '')
+      .replace(/[\w.+-]+@[\w.-]+/g, '<email>')
+      .slice(0, 120);
+    throw new Error(`mp-${res.status}${reason ? `: ${reason}` : ''}`);
+  }
   return body;
 }
 
@@ -487,8 +493,22 @@ Deno.serve(async (req) => {
 
   const body = (await req.json().catch(() => ({}))) as Row;
   try {
-    if (body.action === 'checkout')
-      return await checkout(req, admin, user, String(body.plan ?? ''));
+    if (body.action === 'checkout') {
+      try {
+        return await checkout(req, admin, user, String(body.plan ?? ''));
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : 'unknown';
+        await admin.from('billing_events').insert({
+          provider: 'mercadopago',
+          event_key: `checkout-error:${crypto.randomUUID()}`,
+          topic: 'checkout-error',
+          resource_id: String(body.plan ?? '').slice(0, 80) || 'unknown',
+          outcome: reason.slice(0, 60),
+        });
+        log(`checkout-error ${reason}`);
+        return json({ error: 'provider-error', reason: reason.slice(0, 120) }, 502);
+      }
+    }
     if (body.action === 'sync') return await sync(admin, user);
     if (body.action === 'cancel') return await cancel(admin, user);
     return json({ error: 'unknown-action' }, 400);
