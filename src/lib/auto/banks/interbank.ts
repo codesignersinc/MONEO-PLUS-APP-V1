@@ -50,7 +50,7 @@ export const parseInterbank: BankParser = (msg) => {
   // "Se realizó un pago recurrente de S/.19.90 en OPENAI *CHATGPT SUBSCR con tu Tarjeta de Débito."
   m = flat.match(
     new RegExp(
-      `(Realizaste un consumo|Se realiz[oó] un pago recurrente) de\\s*(${AMOUNT_SRC})\\s+en\\s+(.+?)\\s+con tu Tarjeta de (D[eé]bito|Cr[eé]dito)`,
+      `(Realizaste un consumo|Se realiz[oó] un pago recurrente) de\\s*(${AMOUNT_SRC})\\s+en\\s+(.+?)(?:\\s+con tu Tarjeta de (D[eé]bito|Cr[eé]dito).*|\\s*\\.?\\s*)$`,
       'i'
     )
   );
@@ -65,7 +65,7 @@ export const parseInterbank: BankParser = (msg) => {
       ...amt,
       ...merchantFields(m[3]),
       ...when(msg),
-      cardType: /cr/i.test(m[4]) ? 'credito' : 'debito',
+      cardType: m[4] ? (/cr/i.test(m[4]) ? 'credito' : 'debito') : undefined,
       recurring,
     };
   }

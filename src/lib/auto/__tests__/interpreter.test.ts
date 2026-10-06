@@ -107,6 +107,32 @@ describe('Interbank', () => {
     expect(r).toMatchObject({ bank: 'interbank', amount: 40, cardLast4: '4821' });
   });
 
+  it('short typed version without the card part', () => {
+    const r = parseBankMessage({
+      source: 'text',
+      text: 'Realizaste un consumo de S/21 en yopo',
+      receivedAt: new Date(2026, 9, 6, 9, 0),
+    });
+    expect(r).toMatchObject({
+      bank: 'interbank',
+      type: 'gasto',
+      amount: 21,
+      merchant: 'Yopo',
+      suggestedCategory: 'Comida',
+      date: '2026-10-06',
+    });
+    expect(r?.cardType).toBeUndefined();
+  });
+
+  it('a pasted BCP notice is still BCP, not Interbank', () => {
+    const r = parseBankMessage({
+      source: 'text',
+      text: F.BCP_EMAIL_CONSUMO_2.text,
+      receivedAt: new Date(2026, 9, 6),
+    });
+    expect(r).toMatchObject({ bank: 'bcp', amount: 92.92, merchant: 'Wong' });
+  });
+
   it('notification: Plin received is income', () => {
     expect(parse(push(F.IB_PUSH_PLIN, new Date(2026, 9, 5, 20, 43)))).toMatchObject({
       kind: 'plin_recibido',
