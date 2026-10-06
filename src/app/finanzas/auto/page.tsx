@@ -1,10 +1,11 @@
 'use client';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
+  Camera,
   ClipboardPaste,
   RotateCcw,
   ShieldCheck,
@@ -16,6 +17,7 @@ import BrandLogo from '@/components/finance/BrandLogo';
 import VoiceButton from '@/components/finance/VoiceButton';
 import { useToast } from '@/components/ui/Toast';
 import { parseBankMessage } from '@/lib/auto';
+import { readImageText } from '@/lib/ocr';
 import {
   autoService,
   rulesService,
@@ -83,6 +85,9 @@ export default function MoneoAutoPage() {
   const [text, setText] = useState('');
   const [pasteMsg, setPasteMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [adding, setAdding] = useState(false);
+  // OCR progress (0–1) while reading a screenshot or receipt photo; null when idle.
+  const [reading, setReading] = useState<number | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [registering, setRegistering] = useState<AutoSuggestion | null>(null);
 
   const load = useCallback(() => {
@@ -109,12 +114,14 @@ export default function MoneoAutoPage() {
   );
 
   // The pasted text is interpreted here, in the browser; only the result is saved.
-  const handlePaste = async (input: string = text) => {
+  const handlePaste = async (input: string = text, fromImage = false) => {
     const parsed = parseBankMessage({ source: 'text', text: input, receivedAt: new Date() });
     if (!parsed) {
       setPasteMsg({
         ok: false,
-        text: 'No encontramos un monto. Prueba con «gasté 25 en taxi» o pega el aviso de tu banco (BCP, BBVA, Interbank, Yape o Plin).',
+        text: fromImage
+          ? 'Leímos la imagen pero no encontramos el movimiento. Revisa el texto de arriba: deja el monto y el concepto, y toca Interpretar.'
+          : 'No encontramos un monto. Prueba con «gasté 25 en taxi» o pega el aviso de tu banco (BCP, BBVA, Interbank, Yape o Plin).',
       });
       return;
     }
@@ -138,6 +145,32 @@ export default function MoneoAutoPage() {
       setPasteMsg({ ok: false, text: getErrorMessage(err) });
     } finally {
       setAdding(false);
+    }
+  };
+
+  // Screenshot or photo of a receipt: read in the browser (never uploaded), then
+  // interpreted like pasted text.
+  const handleImage = async (file: File | undefined) => {
+    if (!file) return;
+    setPasteMsg(null);
+    setReading(0);
+    try {
+      const ocrText = await readImageText(file, setReading);
+      setText(ocrText);
+      if (!ocrText.trim()) {
+        setPasteMsg({
+          ok: false,
+          text: 'No pudimos leer texto en la imagen. Prueba con una foto más nítida.',
+        });
+      } else {
+        await handlePaste(ocrText, true);
+      }
+    } catch (err) {
+      console.error(err);
+      setPasteMsg({ ok: false, text: 'No pudimos leer la imagen. Intenta de nuevo.' });
+    } finally {
+      setReading(null);
+      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
@@ -178,11 +211,11 @@ export default function MoneoAutoPage() {
       <section className="mb-6 rounded-3xl border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
         <div className="mb-2 flex items-center gap-2">
           <ClipboardPaste className="h-5 w-5" />
-          <h2 className="font-black text-black">Escribe, dicta o pega un aviso</h2>
+          <h2 className="font-black text-black">Registra a tu manera</h2>
         </div>
         <p className="mb-3 text-xs text-gray-600">
-          Escribe o dicta como hablas («gasté 25 en taxi», «almuerzo 18 bcp», «me pagaron 1500») o
-          pega el texto de un correo o notificación de tu banco.
+          Escribe o dicta como hablas («gasté 25 en taxi», «almuerzo 18 bcp», «me pagaron 1500»),
+          pega el aviso de tu banco o sube una captura o foto de tu boleta.
         </p>
         <textarea
           value={text}
@@ -210,10 +243,28 @@ export default function MoneoAutoPage() {
         )}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="flex items-center gap-1.5 text-[11px] text-gray-500">
-            <ShieldCheck className="h-3.5 w-3.5 shrink-0" /> El texto no se guarda: solo monto,
-            concepto, fecha y últimos 4 dígitos. El dictado lo transcribe tu navegador.
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" /> No guardamos el texto ni las imágenes
+            (se leen en tu teléfono): solo monto, concepto, fecha y últimos 4 dígitos.
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 pr-1 sm:w-auto">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImage(e.target.files?.[0])}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={adding || reading !== null}
+              aria-label="Leer captura o foto de boleta"
+              title="Captura o foto de boleta"
+              className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl border-[3px] border-black bg-white px-3 text-sm font-black text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 disabled:opacity-60"
+            >
+              <Camera className="h-5 w-5" />
+              {reading !== null ? `${Math.round(reading * 100)}%` : 'Captura'}
+            </button>
             <VoiceButton
               disabled={adding}
               onPartial={(t) => {
@@ -229,7 +280,7 @@ export default function MoneoAutoPage() {
             <button
               onClick={() => handlePaste()}
               disabled={adding || !text.trim()}
-              className="flex items-center gap-2 rounded-xl border-[3px] border-black bg-[#FFD43B] px-4 py-2 text-sm font-black text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-[3px] border-black bg-[#FFD43B] px-4 text-sm font-black text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 disabled:opacity-50 sm:flex-none"
             >
               <Sparkles className="h-4 w-4" /> {adding ? 'Leyendo…' : 'Interpretar'}
             </button>

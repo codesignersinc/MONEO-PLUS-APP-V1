@@ -107,17 +107,21 @@ export default function VoiceButton({ onPartial, onFinal, onError, disabled }: P
       disabled={disabled && !listening}
       aria-label={listening ? 'Detener dictado' : 'Dictar por voz'}
       title={listening ? 'Detener' : 'Dictar por voz'}
-      className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 ${
-        listening ? 'bg-[#FF806E]' : 'bg-white hover:-translate-y-0.5'
+      className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-[3px] border-black text-white shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 ${
+        listening ? 'bg-[#B91C1C]' : 'bg-[#EF4444] hover:-translate-y-0.5'
       }`}
     >
       {listening && (
         <span
-          className="absolute inset-0 animate-ping rounded-xl bg-[#FF806E] opacity-40"
+          className="absolute inset-0 animate-ping rounded-xl bg-[#EF4444] opacity-40"
           aria-hidden="true"
         />
       )}
-      {listening ? <Square className="relative h-4 w-4 fill-black" /> : <Mic className="h-5 w-5" />}
+      {listening ? (
+        <Square className="relative h-4 w-4 fill-white text-white" />
+      ) : (
+        <Mic className="h-5 w-5 text-white" strokeWidth={2.5} />
+      )}
     </button>
   );
 }

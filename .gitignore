@@ -41,3 +41,6 @@ turbo/
 
 # Claude Code local files
 .claude/
+
+# OCR assets copied from node_modules (scripts/copy-ocr-assets.mjs)
+/public/ocr/

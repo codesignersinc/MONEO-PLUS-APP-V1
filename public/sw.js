@@ -2,10 +2,10 @@
 // - Pages (navigations): always from the network, so each deploy is seen right away;
 //   only when offline it shows /offline.html. Pages are never cached (they belong to a
 //   signed-in user).
-// - Static, versioned assets (/_next/static, icons, images, fonts): cache first.
+// - Static, versioned assets (/_next/static, icons, images, fonts, OCR engine): cache first.
 // - Supabase and any other origin: not handled.
 // Bump CACHE_NAME to drop old caches.
-const CACHE_NAME = 'moneo-v2';
+const CACHE_NAME = 'moneo-v3';
 const PRECACHE = ['/offline.html', '/icons/icon-192.png', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -27,6 +27,7 @@ function isStaticAsset(url) {
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/assets/') ||
+    url.pathname.startsWith('/ocr/') ||
     /\.(?:png|jpg|jpeg|webp|svg|ico|woff2?)$/.test(url.pathname)
   );
 }
