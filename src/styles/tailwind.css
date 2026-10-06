@@ -103,6 +103,14 @@ body {
   max-height: calc(100dvh - env(safe-area-inset-top) - 16px);
 }
 
+/* Horizontal carousels: still scrollable, without the scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Finance app body override */
 body.fin-app {
   background-color: var(--fin-bg);
