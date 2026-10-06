@@ -15,7 +15,6 @@ import {
 import LoadError from '@/components/ui/LoadError';
 import BrandLogo from '@/components/finance/BrandLogo';
 import VoiceButton from '@/components/finance/VoiceButton';
-import AutoEmailCard from '@/components/finance/AutoEmailCard';
 import { useToast } from '@/components/ui/Toast';
 import { parseBankMessage } from '@/lib/auto';
 import { readImageText } from '@/lib/ocr';
@@ -311,7 +310,8 @@ export default function MoneoAutoPage() {
         </div>
       </section>
 
-      <AutoEmailCard />
+      {/* Correo automático (reenvío) oculto por ahora: casi nadie configura el reenvío.
+          El componente sigue en src/components/finance/AutoEmailCard.tsx. */}
 
       {/* Inbox */}
       <h2 className="mb-3 text-lg font-black text-black">
