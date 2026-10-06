@@ -117,19 +117,19 @@ export function NetWorthCard({
   return (
     <section
       aria-label="Tu patrimonio total"
-      className="relative overflow-hidden rounded-[24px] border-2 border-[#111] bg-[#FFD83D] p-5 shadow-[0_3px_0_#111] sm:p-6"
+      className="relative mt-10 rounded-[24px] border-2 border-[#111] bg-[#FFD83D] p-5 shadow-[0_3px_0_#111] sm:p-6 lg:mt-12"
     >
       <Image
         src="/assets/images/home/monedas-patrimonio.webp"
         alt=""
         aria-hidden
-        width={440}
-        height={293}
+        width={500}
+        height={333}
         priority
-        className="pointer-events-none absolute -right-3 -top-2 w-[104px] select-none sm:w-[230px] lg:-right-2 lg:top-auto lg:bottom-[78px] lg:w-[300px] xl:w-[330px]"
+        className="pointer-events-none absolute -right-3 -top-14 z-10 w-[168px] select-none drop-shadow-[0_6px_0_rgba(17,17,17,0.12)] sm:-top-16 sm:w-[270px] lg:-right-5 lg:-top-[86px] lg:w-[350px] xl:w-[390px]"
       />
       <div className="relative">
-        <div className="flex items-center gap-2">
+        <div className="relative z-20 flex items-center gap-2">
           <h2 className="text-[15px] font-black sm:text-[17px]">Tu patrimonio total</h2>
           <button
             type="button"
@@ -145,7 +145,7 @@ export function NetWorthCard({
             )}
           </button>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 pr-[64px] sm:pr-[200px] lg:pr-[280px]">
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 pr-[40px] sm:pr-[230px] lg:pr-[310px] xl:pr-[350px]">
           <p className="whitespace-nowrap text-[34px] font-black leading-none tracking-tight tabular-nums sm:text-[52px]">
             {show(netWorth)}
           </p>
@@ -168,7 +168,7 @@ export function NetWorthCard({
             </span>
           )}
         </div>
-        <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3 lg:mr-[230px] xl:mr-[260px]">
+        <div className="relative z-20 mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3 lg:mr-[40px] xl:mr-[120px]">
           <MiniStat
             icon={Wallet}
             tile="#DCEBFF"

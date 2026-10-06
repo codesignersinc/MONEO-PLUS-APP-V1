@@ -126,7 +126,10 @@ export default function NotificationBell() {
     }
   }
 
+  const [align, setAlign] = useState<'left' | 'right'>('right');
   function handleToggle() {
+    const rect = bellRef.current?.getBoundingClientRect();
+    if (rect) setAlign(rect.left + rect.width / 2 < window.innerWidth / 2 ? 'left' : 'right');
     setOpen((prev) => !prev);
   }
 
@@ -184,6 +187,7 @@ export default function NotificationBell() {
           onRetry={load}
           onClose={() => setOpen(false)}
           unreadCount={unreadCount}
+          align={align}
         />
       )}
     </div>

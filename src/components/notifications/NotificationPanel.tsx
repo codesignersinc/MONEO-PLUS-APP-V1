@@ -16,6 +16,8 @@ interface NotificationPanelProps {
   onRetry: () => void;
   onClose: () => void;
   unreadCount: number;
+  // Desktop: open towards the side with room (bell in the sidebar → left, top bar → right).
+  align?: 'left' | 'right';
 }
 
 export default function NotificationPanel({
@@ -29,6 +31,7 @@ export default function NotificationPanel({
   onRetry,
   onClose,
   unreadCount,
+  align = 'right',
 }: NotificationPanelProps) {
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -83,7 +86,8 @@ export default function NotificationPanel({
           /* Mobile: bottom sheet */
           bottom-0 left-0 right-0 max-h-[80vh]
           /* Desktop: dropdown */
-          lg:absolute lg:bottom-auto lg:left-auto lg:right-0 lg:top-full lg:mt-2 lg:w-[400px] lg:max-h-[520px]
+          lg:absolute lg:bottom-auto lg:top-full lg:mt-2 lg:w-[400px] lg:max-h-[520px]
+          ${align === 'left' ? 'lg:left-0 lg:right-auto' : 'lg:left-auto lg:right-0'}
         `}
       >
         {/* Header */}
