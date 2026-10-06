@@ -584,6 +584,25 @@ var AD_CONTEXT = /hasta|bienvenida|cashback|publicidad|\bgana\b|descuento|promo|
 var NOT_THE_AMOUNT = /comisi[oó]n|saldo|disponible|l[ií]mite|m[ií]nimo|m[aá]ximo|itf\b/i;
 var TITLE = /yapeaste|plineaste|te\s*yape|te\s*plinearon|exitos[oa]|realizad[oa]|recibiste|constancia|enviaste|pagaste|transferiste/i;
 var OTHER_BANKS = /banbif|pichincha|mibanco|scotiabank|banco de la naci[oó]n|caja\s+(?:arequipa|huancayo|piura|cusco|trujillo|sullana|ica|tacna|maynas)|falabella|ripley|\bgnb\b|citibank|alfin|compartamos|agrobanco|tunki|\bbim\b|ligo|lukita/i;
+function fold(text) {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+function joinSplitAmounts(lines) {
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^(?:S\/\.?|US\$|\$)$/i.test(lines[i])) {
+      let j = i + 1;
+      while (j < lines.length && j <= i + 2 && !/[\p{L}\d]/u.test(lines[j])) j++;
+      if (j < lines.length && /^\d/.test(lines[j])) {
+        out.push(`${lines[i]} ${lines[j]}`);
+        i = j;
+        continue;
+      }
+    }
+    out.push(lines[i]);
+  }
+  return out;
+}
 function toNumber(raw) {
   const s = raw.replace(/\s/g, "");
   const dec = s.match(/[.,](\d{1,2})$/);
@@ -595,7 +614,7 @@ function toNumber(raw) {
 }
 function findAmount2(lines) {
   for (let i = 0; i < lines.length; i++) {
-    if (NOT_THE_AMOUNT.test(lines[i])) continue;
+    if (NOT_THE_AMOUNT.test(fold(lines[i]))) continue;
     const around = `${lines[i - 1] ?? ""} ${lines[i]} ${lines[i + 1] ?? ""}`;
     if (AD_CONTEXT.test(around)) continue;
     for (const m of lines[i].matchAll(AMOUNT_RE2)) {
@@ -605,9 +624,9 @@ function findAmount2(lines) {
       return { amount, currency, index: i };
     }
   }
-  const title = lines.findIndex((l) => TITLE.test(l));
+  const title = lines.findIndex((l) => TITLE.test(fold(l)));
   if (title >= 0) {
-    for (let i = title + 1; i <= title + 2 && i < lines.length; i++) {
+    for (let i = title + 1; i <= title + 4 && i < lines.length; i++) {
       const m = lines[i].match(/^(\d{1,6}(?:[.,]\d{1,2})?)$/);
       if (m && toNumber(m[1]) > 0) return { amount: toNumber(m[1]), currency: "PEN", index: i };
     }
@@ -656,15 +675,18 @@ function counterpart(lines, amountIndex) {
   return { name: "", labeled: "" };
 }
 function looksLikeVoucher(text) {
-  return IN.test(text) || OUT.test(text);
+  const t = fold(text);
+  return IN.test(t) || OUT.test(t);
 }
 function parseVoucher(text, receivedAt) {
   const normalized = normalizeText(text);
   if (!looksLikeVoucher(normalized)) return null;
-  const lines = normalized.split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const lines = joinSplitAmounts(
+    normalized.split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean)
+  );
   const found = findAmount2(lines);
   if (!found) return null;
-  const incoming = IN.test(normalized);
+  const incoming = IN.test(fold(normalized));
   const bank = bankOf(lines, normalized);
   const { name, labeled } = counterpart(lines, found.index);
   const isPayment = /comercio|empresa|establecimiento|pagaste|servicio/i.test(labeled + normalized);
