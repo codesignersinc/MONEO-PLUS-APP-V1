@@ -175,7 +175,7 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
           onChange={handleInputChange}
           onFocus={() => setOpen(true)}
           placeholder="Buscar Netflix, Spotify, ChatGPT..."
-          className="flex-1 bg-transparent text-sm font-bold text-black placeholder-gray-400 outline-none"
+          className="flex-1 min-w-0 bg-transparent text-[16px] font-bold text-[#111] placeholder-gray-400 outline-none"
         />
         <ChevronDown
           className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}

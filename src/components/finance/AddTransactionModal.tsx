@@ -8,7 +8,17 @@ import {
   formatCurrency,
   getRateFromMap,
 } from '@/lib/currency';
-import { CATEGORY_PRESETS } from '@/lib/financeStore';
+import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
+import {
+  AccountSelect,
+  AmountField,
+  CategoryChips,
+  DateField,
+  FormHero,
+  NotesField,
+  SubmitButton,
+  TextField,
+} from '@/components/finance/formKit';
 import { getErrorMessage } from '@/lib/dataError';
 import TransferForm from '@/components/finance/TransferForm';
 import { notifyDataChanged } from '@/lib/dataSync';
@@ -23,14 +33,6 @@ interface AddTransactionModalProps {
 
 type TabType = 'gasto' | 'ingreso' | 'transferencia';
 
-interface AccountOption {
-  id: string;
-  name: string;
-  icon: string;
-  currency: string;
-  balance: number;
-}
-
 export default function AddTransactionModal({
   isOpen,
   onClose,
@@ -41,12 +43,10 @@ export default function AddTransactionModal({
   const [amount, setAmount] = useState('');
   const [name, setName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(CATEGORY_PRESETS[0].id);
-  const [selectedAccount, setSelectedAccount] = useState<AccountOption | null>(null);
+  const [accountId, setAccountId] = useState('');
   const [note, setNote] = useState('');
   const [date, setDate] = useState('');
-  const [accounts, setAccounts] = useState<AccountOption[]>([]);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-  const [showAccountPicker, setShowAccountPicker] = useState(false);
+  const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
@@ -58,7 +58,8 @@ export default function AddTransactionModal({
       if (initialTab) setActiveTab(initialTab);
       setLoadError('');
       setSaveError('');
-      setSelectedAccount(null);
+      setAccountId('');
+      setAccounts(null);
       const today = new Date();
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -71,20 +72,14 @@ export default function AddTransactionModal({
         exchangeRatesService.getRatesMap(),
       ])
         .then(([accs, settings, rates]) => {
-          const opts: AccountOption[] = accs.map((a) => ({
-            id: a.id,
-            name: a.name,
-            icon: a.icon,
-            currency: a.currency || 'PEN',
-            balance: a.balance,
-          }));
-          setAccounts(opts);
+          setAccounts(accs);
           setBaseCurrency(settings.baseCurrencyCode);
           setRatesMap(rates);
         })
         .catch((err) => {
           // Not the same as "no accounts": tell the user loading failed.
           console.error(err);
+          setAccounts([]);
           setLoadError(`No pudimos cargar tus cuentas. ${getErrorMessage(err)}`);
         });
     }
@@ -93,6 +88,7 @@ export default function AddTransactionModal({
   if (!isOpen) return null;
 
   const selectedCat = CATEGORY_PRESETS.find((c) => c.id === selectedCategory);
+  const selectedAccount = accounts?.find((a) => a.id === accountId) ?? null;
   const accountCurrency = selectedAccount?.currency || 'PEN';
   const currInfo = getCurrencyInfo(accountCurrency);
   const amountNum = parseFloat(amount) || 0;
@@ -146,42 +142,47 @@ export default function AddTransactionModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center animate-fade-in">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-t-3xl lg:rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] animate-slide-up mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black">
-          <h2 className="font-black text-black text-lg">Agregar movimiento</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-black transition-colors"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="w-5 h-5"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+  const isGasto = activeTab === 'gasto';
+  const categories = CATEGORY_PRESETS.filter((c) =>
+    isGasto ? c.id !== 'ingreso' : c.id === 'ingreso' || c.id === 'otros'
+  ).map((c) => ({ label: c.label, icon: c.icon }));
 
-        <div className="px-5 py-4 space-y-4 max-h-[80vh] overflow-y-auto">
-          {/* Tabs */}
-          <div className="flex gap-2">
-            {(['gasto', 'ingreso', 'transferencia'] as TabType[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 rounded-xl border-[2px] text-sm font-black capitalize transition-all ${activeTab === tab ? 'bg-[#FFD43B] border-black text-black' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in lg:items-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative mx-auto w-full max-w-md animate-slide-up rounded-t-[28px] border-[3px] border-black bg-[#FFF9EC] shadow-[6px_6px_0px_rgba(0,0,0,1)] lg:rounded-[28px]">
+        <div className="mx-auto mt-2.5 h-1.5 w-12 rounded-full bg-gray-300 lg:hidden" />
+        <div className="max-h-[88vh] space-y-5 overflow-y-auto px-5 pb-6 pt-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-1 gap-2" role="tablist" aria-label="Tipo de movimiento">
+              {(['gasto', 'ingreso', 'transferencia'] as TabType[]).map((tab) => (
+                <button
+                  key={tab}
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`h-11 flex-1 rounded-2xl border-[3px] px-1 text-[13px] font-black transition-all ${activeTab === tab ? 'border-black bg-[#FFD83D] text-black shadow-[0_3px_0_#111]' : 'border-gray-200 bg-white text-gray-600'}`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-[3px] border-black bg-white text-black"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="h-5 w-5"
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
 
           {activeTab === 'transferencia' ? (
@@ -195,188 +196,74 @@ export default function AddTransactionModal({
             />
           ) : (
             <>
-              {/* Amount with currency */}
-              <div className="flex items-center justify-center gap-2 py-2">
-                <span className="text-3xl font-black text-black">{currInfo.symbol}</span>
-                <input
-                  type="number"
+              <FormHero
+                title={isGasto ? 'Nuevo gasto' : 'Nuevo ingreso'}
+                subtitle={
+                  isGasto
+                    ? 'Registra un gasto y mantén el control de tu dinero.'
+                    : 'Anota lo que recibes y mira crecer tu dinero.'
+                }
+                emoji={isGasto ? '🧾' : '💰'}
+                tone={isGasto ? '#FFD83D' : '#C9F2DA'}
+              />
+              <AccountSelect accounts={accounts} value={accountId} onChange={setAccountId} />
+              <TextField
+                label={isGasto ? 'Nombre del gasto' : 'Nombre del ingreso'}
+                value={name}
+                onChange={setName}
+                placeholder={isGasto ? 'Ej. Almuerzo' : 'Ej. Sueldo'}
+                icon={selectedCat?.icon}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <AmountField
+                  label={`Monto (${currInfo.symbol})`}
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  className="text-4xl font-black text-black bg-transparent border-none outline-none w-40 text-center placeholder-gray-300"
+                  onChange={setAmount}
+                  currency={currInfo.symbol}
                 />
-                <span className="text-sm font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
-                  {accountCurrency}
-                </span>
+                <DateField label="Fecha" value={date} onChange={setDate} />
               </div>
 
-              {/* Equivalent in base currency */}
               {showEquiv && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 text-center">
-                  <p className="text-xs text-blue-600 font-semibold">
+                <div className="rounded-2xl border-2 border-[#111] bg-[#E0EDFF] px-4 py-2.5 text-center">
+                  <p className="text-xs font-bold text-[#111]">
                     Equivalente en {getCurrencyInfo(baseCurrency).name}
                   </p>
-                  <p className="text-base font-bold text-blue-800">
+                  <p className="text-base font-black text-[#111]">
                     ≈ {formatCurrency(baseEquiv, baseCurrency)}
                   </p>
-                  <p className="text-xs text-blue-500 mt-0.5">
+                  <p className="mt-0.5 text-xs font-semibold text-gray-700">
                     1 {accountCurrency} = {formatCurrency(rate, baseCurrency)}
                   </p>
                 </div>
               )}
 
-              {/* Name */}
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Descripción (ej: Almuerzo, Sueldo...)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+              <CategoryChips
+                categories={categories}
+                value={selectedCat?.label ?? ''}
+                onChange={(label) => {
+                  const c = CATEGORY_PRESETS.find((x) => x.label === label);
+                  if (c) setSelectedCategory(c.id);
+                }}
+                initial={8}
               />
+              <NotesField value={note} onChange={setNote} />
 
-              {/* Category */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowCategoryPicker(!showCategoryPicker);
-                    setShowAccountPicker(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 hover:border-black transition-colors"
+              {(loadError || saveError) && (
+                <p
+                  role="alert"
+                  className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]"
                 >
-                  <span className="text-xl">{selectedCat?.icon}</span>
-                  <span className="flex-1 text-left text-sm font-medium text-black">
-                    {selectedCat?.label}
-                  </span>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="w-4 h-4 text-black"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {showCategoryPicker && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-black rounded-xl shadow-lg z-10 p-2 grid grid-cols-2 gap-1 max-h-48 overflow-y-auto">
-                    {CATEGORY_PRESETS.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          setSelectedCategory(cat.id);
-                          setShowCategoryPicker(false);
-                        }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.id ? 'bg-[#FFD43B] text-black font-bold' : 'hover:bg-gray-50 text-black'}`}
-                      >
-                        <span>{cat.icon}</span>
-                        <span>{cat.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Account */}
-              {accounts.length > 0 ? (
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      setShowAccountPicker(!showAccountPicker);
-                      setShowCategoryPicker(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 hover:border-black transition-colors"
-                  >
-                    <span className="text-xl">{selectedAccount?.icon || '🏦'}</span>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium text-black">
-                        {selectedAccount?.name || 'Seleccionar cuenta'}
-                      </p>
-                      {selectedAccount && (
-                        <p className="text-xs text-gray-500">
-                          {getCurrencyInfo(selectedAccount.currency).flag}{' '}
-                          {selectedAccount.currency} ·{' '}
-                          {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
-                        </p>
-                      )}
-                    </div>
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="w-4 h-4 text-black"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  {showAccountPicker && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-black rounded-xl shadow-lg z-10 p-2 space-y-1 max-h-48 overflow-y-auto">
-                      {accounts.map((acc) => {
-                        const ci = getCurrencyInfo(acc.currency);
-                        return (
-                          <button
-                            key={acc.id}
-                            onClick={() => {
-                              setSelectedAccount(acc);
-                              setShowAccountPicker(false);
-                            }}
-                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${selectedAccount?.id === acc.id ? 'bg-[#FFD43B] text-black font-bold' : 'hover:bg-gray-50 text-black'}`}
-                          >
-                            <span>{acc.icon}</span>
-                            <div className="flex-1 text-left">
-                              <p className="font-medium">{acc.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {ci.flag} {acc.currency}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="px-4 py-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-700">
-                  Primero agrega una cuenta en la sección Cuentas
-                </div>
-              )}
-
-              {/* Date */}
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
-              />
-
-              {/* Note */}
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Nota (opcional)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
-              />
-
-              {loadError && (
-                <p role="alert" className="text-sm font-semibold text-red-600">
-                  {loadError}
-                </p>
-              )}
-              {saveError && (
-                <p role="alert" className="text-sm font-semibold text-red-600">
-                  {saveError}
+                  {loadError || saveError}
                 </p>
               )}
 
-              {/* Save */}
-              <button
+              <SubmitButton
                 onClick={handleSave}
                 disabled={!amount || !name || !selectedAccount || saving}
-                className="w-full py-3.5 bg-[#FFD43B] rounded-xl active:scale-98 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
               >
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
+                {saving ? 'Guardando…' : isGasto ? 'Registrar gasto' : 'Registrar ingreso'}
+              </SubmitButton>
             </>
           )}
         </div>

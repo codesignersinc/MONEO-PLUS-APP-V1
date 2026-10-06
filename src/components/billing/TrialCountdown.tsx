@@ -25,10 +25,12 @@ export default function TrialCountdown() {
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
+    // On phones it starts as the small bubble (it would cover the content); tap to open.
+    const phone = window.matchMedia('(max-width: 1023px)').matches;
     try {
-      setMinimized(localStorage.getItem(MIN_KEY) === today());
+      setMinimized(phone || localStorage.getItem(MIN_KEY) === today());
     } catch {
-      setMinimized(false);
+      setMinimized(phone);
     }
   }, []);
 
@@ -75,7 +77,7 @@ export default function TrialCountdown() {
           }
         }}
         aria-label={`MONEO PLUS de prueba: ${label}`}
-        className={`${position} grid h-12 w-12 place-items-center rounded-full border-[3px] border-[#111] text-[15px] font-black shadow-[0_3px_0_#111] ${urgent ? 'bg-[#FF806E] motion-safe:animate-heartbeat' : 'bg-[#FFD83D]'}`}
+        className={`${position} grid h-12 w-12 place-items-center rounded-full border-[3px] border-[#111] text-[15px] font-black text-[#111] shadow-[0_3px_0_#111] ${urgent ? 'bg-[#FF806E] motion-safe:animate-heartbeat' : 'bg-[#FFD83D]'}`}
       >
         {days === 0 ? '!' : days}
       </button>

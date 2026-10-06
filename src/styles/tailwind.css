@@ -35,6 +35,53 @@
   box-sizing: border-box;
 }
 
+/* Form controls: the body text is light (dark landing) and Tailwind makes inputs inherit it,
+   which left white text on white fields. Fields are always light: dark text, gray
+   placeholders, light native widgets (iOS dark mode) and full-width dates on iOS. A text-*
+   class on a field still wins over these. */
+@layer base {
+  input,
+  select,
+  textarea {
+    color: #111111;
+    color-scheme: light;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    -webkit-text-fill-color: currentColor;
+    opacity: 1;
+  }
+  input[type='date'],
+  input[type='time'],
+  input[type='datetime-local'],
+  input[type='month'] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    text-align: left;
+  }
+  input::-webkit-date-and-time-value {
+    text-align: left;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }

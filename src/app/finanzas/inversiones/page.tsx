@@ -330,19 +330,19 @@ export default function InversionesPage() {
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Nombre (ej: Credicorp, Bitcoin)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
               />
               <input
                 type="text"
                 value={form.ticker}
                 onChange={(e) => setForm((f) => ({ ...f, ticker: e.target.value }))}
                 placeholder="Ticker / símbolo (ej: BAP, BTC)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
               />
               <select
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
               >
                 {INVESTMENT_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -358,7 +358,7 @@ export default function InversionesPage() {
                     value={form.shares}
                     onChange={(e) => setForm((f) => ({ ...f, shares: e.target.value }))}
                     placeholder="0"
-                    className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                    className="px-3 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -368,7 +368,7 @@ export default function InversionesPage() {
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                     placeholder="0"
-                    className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                    className="px-3 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -378,7 +378,7 @@ export default function InversionesPage() {
                     value={form.cost}
                     onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))}
                     placeholder="0"
-                    className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                    className="px-3 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                 </div>
               </div>

@@ -50,7 +50,7 @@ const fmtDate = (d: string) => {
 };
 
 const inputClass =
-  'w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors';
+  'w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow';
 const labelClass = 'block text-xs font-black text-black uppercase tracking-wide mb-1.5';
 
 function TypeBadge({ type }: { type: AutoSuggestion['type'] }) {

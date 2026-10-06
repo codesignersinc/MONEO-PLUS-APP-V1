@@ -840,7 +840,7 @@ export default function MovimientosPage() {
                             account: acc?.name || '',
                           }));
                         }}
-                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                        className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                       >
                         <option value="">
                           {editingTx && !editingTx.accountId ? 'Sin cuenta' : 'Elige la cuenta'}
@@ -875,7 +875,7 @@ export default function MovimientosPage() {
                     <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
                       Monto
                     </label>
-                    <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                    <div className="flex items-center gap-2 px-4 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
                       <span className="text-black font-semibold">
                         {
                           getCurrencyInfo(
@@ -913,7 +913,7 @@ export default function MovimientosPage() {
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                     placeholder="Descripción (ej: Almuerzo, Sueldo...)"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                    className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                   {/* Category */}
                   <select
@@ -927,7 +927,7 @@ export default function MovimientosPage() {
                         categoryIcon: cat?.icon || '📦',
                       }));
                     }}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                    className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   >
                     {CATEGORY_PRESETS.map((c) => (
                       <option key={c.id} value={c.label}>
@@ -941,13 +941,13 @@ export default function MovimientosPage() {
                       type="date"
                       value={form.date}
                       onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                      className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                      className="px-3 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                     />
                     <input
                       type="time"
                       value={form.time}
                       onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                      className="px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                      className="px-3 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                     />
                   </div>
                   {/* Notes */}
@@ -956,7 +956,7 @@ export default function MovimientosPage() {
                     value={form.notes}
                     onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                     placeholder="Nota (opcional)"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                    className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                   {formError && (
                     <p role="alert" className="text-sm font-semibold text-red-600">
