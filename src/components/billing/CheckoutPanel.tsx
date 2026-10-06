@@ -4,6 +4,7 @@ import { CreditCard, ExternalLink, Loader2, ShieldCheck, Smartphone, Store } fro
 import { useAuth } from '@/contexts/AuthContext';
 import {
   BillingError,
+  billingService,
   paymentsService,
   rejectionMessage,
   type BillingPlan,
@@ -172,6 +173,7 @@ export default function CheckoutPanel({
           {error}
         </p>
       )}
+      {result?.status !== 'approved' && <RedirectFallback plan={plan} />}
       <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-gray-600">
         <ShieldCheck className="h-4 w-4 shrink-0" /> Procesado por Mercado Pago. MONEO nunca ve ni
         guarda tu tarjeta.
@@ -422,6 +424,40 @@ function CashForm({
       >
         {busy && <Loader2 className="h-5 w-5 animate-spin" />} Generar código de {money(plan.price)}
       </button>
+    </div>
+  );
+}
+
+// Backup: pay on Mercado Pago's own page (its checkout also offers Yape and saved cards).
+function RedirectFallback({ plan }: { plan: BillingPlan }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  return (
+    <div className="mt-3 text-center">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError('');
+          try {
+            track('checkout_started', { plan: plan.code, method: 'redirect' });
+            window.location.href = (await billingService.checkout(plan.code)).url;
+          } catch (err) {
+            setError(
+              err instanceof BillingError
+                ? err.userMessage
+                : new BillingError('unknown').userMessage
+            );
+            setBusy(false);
+          }
+        }}
+        className="inline-flex items-center gap-1.5 text-[13px] font-black text-gray-700 underline disabled:opacity-50"
+      >
+        {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+        ¿Problemas? Pagar en la página de Mercado Pago <ExternalLink className="h-3.5 w-3.5" />
+      </button>
+      {error && <p className="mt-1 text-xs font-black text-[#B42318]">{error}</p>}
     </div>
   );
 }
