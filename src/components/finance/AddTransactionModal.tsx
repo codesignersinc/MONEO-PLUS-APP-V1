@@ -73,6 +73,8 @@ export default function AddTransactionModal({
       ])
         .then(([accs, settings, rates]) => {
           setAccounts(accs);
+          // First registered account preselected; the user can change it.
+          setAccountId(accs[0]?.id ?? '');
           setBaseCurrency(settings.baseCurrencyCode);
           setRatesMap(rates);
         })
@@ -152,7 +154,7 @@ export default function AddTransactionModal({
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative mx-auto w-full max-w-md animate-slide-up rounded-t-[28px] border-[3px] border-black bg-[#FFF9EC] shadow-[6px_6px_0px_rgba(0,0,0,1)] lg:rounded-[28px]">
         <div className="mx-auto mt-2.5 h-1.5 w-12 rounded-full bg-gray-300 lg:hidden" />
-        <div className="max-h-[88vh] space-y-5 overflow-y-auto px-5 pb-6 pt-3">
+        <div className="sheet-max space-y-5 overflow-y-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-1 gap-2" role="tablist" aria-label="Tipo de movimiento">
               {(['gasto', 'ingreso', 'transferencia'] as TabType[]).map((tab) => (

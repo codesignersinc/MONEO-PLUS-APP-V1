@@ -81,6 +81,20 @@ export function AccountAmountFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount]);
 
+  // First registered account preselected once the accounts load; the user can change it.
+  useEffect(() => {
+    if (!accounts?.length || value.accountId) return;
+    const acc = accounts[0];
+    const foreign = (acc.currency || 'PEN') !== baseCurrency;
+    const converted = amount * getRateFromMap(ratesMap, baseCurrency, acc.currency);
+    onChange({
+      accountId: acc.id,
+      foreign,
+      accountAmount: foreign && converted > 0 ? converted.toFixed(2) : '',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts]);
+
   if (loadError) return <LoadError what="tus cuentas" error={loadError} onRetry={load} />;
   if (accounts && accounts.length === 0) {
     return (

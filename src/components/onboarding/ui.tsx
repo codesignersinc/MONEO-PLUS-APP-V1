@@ -31,7 +31,7 @@ export function Shell({
 }) {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[#FFF9EC] font-poppins text-[#111111]">
-      <header className="sticky top-0 z-20 bg-[#FFF9EC]/95 backdrop-blur">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 bg-[#FFF9EC]/95 backdrop-blur">
         <div
           className={`mx-auto flex h-16 w-full items-center gap-3 px-4 ${wide ? 'max-w-5xl' : 'max-w-xl'}`}
         >

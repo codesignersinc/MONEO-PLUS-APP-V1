@@ -87,12 +87,28 @@ html {
 }
 
 body {
+  /* Installed app (iOS status bar "black-translucent"): keep content below the clock. */
+  padding-top: env(safe-area-inset-top);
   background-color: var(--color-void);
   color: var(--color-phosphor);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+/* Sheets and modals: the visible height (dvh excludes Safari's bars), minus the status bar. */
+.sheet-max {
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - env(safe-area-inset-top) - 16px);
+}
+
+/* Horizontal carousels: still scrollable, without the scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Finance app body override */

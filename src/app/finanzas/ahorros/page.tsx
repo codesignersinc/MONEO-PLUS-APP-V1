@@ -315,7 +315,7 @@ export default function AhorrosPage() {
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
-            className="relative bg-[#FAFAF8] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col max-h-[92vh]"
+            className="relative bg-[#FAFAF8] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border-[3px] border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col sheet-max"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { parseBankMessage } from '@/lib/auto';
 import { cleanOcrText } from '@/lib/auto/receipt';
-import { BCP_OCR, BCP_OCR_PASS1, INTERBANK_OCR, YAPE_OCR, YAPE_OCR_PASS1 } from './voucherFixtures';
+import {
+  BCP_OCR,
+  BCP_OCR_NOISY,
+  BCP_OCR_PASS1,
+  INTERBANK_OCR,
+  PLIN_APP_OCR,
+  YAPE_OCR,
+  YAPE_OCR_NOISY,
+  YAPE_OCR_PASS1,
+} from './voucherFixtures';
 
 const now = new Date(2026, 9, 6, 12, 0);
 const read = (text: string) =>
@@ -110,6 +119,35 @@ describe('app vouchers (OCR screenshots)', () => {
   it('a fee or balance line is never taken as the amount', () => {
     expect(read('¡Pago exitoso!\nComisión S/ 1.00\nS/ 80.00\nEnviado a: Luis Paz')).toMatchObject({
       amount: 80,
+    });
+  });
+
+  it('Plin app "Constancia": amount, recipient, date and time', () => {
+    expect(read(PLIN_APP_OCR)).toMatchObject({
+      type: 'gasto',
+      amount: 30,
+      merchant: 'Ana M Soto R',
+      date: '2026-10-05',
+      time: '23:14',
+      operationId: '11223344',
+    });
+  });
+
+  it('noisy phone OCR: misread accents and the amount split from its currency', () => {
+    expect(read(BCP_OCR_NOISY)).toMatchObject({
+      bank: 'bcp',
+      type: 'gasto',
+      amount: 70,
+      date: '2026-06-28',
+      cardLast4: '1234',
+    });
+    expect(read(YAPE_OCR_NOISY)).toMatchObject({
+      bank: 'yape',
+      kind: 'yape_enviado',
+      type: 'gasto',
+      amount: 300,
+      merchant: 'Ana Maria Torres',
+      date: '2026-09-19',
     });
   });
 });

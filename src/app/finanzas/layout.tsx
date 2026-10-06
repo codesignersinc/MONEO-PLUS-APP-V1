@@ -33,7 +33,7 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
           />
           <MobileNav onFabClick={() => setShowModal(true)} />
           <main
-            className={`pb-24 lg:pb-0 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60'}`}
+            className={`pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-0 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60'}`}
           >
             {!loading && user ? (
               children

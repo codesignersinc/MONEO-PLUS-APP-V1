@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight, Calculator, CalendarDays, ChevronDown, FileText, X } from 'lucide-react';
 import BrandLogo from '@/components/finance/BrandLogo';
@@ -346,39 +346,36 @@ const CHIP_TONES = [
   '#FFF1DC',
 ];
 
+// One row that slides sideways (all categories); the chosen one scrolls into view.
 export function CategoryChips({
   categories,
   value,
   onChange,
   label = 'Categoría',
-  initial = 9,
 }: {
   categories: { label: string; icon: string }[];
   value: string;
   onChange: (label: string) => void;
   label?: string;
+  // Kept for callers: every category is in the carousel now.
   initial?: number;
 }) {
-  const [all, setAll] = useState(false);
-  const shown = all ? categories : categories.slice(0, initial);
-  const more = categories.length > initial;
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = row.current;
+    const el = box?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    // Only the row scrolls (sideways), never the form.
+    if (box && el) box.scrollLeft = el.offsetLeft - (box.clientWidth - el.clientWidth) / 2;
+  }, [value]);
   return (
-    <Field
-      label={label}
-      aside={
-        more ? (
-          <button
-            type="button"
-            onClick={() => setAll((a) => !a)}
-            className="font-black text-[#2563EB]"
-          >
-            {all ? 'Ver menos' : 'Ver todas →'}
-          </button>
-        ) : undefined
-      }
-    >
-      <div className="flex flex-wrap gap-2">
-        {shown.map((c, i) => {
+    <Field label={label}>
+      <div
+        ref={row}
+        role="group"
+        aria-label={label}
+        className="no-scrollbar relative -mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-4 px-4 pb-1"
+      >
+        {categories.map((c, i) => {
           const on = c.label === value;
           return (
             <button
@@ -386,7 +383,7 @@ export function CategoryChips({
               type="button"
               onClick={() => onChange(c.label)}
               aria-pressed={on}
-              className={`flex min-h-[46px] items-center gap-2 rounded-2xl border-2 px-3.5 text-[15px] font-black text-[#111] transition-transform active:scale-95 ${on ? 'border-[#111] bg-[#FFD83D] shadow-[0_3px_0_#111]' : 'border-transparent'}`}
+              className={`flex min-h-[46px] shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-2xl border-2 px-3.5 text-[15px] font-black text-[#111] transition-transform active:scale-95 ${on ? 'border-[#111] bg-[#FFD83D] shadow-[0_3px_0_#111]' : 'border-transparent'}`}
               style={on ? undefined : { background: CHIP_TONES[i % CHIP_TONES.length] }}
             >
               <span className="text-xl leading-none">{c.icon}</span>
