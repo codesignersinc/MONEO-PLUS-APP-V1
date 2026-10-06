@@ -1,5 +1,6 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   ArrowDown,
@@ -25,30 +26,97 @@ export interface PeriodState {
   custom: { from: string; to: string };
 }
 
-// Closes a popover on outside click / Escape.
+// Popover state + the element it hangs from.
 function usePopover() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
   return { open, setOpen, ref };
 }
 
-const menuCls =
-  'absolute z-40 mt-2 min-w-[220px] overflow-hidden rounded-2xl border-2 border-[#111] bg-white py-1.5 shadow-[0_4px_0_#111] motion-safe:animate-fade-in';
+// Menus and the date picker render in a layer of their own (portal), so a scrolling or
+// clipped container (the period pills scroll sideways on phones) never cuts them.
+// Desktop: dropdown under the button, kept inside the screen. Phone: bottom sheet.
+function FloatingPanel({
+  open,
+  anchor,
+  onClose,
+  align = 'left',
+  label,
+  role = 'menu',
+  width = 240,
+  children,
+}: {
+  open: boolean;
+  anchor: React.RefObject<HTMLDivElement | null>;
+  onClose: () => void;
+  align?: 'left' | 'right';
+  label: string;
+  role?: 'menu' | 'dialog';
+  width?: number;
+  children: React.ReactNode;
+}) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [sheet, setSheet] = useState(false);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    const place = () => {
+      setSheet(window.innerWidth < 640);
+      const r = anchor.current?.getBoundingClientRect();
+      if (!r) return;
+      const raw = align === 'right' ? r.right - width : r.left;
+      setPos({
+        top: r.bottom + 8,
+        left: Math.max(12, Math.min(raw, window.innerWidth - width - 12)),
+      });
+    };
+    place();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closeRef.current();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, anchor, align, width]);
+
+  if (!open || !pos || typeof document === 'undefined') return null;
+  return createPortal(
+    <>
+      <div
+        aria-hidden
+        onClick={onClose}
+        className={`fixed inset-0 z-[70] ${sheet ? 'bg-black/30' : ''}`}
+      />
+      <div
+        role={role}
+        aria-label={label}
+        className={`fixed z-[71] overflow-auto border-2 border-[#111] bg-white font-poppins text-[#111] shadow-[0_4px_0_#111] motion-safe:animate-fade-in ${
+          sheet
+            ? 'inset-x-0 bottom-0 max-h-[80vh] rounded-t-[24px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-2'
+            : 'max-h-[70vh] rounded-2xl py-1.5'
+        }`}
+        style={sheet ? undefined : { top: pos.top, left: pos.left, width }}
+      >
+        {sheet && <div aria-hidden className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-[#111]/20" />}
+        {children}
+      </div>
+    </>,
+    document.body
+  );
+}
+
 const itemCls =
-  'flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] font-bold hover:bg-[#FFF9EC] focus-visible:bg-[#FFF9EC] focus-visible:outline-none';
+  'flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] font-bold hover:bg-[#FFF9EC] focus-visible:bg-[#FFF9EC] focus-visible:outline-none';
+const dateCls =
+  'mt-1 block h-12 w-full min-w-0 appearance-none rounded-xl border-2 border-[#111] bg-white px-3 text-left text-[15px] font-semibold normal-case tracking-normal text-[#111] [&::-webkit-date-and-time-value]:text-left';
 
 export function SearchBox({ compact }: { compact?: boolean }) {
   const router = useRouter();
@@ -121,9 +189,9 @@ export function PeriodFilter({
     <div
       role="group"
       aria-label="Período"
-      className="flex items-center gap-1 overflow-x-auto rounded-2xl border-2 border-[#111] bg-white p-1"
+      className="flex items-center gap-1 overflow-x-auto rounded-2xl border-2 border-[#111] bg-white p-1 [scrollbar-width:none]"
     >
-      <div ref={months.ref} className="relative">
+      <div ref={months.ref} className="shrink-0">
         <button
           type="button"
           aria-haspopup="menu"
@@ -134,26 +202,32 @@ export function PeriodFilter({
           {value.kind === 'mes' && value.offset !== 0 ? monthLabel(value.offset) : 'Este mes'}
           <ChevronDown className="h-4 w-4" />
         </button>
-        {months.open && (
-          <div role="menu" className={`${menuCls} left-0 max-h-72 overflow-y-auto`}>
-            {Array.from({ length: 12 }, (_, i) => -i).map((off) => (
-              <button
-                key={off}
-                type="button"
-                role="menuitemradio"
-                aria-checked={value.kind === 'mes' && value.offset === off}
-                onClick={() => {
-                  onChange({ ...value, kind: 'mes', offset: off });
-                  months.setOpen(false);
-                }}
-                className={itemCls}
-              >
-                {off === 0 ? 'Este mes' : monthLabel(off)}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
+      <FloatingPanel
+        open={months.open}
+        anchor={months.ref}
+        onClose={() => months.setOpen(false)}
+        label="Elegir mes"
+      >
+        {Array.from({ length: 12 }, (_, i) => -i).map((off) => {
+          const active = value.kind === 'mes' && value.offset === off;
+          return (
+            <button
+              key={off}
+              type="button"
+              role="menuitemradio"
+              aria-checked={active}
+              onClick={() => {
+                onChange({ ...value, kind: 'mes', offset: off });
+                months.setOpen(false);
+              }}
+              className={`${itemCls} ${active ? 'bg-[#FFD83D] hover:bg-[#FFD83D]' : ''}`}
+            >
+              {off === 0 ? 'Este mes' : monthLabel(off)}
+            </button>
+          );
+        })}
+      </FloatingPanel>
       <button
         type="button"
         aria-pressed={value.kind === 'trimestre'}
@@ -170,7 +244,7 @@ export function PeriodFilter({
       >
         Este año
       </button>
-      <div ref={custom.ref} className="relative">
+      <div ref={custom.ref} className="shrink-0">
         <button
           type="button"
           aria-haspopup="dialog"
@@ -184,46 +258,51 @@ export function PeriodFilter({
           <CalendarDays className="h-4 w-4" />
           Personalizado
         </button>
-        {custom.open && (
-          <div
-            role="dialog"
-            aria-label="Elegir fechas"
-            className={`${menuCls} right-0 w-[260px] p-4`}
-          >
-            <label className="block text-xs font-black uppercase tracking-wide">
-              Desde
-              <input
-                type="date"
-                value={draft.from}
-                max={draft.to || undefined}
-                onChange={(e) => setDraft({ ...draft, from: e.target.value })}
-                className="mt-1 h-11 w-full rounded-xl border-2 border-[#111] px-3 text-sm font-semibold"
-              />
-            </label>
-            <label className="mt-3 block text-xs font-black uppercase tracking-wide">
-              Hasta
-              <input
-                type="date"
-                value={draft.to}
-                min={draft.from || undefined}
-                onChange={(e) => setDraft({ ...draft, to: e.target.value })}
-                className="mt-1 h-11 w-full rounded-xl border-2 border-[#111] px-3 text-sm font-semibold"
-              />
-            </label>
-            <button
-              type="button"
-              disabled={!draft.from || !draft.to}
-              onClick={() => {
-                onChange({ kind: 'custom', offset: 0, custom: draft });
-                custom.setOpen(false);
-              }}
-              className="mt-4 h-11 w-full rounded-xl border-2 border-[#111] bg-[#FFD83D] text-sm font-black shadow-[0_2px_0_#111] disabled:opacity-40"
-            >
-              Aplicar
-            </button>
-          </div>
-        )}
       </div>
+      <FloatingPanel
+        open={custom.open}
+        anchor={custom.ref}
+        onClose={() => custom.setOpen(false)}
+        align="right"
+        role="dialog"
+        label="Elegir fechas"
+        width={290}
+      >
+        <div className="px-4 pb-2 pt-2">
+          <p className="mb-3 text-[16px] font-black">Período personalizado</p>
+          <label className="block text-xs font-black uppercase tracking-wide">
+            Desde
+            <input
+              type="date"
+              value={draft.from}
+              max={draft.to || undefined}
+              onChange={(e) => setDraft({ ...draft, from: e.target.value })}
+              className={dateCls}
+            />
+          </label>
+          <label className="mt-3 block text-xs font-black uppercase tracking-wide">
+            Hasta
+            <input
+              type="date"
+              value={draft.to}
+              min={draft.from || undefined}
+              onChange={(e) => setDraft({ ...draft, to: e.target.value })}
+              className={dateCls}
+            />
+          </label>
+          <button
+            type="button"
+            disabled={!draft.from || !draft.to}
+            onClick={() => {
+              onChange({ kind: 'custom', offset: 0, custom: draft });
+              custom.setOpen(false);
+            }}
+            className="mt-4 h-12 w-full rounded-xl border-2 border-[#111] bg-[#FFD83D] text-sm font-black shadow-[0_2px_0_#111] disabled:opacity-40"
+          >
+            Aplicar
+          </button>
+        </div>
+      </FloatingPanel>
     </div>
   );
 }
@@ -239,7 +318,7 @@ const NEW_ITEMS: { id: NewAction; label: string; icon: React.ElementType; tile: 
 export function NewMenu({ onSelect }: { onSelect: (a: NewAction) => void }) {
   const pop = usePopover();
   return (
-    <div ref={pop.ref} className="relative">
+    <div ref={pop.ref} className="shrink-0">
       <button
         type="button"
         aria-haspopup="menu"
@@ -253,30 +332,34 @@ export function NewMenu({ onSelect }: { onSelect: (a: NewAction) => void }) {
         Nuevo
         <ChevronDown className="h-4 w-4" />
       </button>
-      {pop.open && (
-        <div role="menu" className={`${menuCls} right-0`}>
-          {NEW_ITEMS.map((it) => (
-            <button
-              key={it.id}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                pop.setOpen(false);
-                onSelect(it.id);
-              }}
-              className={itemCls}
+      <FloatingPanel
+        open={pop.open}
+        anchor={pop.ref}
+        onClose={() => pop.setOpen(false)}
+        align="right"
+        label="Nuevo"
+      >
+        {NEW_ITEMS.map((it) => (
+          <button
+            key={it.id}
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              pop.setOpen(false);
+              onSelect(it.id);
+            }}
+            className={itemCls}
+          >
+            <span
+              className="grid h-8 w-8 place-items-center rounded-lg border-2 border-[#111]"
+              style={{ background: it.tile }}
             >
-              <span
-                className="grid h-8 w-8 place-items-center rounded-lg border-2 border-[#111]"
-                style={{ background: it.tile }}
-              >
-                <it.icon className="h-4 w-4" strokeWidth={2.6} />
-              </span>
-              {it.label}
-            </button>
-          ))}
-        </div>
-      )}
+              <it.icon className="h-4 w-4" strokeWidth={2.6} />
+            </span>
+            {it.label}
+          </button>
+        ))}
+      </FloatingPanel>
     </div>
   );
 }
@@ -285,7 +368,7 @@ export function UserMenu({ name, onSignOut }: { name: string; onSignOut: () => v
   const pop = usePopover();
   const router = useRouter();
   return (
-    <div ref={pop.ref} className="relative">
+    <div ref={pop.ref} className="shrink-0">
       <button
         type="button"
         aria-haspopup="menu"
@@ -301,26 +384,30 @@ export function UserMenu({ name, onSignOut }: { name: string; onSignOut: () => v
         </span>
         <ChevronDown className="h-4 w-4" />
       </button>
-      {pop.open && (
-        <div role="menu" className={`${menuCls} right-0`}>
-          <button
-            type="button"
-            role="menuitem"
-            className={itemCls}
-            onClick={() => router.push('/finanzas/configuracion')}
-          >
-            <Settings2 className="h-4 w-4" /> Configuración
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className={`${itemCls} text-[#C2321B]`}
-            onClick={onSignOut}
-          >
-            <LogOut className="h-4 w-4" /> Cerrar sesión
-          </button>
-        </div>
-      )}
+      <FloatingPanel
+        open={pop.open}
+        anchor={pop.ref}
+        onClose={() => pop.setOpen(false)}
+        align="right"
+        label="Tu cuenta"
+      >
+        <button
+          type="button"
+          role="menuitem"
+          className={itemCls}
+          onClick={() => router.push('/finanzas/configuracion')}
+        >
+          <Settings2 className="h-4 w-4" /> Configuración
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className={`${itemCls} text-[#C2321B]`}
+          onClick={onSignOut}
+        >
+          <LogOut className="h-4 w-4" /> Cerrar sesión
+        </button>
+      </FloatingPanel>
     </div>
   );
 }
