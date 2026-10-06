@@ -54,6 +54,14 @@ import {
 } from '@/components/finance/formKit';
 import TransferForm from '@/components/finance/TransferForm';
 import {
+  EntryMethodPicker,
+  ImageReader,
+  VoiceReader,
+  type EntryMethod,
+  type Prefill,
+} from '@/components/finance/ExpenseEntry';
+import { usePlus } from '@/contexts/PlusContext';
+import {
   AccountAmountFields,
   EMPTY_ACCOUNT_CHOICE,
   resolveAccountChoice,
@@ -181,7 +189,21 @@ type FormKey = 'gasto' | 'ingreso' | 'pago' | 'suscripcion' | 'transferencia' | 
 
 // ── Inline form components ──────────────────────────────────────────────────
 
+// Maps the interpreter's category (CATEGORY_PRESETS labels) to the quick-add expense ones.
+const EXPENSE_CATEGORY_ALIASES: Record<string, string> = {
+  Supermercado: 'Comida',
+  Vivienda: 'Hogar',
+  Servicios: 'Hogar',
+  Suscripciones: 'Entretenimiento',
+  Otros: 'Otro',
+};
+
 function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const router = useRouter();
+  const { plus } = usePlus();
+  // First "¿Cómo quieres ingresar el gasto?", then the form (pre-filled when read).
+  const [mode, setMode] = useState<'choose' | EntryMethod>('choose');
+  const [notice, setNotice] = useState('');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Comida');
@@ -254,8 +276,59 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
     }
   };
 
+  const applyPrefill = (p: Prefill | null, heard?: string) => {
+    if (p) {
+      if (p.name) setName(p.name.slice(0, 80));
+      if (p.amount) setAmount(p.amount);
+      if (p.date) setDate(p.date);
+      const label = p.category ? (EXPENSE_CATEGORY_ALIASES[p.category] ?? p.category) : null;
+      if (label && EXPENSE_CATEGORIES.some((c) => c.label === label)) handleCat(label);
+      setNotice('Revisa los datos detectados, elige la cuenta y registra.');
+    } else {
+      if (heard) setName(heard.slice(0, 80));
+      setNotice('No encontramos el monto. Complétalo a mano.');
+    }
+    setMode('manual');
+  };
+
+  if (mode === 'choose') {
+    return (
+      <EntryMethodPicker
+        plus={plus}
+        onBack={onClose}
+        onPick={(m) => {
+          setNotice('');
+          setMode(m);
+        }}
+        onLocked={() => router.push('/finanzas/plus')}
+      />
+    );
+  }
+  if (mode === 'scan' || mode === 'image') {
+    return (
+      <ImageReader
+        camera={mode === 'scan'}
+        onDone={(p) => applyPrefill(p)}
+        onCancel={() => setMode('choose')}
+      />
+    );
+  }
+  if (mode === 'voice') {
+    return <VoiceReader onDone={applyPrefill} onCancel={() => setMode('choose')} />;
+  }
+
   return (
-    <FormWrapper title="Nuevo Gasto" emoji="🧾" accentBg="bg-[#fde899]" onClose={onClose}>
+    <FormWrapper
+      title="Nuevo Gasto"
+      emoji="🧾"
+      accentBg="bg-[#fde899]"
+      onClose={() => setMode('choose')}
+    >
+      {notice && (
+        <p className="mb-4 rounded-2xl border-2 border-[#111] bg-[#DDF7E9] px-3 py-2 text-sm font-bold text-[#111]">
+          {notice}
+        </p>
+      )}
       <div className="mb-5">
         <AccountSelect accounts={accounts} value={accountId} onChange={setAccountId} />
       </div>
