@@ -796,7 +796,7 @@ export default function SuscripcionesPage() {
                 <select
                   value={form.category}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white rounded-xl border-[2.5px] border-black text-sm font-bold text-black outline-none focus:ring-2 focus:ring-[#FFD43B] transition-all"
+                  className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                 >
                   {SUB_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -811,14 +811,14 @@ export default function SuscripcionesPage() {
                 <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
                   Monto mensual
                 </label>
-                <div className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl border-[2.5px] border-black focus-within:ring-2 focus-within:ring-[#FFD43B] transition-all">
+                <div className="flex items-center gap-2 px-4 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
                   <span className="text-black font-black text-sm">S/</span>
                   <input
                     type="number"
                     value={form.amount}
                     onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
                     placeholder="0.00"
-                    className="flex-1 bg-transparent text-sm font-black text-black outline-none"
+                    className="flex-1 min-w-0 bg-transparent text-[16px] font-black text-[#111] outline-none"
                   />
                 </div>
               </div>
@@ -832,7 +832,7 @@ export default function SuscripcionesPage() {
                   type="date"
                   value={form.nextPaymentDate}
                   onChange={(e) => setForm((f) => ({ ...f, nextPaymentDate: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white rounded-xl border-[2.5px] border-black text-sm font-bold text-black outline-none focus:ring-2 focus:ring-[#FFD43B] transition-all"
+                  className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                 />
                 <p className="text-xs font-medium text-gray-500 mt-1">
                   El día del mes se usará para los cobros recurrentes

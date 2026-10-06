@@ -557,14 +557,14 @@ export default function CuentasPage() {
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                     placeholder="Nombre de la cuenta (ej: BCP Ahorros)"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                    className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                   <input
                     type="text"
                     value={form.institution}
                     onChange={(e) => setForm((f) => ({ ...f, institution: e.target.value }))}
                     placeholder="Institución (ej: BCP, Interbank, Yape)"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                    className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                   {!editingAcc && (
                     <button
@@ -623,7 +623,7 @@ export default function CuentasPage() {
                       <select
                         value={form.currency}
                         onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
-                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                        className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                       >
                         {CURRENCIES.map((c) => (
                           <option key={c.code} value={c.code}>
@@ -642,7 +642,7 @@ export default function CuentasPage() {
                   {!editingAcc && (
                     <p className="text-sm font-bold text-gray-700">¿Cuál es el saldo actual?</p>
                   )}
-                  <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                  <div className="flex items-center gap-2 px-4 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
                     <span className="text-gray-500 font-semibold text-sm">
                       {getCurrencyInfo(form.currency).symbol}
                     </span>
@@ -651,7 +651,7 @@ export default function CuentasPage() {
                       value={form.balance}
                       onChange={(e) => setForm((f) => ({ ...f, balance: e.target.value }))}
                       placeholder="0.00"
-                      className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
+                      className="flex-1 min-w-0 bg-transparent text-[16px] font-bold text-[#111] outline-none"
                     />
                     <span className="text-xs text-gray-500 font-semibold">{form.currency}</span>
                   </div>

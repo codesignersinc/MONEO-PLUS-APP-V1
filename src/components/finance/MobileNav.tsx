@@ -40,6 +40,18 @@ import { getErrorMessage } from '@/lib/dataError';
 import { buildCurrencyFields, getRateFromMap } from '@/lib/currency';
 import { getFxContext } from '@/lib/supabaseCurrency';
 import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
+import {
+  AccountSelect,
+  AmountField,
+  CategoryChips,
+  DateField,
+  FIELD,
+  FormHero,
+  LABEL,
+  NotesField,
+  SubmitButton,
+  TextField,
+} from '@/components/finance/formKit';
 import TransferForm from '@/components/finance/TransferForm';
 import {
   AccountAmountFields,
@@ -244,27 +256,8 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
 
   return (
     <FormWrapper title="Nuevo Gasto" emoji="🧾" accentBg="bg-[#fde899]" onClose={onClose}>
-      <div className="mb-3">
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Cuenta</label>
-        {accounts && accounts.length === 0 ? (
-          <p className="mt-1 text-xs font-semibold text-amber-700">
-            Primero agrega una cuenta en la sección Cuentas.
-          </p>
-        ) : (
-          <select
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            disabled={!accounts}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none bg-white"
-          >
-            <option value="">{accounts ? 'Elige la cuenta' : 'Cargando cuentas…'}</option>
-            {accounts?.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name} ({a.currency})
-              </option>
-            ))}
-          </select>
-        )}
+      <div className="mb-5">
+        <AccountSelect accounts={accounts} value={accountId} onChange={setAccountId} />
       </div>
       <FormFields
         name={name}
@@ -282,7 +275,6 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
         saving={saving}
         onSave={handleSave}
         saveLabel="Registrar gasto"
-        saveBg="bg-[#F5C518] text-black"
       />
     </FormWrapper>
   );
@@ -348,30 +340,28 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
 
   return (
     <FormWrapper title="Nuevo Ingreso" emoji="➕" accentBg="bg-[#e1c2fd]" onClose={onClose}>
-      <div className="space-y-3">
+      <div className="space-y-5">
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
+          <label className={LABEL}>Nombre</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ej. Sueldo enero"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Monto (S/)
-          </label>
+          <label className={LABEL}>Monto (S/)</label>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Estado</label>
+          <label className={LABEL}>Estado</label>
           <div className="mt-1 flex gap-2">
             {(['cobrado', 'pendiente'] as const).map((s) => (
               <button
@@ -390,50 +380,37 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
             value={choice}
             onChange={setChoice}
             label="Cuenta donde cobraste"
-            selectClassName="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none bg-white"
+            selectClassName={FIELD}
           />
         )}
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Fecha de cobro
-          </label>
+          <label className={LABEL}>Fecha de cobro</label>
           <input
             type="date"
             value={collectionDate}
             onChange={(e) => setCollectionDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+            className={FIELD}
           />
         </div>
+        <CategoryChips categories={INCOME_CATEGORIES} value={category} onChange={handleCat} />
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Categoría
-          </label>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {INCOME_CATEGORIES.map((c) => (
-              <button
-                key={c.label}
-                onClick={() => handleCat(c.label)}
-                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}
-              >
-                {c.icon} {c.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Notas</label>
+          <label className={LABEL}>Notas</label>
           <input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Opcional"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-purple-400 bg-white"
+            className={FIELD}
           />
         </div>
-        {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
+        {error && (
+          <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
+            {error}
+          </p>
+        )}
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#C084FC] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+          className="flex h-16 w-full items-center justify-center rounded-2xl border-[3px] border-[#111] bg-[#C084FC] text-black text-[19px] font-black shadow-[0_5px_0_#111] transition-transform active:translate-y-1 active:shadow-[0_1px_0_#111] disabled:opacity-60"
         >
           {saving ? 'Guardando…' : 'Registrar ingreso'}
         </button>
@@ -505,30 +482,28 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
 
   return (
     <FormWrapper title="Nuevo Pago" emoji="📅" accentBg="bg-[#ffd5cc]" onClose={onClose}>
-      <div className="space-y-3">
+      <div className="space-y-5">
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
+          <label className={LABEL}>Nombre</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ej. Alquiler"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Monto (S/)
-          </label>
+          <label className={LABEL}>Monto (S/)</label>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Estado</label>
+          <label className={LABEL}>Estado</label>
           <div className="mt-1 flex gap-2">
             {(['pendiente', 'pagado'] as const).map((s) => (
               <button
@@ -547,50 +522,37 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
             value={choice}
             onChange={setChoice}
             label="Cuenta desde la que pagaste"
-            selectClassName="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none bg-white"
+            selectClassName={FIELD}
           />
         )}
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Fecha de pago
-          </label>
+          <label className={LABEL}>Fecha de pago</label>
           <input
             type="date"
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+            className={FIELD}
           />
         </div>
+        <CategoryChips categories={PAGO_CATEGORIES} value={category} onChange={handleCat} />
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Categoría
-          </label>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {PAGO_CATEGORIES.map((c) => (
-              <button
-                key={c.label}
-                onClick={() => handleCat(c.label)}
-                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}
-              >
-                {c.icon} {c.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Notas</label>
+          <label className={LABEL}>Notas</label>
           <input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Opcional"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-red-400 bg-white"
+            className={FIELD}
           />
         </div>
-        {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
+        {error && (
+          <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
+            {error}
+          </p>
+        )}
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#F87171] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+          className="flex h-16 w-full items-center justify-center rounded-2xl border-[3px] border-[#111] bg-[#F87171] text-black text-[19px] font-black shadow-[0_5px_0_#111] transition-transform active:translate-y-1 active:shadow-[0_1px_0_#111] disabled:opacity-60"
         >
           {saving ? 'Guardando…' : 'Registrar pago'}
         </button>
@@ -639,41 +601,37 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
 
   return (
     <FormWrapper title="Nueva Suscripción" emoji="📺" accentBg="bg-[#bfdbfe]" onClose={onClose}>
-      <div className="space-y-3">
+      <div className="space-y-5">
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
+          <label className={LABEL}>Nombre</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ej. Netflix"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Monto mensual (S/)
-          </label>
+          <label className={LABEL}>Monto mensual (S/)</label>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Próximo pago
-          </label>
+          <label className={LABEL}>Próximo pago</label>
           <input
             type="date"
             value={nextPaymentDate}
             onChange={(e) => setNextPaymentDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-blue-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ícono</label>
+          <label className={LABEL}>Ícono</label>
           <div className="mt-1 flex flex-wrap gap-2">
             {['🎬', '🎵', '📡', '☁️', '📱', '🎮', '📚', '🔄'].map((ic) => (
               <button
@@ -686,11 +644,15 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
             ))}
           </div>
         </div>
-        {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
+        {error && (
+          <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
+            {error}
+          </p>
+        )}
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#3B82F6] text-white font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+          className="flex h-16 w-full items-center justify-center rounded-2xl border-[3px] border-[#111] bg-[#3B82F6] text-white text-[19px] font-black shadow-[0_5px_0_#111] transition-transform active:translate-y-1 active:shadow-[0_1px_0_#111] disabled:opacity-60"
         >
           {saving ? 'Guardando…' : 'Registrar suscripción'}
         </button>
@@ -746,57 +708,49 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
 
   return (
     <FormWrapper title="Nueva Meta de Ahorro" emoji="🐷" accentBg="bg-[#BBF7D0]" onClose={onClose}>
-      <div className="space-y-3">
+      <div className="space-y-5">
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Nombre de la meta
-          </label>
+          <label className={LABEL}>Nombre de la meta</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ej. Fondo de emergencia"
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-              Meta (S/)
-            </label>
+            <label className={LABEL}>Meta (S/)</label>
             <input
               type="number"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
               placeholder="0.00"
-              className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+              className={FIELD}
             />
           </div>
           <div className="flex-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-              Ya tengo (S/)
-            </label>
+            <label className={LABEL}>Ya tengo (S/)</label>
             <input
               type="number"
               value={current}
               onChange={(e) => setCurrent(e.target.value)}
               placeholder="0.00"
-              className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+              className={FIELD}
             />
           </div>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Fecha objetivo
-          </label>
+          <label className={LABEL}>Fecha objetivo</label>
           <input
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-green-400 bg-white"
+            className={FIELD}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ícono</label>
+          <label className={LABEL}>Ícono</label>
           <div className="mt-1 flex flex-wrap gap-2">
             {GOAL_ICONS.map((ic) => (
               <button
@@ -809,11 +763,15 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
             ))}
           </div>
         </div>
-        {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
+        {error && (
+          <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
+            {error}
+          </p>
+        )}
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 rounded-xl border-2 border-black bg-[#22C55E] text-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50"
+          className="flex h-16 w-full items-center justify-center rounded-2xl border-[3px] border-[#111] bg-[#22C55E] text-black text-[19px] font-black shadow-[0_5px_0_#111] transition-transform active:translate-y-1 active:shadow-[0_1px_0_#111] disabled:opacity-60"
         >
           {saving ? 'Guardando…' : 'Crear meta de ahorro'}
         </button>
@@ -823,6 +781,15 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
 }
 
 // ── Shared sub-components ───────────────────────────────────────────────────
+
+const FORM_SUBTITLES: Record<string, string> = {
+  'Nuevo Gasto': 'Registra un gasto y mantén el control de tu dinero.',
+  'Nuevo Ingreso': 'Anota lo que cobras o lo que te deben pagar.',
+  'Nuevo Pago': 'Programa un pago y te avisamos antes.',
+  'Nueva Suscripción': 'Ten a la vista tus cobros mensuales.',
+  'Nueva Transferencia': 'Mueve dinero entre tus cuentas.',
+  'Nueva Meta de Ahorro': 'Ponle nombre y fecha a lo que quieres lograr.',
+};
 
 function FormWrapper({
   title,
@@ -837,23 +804,22 @@ function FormWrapper({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const tone = accentBg.match(/#[0-9a-fA-F]{6}/)?.[0] ?? '#FFD83D';
   return (
     <div className="px-4 pb-8">
-      {/* back button */}
       <button
         onClick={onClose}
-        className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 mb-4 hover:text-black transition-colors"
+        className="mb-4 flex items-center gap-1.5 text-[17px] font-black text-[#111]"
       >
-        <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
+        <ChevronLeft className="h-5 w-5" strokeWidth={2.8} />
         Volver
       </button>
-      {/* form header */}
-      <div
-        className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-black mb-5 ${accentBg}`}
-      >
-        <span className="text-2xl">{emoji}</span>
-        <h3 className="text-lg font-black text-black">{title}</h3>
-      </div>
+      <FormHero
+        title={title.charAt(0) + title.slice(1).toLowerCase()}
+        subtitle={FORM_SUBTITLES[title] ?? ''}
+        emoji={emoji}
+        tone={tone}
+      />
       {children}
     </div>
   );
@@ -875,7 +841,6 @@ function FormFields({
   saving,
   onSave,
   saveLabel,
-  saveBg,
   hideCategories,
 }: {
   name: string;
@@ -893,76 +858,33 @@ function FormFields({
   saving: boolean;
   onSave: () => void;
   saveLabel: string;
-  saveBg: string;
   hideCategories?: boolean;
 }) {
   return (
-    <div className="space-y-3">
-      <div>
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nombre</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ej. Almuerzo"
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
-        />
-      </div>
-      <div>
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-          Monto (S/)
-        </label>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.00"
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
-        />
-      </div>
-      <div>
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Fecha</label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
-        />
+    <div className="space-y-5">
+      <TextField
+        label="Nombre del gasto"
+        value={name}
+        onChange={setName}
+        placeholder="Ej. Almuerzo"
+        icon={categories.find((c) => c.label === category)?.icon}
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <AmountField label="Monto (S/)" value={amount} onChange={setAmount} />
+        <DateField label="Fecha" value={date} onChange={setDate} />
       </div>
       {!hideCategories && categories.length > 0 && (
-        <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-            Categoría
-          </label>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {categories.map((c) => (
-              <button
-                key={c.label}
-                onClick={() => onCategoryChange(c.label)}
-                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition-all ${category === c.label ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-600'}`}
-              >
-                {c.icon} {c.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CategoryChips categories={categories} value={category} onChange={onCategoryChange} />
       )}
-      <div>
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Notas</label>
-        <input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Opcional"
-          className="mt-1 w-full px-3 py-2.5 border-2 border-black rounded-xl text-sm font-medium outline-none focus:border-yellow-400 bg-white"
-        />
-      </div>
-      {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
-      <button
-        onClick={onSave}
-        disabled={saving}
-        className={`w-full py-3 rounded-xl border-2 border-black font-black text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 transition-all disabled:opacity-50 ${saveBg}`}
-      >
+      <NotesField value={notes} onChange={setNotes} />
+      {error && (
+        <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
+          {error}
+        </p>
+      )}
+      <SubmitButton onClick={onSave} disabled={saving} tone="#FFD83D">
         {saving ? 'Guardando…' : saveLabel}
-      </button>
+      </SubmitButton>
     </div>
   );
 }

@@ -398,7 +398,7 @@ export default function IngresosPage() {
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Ej: Sueldo enero, Proyecto freelance..."
-                  className="w-full px-4 py-3 bg-gray-50 border-[2px] border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                  className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                 />
               </div>
 
@@ -414,7 +414,7 @@ export default function IngresosPage() {
                   placeholder="0.00"
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-3 bg-gray-50 border-[2px] border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                  className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                 />
               </div>
 
@@ -451,7 +451,7 @@ export default function IngresosPage() {
                   type="date"
                   value={form.collectionDate}
                   onChange={(e) => setForm((f) => ({ ...f, collectionDate: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 border-[2px] border-gray-200 rounded-xl text-sm text-black outline-none focus:border-black transition-colors"
+                  className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                 />
                 <p className="text-[11px] text-black mt-1">Fecha en que recibirás este ingreso</p>
               </div>
@@ -491,7 +491,7 @@ export default function IngresosPage() {
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                   placeholder="Detalles adicionales..."
                   rows={2}
-                  className="w-full px-4 py-3 bg-gray-50 border-[2px] border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow resize-none"
                 />
               </div>
             </div>

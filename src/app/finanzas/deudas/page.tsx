@@ -387,19 +387,19 @@ export default function DeudasPage() {
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Nombre (ej: Tarjeta BCP Visa)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
               />
               <input
                 type="text"
                 value={form.institution}
                 onChange={(e) => setForm((f) => ({ ...f, institution: e.target.value }))}
                 placeholder="Institución (ej: BCP, Interbank)"
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black placeholder-gray-400 outline-none focus:border-black transition-colors"
+                className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
               />
               <select
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors"
+                className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
               >
                 {DEBT_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -408,36 +408,36 @@ export default function DeudasPage() {
                 ))}
               </select>
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                <div className="flex items-center gap-2 px-3 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
                   <span className="text-gray-500 text-xs">Saldo S/</span>
                   <input
                     type="number"
                     value={form.balance}
                     onChange={(e) => setForm((f) => ({ ...f, balance: e.target.value }))}
                     placeholder="0"
-                    className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
+                    className="flex-1 min-w-0 bg-transparent text-[16px] font-bold text-[#111] outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                <div className="flex items-center gap-2 px-3 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
                   <span className="text-gray-500 text-xs">Límite S/</span>
                   <input
                     type="number"
                     value={form.limit}
                     onChange={(e) => setForm((f) => ({ ...f, limit: e.target.value }))}
                     placeholder="0"
-                    className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
+                    className="flex-1 min-w-0 bg-transparent text-[16px] font-bold text-[#111] outline-none"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 focus-within:border-black">
+                <div className="flex items-center gap-2 px-3 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
                   <span className="text-gray-500 text-xs">Pago S/</span>
                   <input
                     type="number"
                     value={form.monthlyPayment}
                     onChange={(e) => setForm((f) => ({ ...f, monthlyPayment: e.target.value }))}
                     placeholder="0"
-                    className="flex-1 bg-transparent text-sm font-semibold text-black outline-none"
+                    className="flex-1 min-w-0 bg-transparent text-[16px] font-bold text-[#111] outline-none"
                   />
                 </div>
                 <input
