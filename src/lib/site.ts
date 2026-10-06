@@ -16,3 +16,8 @@ export const SITE = {
     linkedin: null as string | null,
   },
 };
+
+// Where "Crear cuenta / Comenzar" leads: the new onboarding (/empezar) once
+// NEXT_PUBLIC_ONBOARDING_V2=true, otherwise the classic sign-up form.
+export const SIGNUP_HREF =
+  process.env.NEXT_PUBLIC_ONBOARDING_V2 === 'true' ? '/empezar' : '/register';

@@ -24,6 +24,7 @@ import {
 import { FaqItem, Reveal, TrackLink } from './client';
 import { GooglePlayBadge, WebBadge } from './PlayBadge';
 import { C, Phone, SectionTitle, SoonBadge, Star, btnPrimary } from './ui';
+import { SIGNUP_HREF } from '@/lib/site';
 
 const wrap = 'mx-auto max-w-6xl px-4 sm:px-6';
 
@@ -444,7 +445,7 @@ export function Pricing() {
               ))}
             </ul>
             <TrackLink
-              href="/register"
+              href={SIGNUP_HREF}
               event="pricing_click"
               eventProps={{ plan: 'gratis' }}
               className={`${btnPrimary} mt-8 w-full`}

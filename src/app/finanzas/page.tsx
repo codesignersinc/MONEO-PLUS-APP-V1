@@ -41,6 +41,8 @@ import BrandLogo from '@/components/finance/BrandLogo';
 import { useDataChanged } from '@/lib/dataSync';
 import WelcomeModal from '@/components/finance/WelcomeModal';
 import { hasSeenWelcome, markWelcomeSeen } from '@/lib/onboarding';
+import { ONBOARDING_V2 } from '@/lib/onboardingFlow';
+import { track } from '@/lib/analytics';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -434,10 +436,20 @@ export default function DashboardPage() {
     (goToAccounts: boolean) => {
       setWelcomeClosed(true);
       if (user) markWelcomeSeen(user.id).catch((err) => console.error(err));
-      if (goToAccounts) router.push('/finanzas/cuentas?nueva=1');
+      if (goToAccounts)
+        router.push(ONBOARDING_V2 ? '/empezar?paso=dinero' : '/finanzas/cuentas?nueva=1');
     },
     [user, router]
   );
+
+  // Arrival from the onboarding (/finanzas?bienvenida=1): a small contextual welcome.
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('bienvenida') !== '1') return;
+    setArrived(true);
+    track('dashboard_first_view');
+    router.replace('/finanzas');
+  }, [router]);
 
   if (loadError)
     return (
@@ -580,6 +592,25 @@ export default function DashboardPage() {
 
   return (
     <>
+      {arrived && (
+        <div
+          role="status"
+          className="fixed inset-x-4 bottom-28 z-[55] mx-auto max-w-sm rounded-3xl border-[3px] border-black bg-[#FFD83D] p-4 shadow-[5px_5px_0_#111] motion-safe:animate-slide-up lg:bottom-8"
+        >
+          <button
+            type="button"
+            onClick={() => setArrived(false)}
+            aria-label="Cerrar"
+            className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full border-2 border-black bg-white text-sm font-black"
+          >
+            ✕
+          </button>
+          <p className="pr-8 font-poppins text-lg font-black">¡Bienvenido a tu MONEO! 🐒</p>
+          <p className="mt-1 text-sm font-semibold">
+            Este es tu dinero. Registra tu primer movimiento con el botón «+».
+          </p>
+        </div>
+      )}
       {showWelcome && (
         <WelcomeModal onStart={() => closeWelcome(true)} onLater={() => closeWelcome(false)} />
       )}

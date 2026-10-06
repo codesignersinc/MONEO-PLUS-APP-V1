@@ -17,6 +17,30 @@ export type LandingEvent =
   | 'faq_open'
   | 'google_play_click';
 
+// Onboarding / MONEO PLUS funnel. Properties are ids and plan codes only, never
+// amounts, balances, account names or bank data.
+export type OnboardingEvent =
+  | 'onboarding_started'
+  | 'goal_selected'
+  | 'expense_category_selected'
+  | 'registration_method_selected'
+  | 'financial_goal_selected'
+  | 'paywall_viewed'
+  | 'plan_selected'
+  | 'checkout_started'
+  | 'trial_started'
+  | 'subscription_started'
+  | 'lifetime_purchased'
+  | 'founder_purchased'
+  | 'payment_failed'
+  | 'account_created'
+  | 'bank_selection_started'
+  | 'bank_selected'
+  | 'first_account_created'
+  | 'notifications_enabled'
+  | 'onboarding_completed'
+  | 'dashboard_first_view';
+
 type Props = Record<string, string | number | boolean>;
 
 interface AnalyticsWindow extends Window {
@@ -24,7 +48,7 @@ interface AnalyticsWindow extends Window {
   plausible?: (name: string, options?: { props?: Props }) => void;
 }
 
-export function track(event: LandingEvent, props: Props = {}): void {
+export function track(event: LandingEvent | OnboardingEvent, props: Props = {}): void {
   if (typeof window === 'undefined') return;
   const w = window as AnalyticsWindow;
   try {
