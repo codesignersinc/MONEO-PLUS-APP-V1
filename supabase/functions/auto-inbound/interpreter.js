@@ -36,6 +36,9 @@ var MONTHS = {
 function normalizeText(text) {
   return text.replace(/\r\n?/g, "\n").replace(/[\u00a0\u2007\u202f\t]/g, " ").split("\n").map((l) => l.replace(/ {2,}/g, " ").trim()).filter((l, i, arr) => l !== "" || i > 0 && arr[i - 1] !== "").join("\n").trim();
 }
+function stripBoldMarkers(text) {
+  return text.replace(/(^|\s)\*(?=[^\s*])/g, "$1").replace(/(?<=[^\s*])\*(?=\s|[.,;:)]|$)/gm, "");
+}
 function flatten(text) {
   return normalizeText(text).replace(/\n+/g, " ");
 }
@@ -193,7 +196,7 @@ function merchantFields(raw) {
   return { merchant, suggestedCategory: suggestCategory(merchant, raw) };
 }
 function personName(raw) {
-  return raw.replace(/\*/g, "").replace(/\s+/g, " ").trim().toLowerCase().replace(/(^|\s)([a-záéíóúñ])/g, (_, s, c) => s + c.toUpperCase());
+  return raw.replace(/\s*[-_=]{3,}.*$/, "").replace(/\*/g, "").replace(/\s+/g, " ").trim().toLowerCase().replace(/(^|\s)([a-záéíóúñ])/g, (_, s, c) => s + c.toUpperCase());
 }
 
 // src/lib/auto/banks/bcp.ts
@@ -350,7 +353,7 @@ function between(flat, label, stop) {
   const m = flat.match(new RegExp(`${label.source}\\s*:?\\s*(.+?)\\s*(?=${stop.source}|$)`, "i"));
   return m ? m[1].trim() : null;
 }
-var STOPS = /Yapero|Tu n[uú]mero|N[uú]mero de celular|Fecha y hora|Celular del|Nombre del|N[º°o]\.? de operaci|Detalle del servicio|Empresa|Servicio|C[oó]digo de usuario|Titular|Resuelve/;
+var STOPS = /-{3,}|Yapero|Tu n[uú]mero|N[uú]mero de celular|Fecha y hora|Celular del|Nombre del|N[º°o]\.? de operaci|Detalle del servicio|Empresa|Servicio|C[oó]digo de usuario|Titular|Resuelve/;
 var parseYape = (msg) => {
   const flat = flatten(`${msg.subject ?? ""}
 ${msg.text}`);
@@ -599,8 +602,9 @@ function bankForApp(sender) {
   if (/plin/.test(s)) return "plin";
   return null;
 }
-function parseBankMessage(msg) {
-  if (!msg.text?.trim()) return null;
+function parseBankMessage(input) {
+  if (!input.text?.trim()) return null;
+  const msg = { ...input, text: stripBoldMarkers(input.text) };
   let candidates;
   if (msg.source === "email") {
     const bank = bankForEmail(msg.sender);

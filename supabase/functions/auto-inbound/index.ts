@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
 
   const from = String((body.FromFull as Row | undefined)?.Email ?? body.From ?? '');
   const subject = String(body.Subject ?? '');
-  let text = String(body.TextBody || '') || htmlToText(String(body.HtmlBody ?? ''));
+  const text = String(body.TextBody || '') || htmlToText(String(body.HtmlBody ?? ''));
 
   // Gmail forwarding confirmation: keep only the numeric code.
   if (/forwarding-noreply@google\.com/i.test(from)) {
@@ -146,18 +146,34 @@ Deno.serve(async (req) => {
     return done(code ? 'gmail-code' : 'gmail-no-code');
   }
 
-  let sender = from;
-  if (!bankForEmail(sender)) {
-    const fwd = unwrapForward(text);
-    if (!fwd || !bankForEmail(fwd.sender)) return done('sender-not-allowed');
-    sender = fwd.sender;
-    text = fwd.body;
-  }
-
   // Interpret in Lima time (the bundle reads local date/time; Deno runs in UTC).
   const sentAt = Date.parse(String(body.Date ?? '')) || now.getTime();
   const receivedAt = new Date(sentAt - 5 * 3600 * 1000);
-  const parsed = parseBankMessage({ source: 'email', sender, subject, text, receivedAt });
+
+  // Try the plain-text body first and the HTML version as a fallback. A hand-forwarded
+  // email is unwrapped to its original bank sender and body.
+  const interpret = (raw: string) => {
+    let sender = from;
+    let content = raw;
+    if (!bankForEmail(sender)) {
+      const fwd = unwrapForward(raw);
+      if (!fwd || !bankForEmail(fwd.sender)) return { allowed: false, parsed: null };
+      sender = fwd.sender;
+      content = fwd.body;
+    }
+    return {
+      allowed: true,
+      parsed: parseBankMessage({ source: 'email', sender, subject, text: content, receivedAt }),
+    };
+  };
+  const html = String(body.HtmlBody ?? '');
+  let attempt = interpret(text);
+  if (!attempt.parsed && html) {
+    const fromHtml = interpret(htmlToText(html));
+    if (fromHtml.allowed || !attempt.allowed) attempt = fromHtml;
+  }
+  if (!attempt.allowed) return done('sender-not-allowed');
+  const parsed = attempt.parsed;
   if (!parsed) return done('not-recognized');
 
   const { data: near } = await admin

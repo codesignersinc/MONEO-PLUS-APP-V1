@@ -25,6 +25,7 @@ export function merchantFields(raw: string) {
 // Person names in Yape/Plin are sometimes cut with "*" ("Violeta Rey*").
 export function personName(raw: string): string {
   return raw
+    .replace(/\s*[-_=]{3,}.*$/, '') // separator lines that follow in plain-text emails
     .replace(/\*/g, '')
     .replace(/\s+/g, ' ')
     .trim()

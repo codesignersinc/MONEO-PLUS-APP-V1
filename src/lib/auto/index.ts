@@ -9,6 +9,7 @@ import { parseBbva } from './banks/bbva';
 import { parseInterbank } from './banks/interbank';
 import { parseYape } from './banks/yape';
 import { sameMerchant } from './merchant';
+import { stripBoldMarkers } from './normalize';
 import { parseFreeText } from './freeText';
 import { parseReceipt } from './receipt';
 
@@ -55,8 +56,9 @@ export function bankForApp(sender: string | undefined): BankId | null {
   return null;
 }
 
-export function parseBankMessage(msg: BankMessage): ParsedMovement | null {
-  if (!msg.text?.trim()) return null;
+export function parseBankMessage(input: BankMessage): ParsedMovement | null {
+  if (!input.text?.trim()) return null;
+  const msg = { ...input, text: stripBoldMarkers(input.text) };
   let candidates: BankParser[];
   if (msg.source === 'email') {
     const bank = bankForEmail(msg.sender);

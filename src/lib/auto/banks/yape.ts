@@ -8,7 +8,7 @@ function between(flat: string, label: RegExp, stop: RegExp): string | null {
 }
 
 const STOPS =
-  /Yapero|Tu n[uú]mero|N[uú]mero de celular|Fecha y hora|Celular del|Nombre del|N[º°o]\.? de operaci|Detalle del servicio|Empresa|Servicio|C[oó]digo de usuario|Titular|Resuelve/;
+  /-{3,}|Yapero|Tu n[uú]mero|N[uú]mero de celular|Fecha y hora|Celular del|Nombre del|N[º°o]\.? de operaci|Detalle del servicio|Empresa|Servicio|C[oó]digo de usuario|Titular|Resuelve/;
 
 // Yape: payment received (notification), yapeo sent and service paid (emails).
 // The security code, phone numbers, service account and receipt numbers are never read.

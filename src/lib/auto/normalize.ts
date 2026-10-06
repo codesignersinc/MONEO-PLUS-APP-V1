@@ -46,6 +46,13 @@ export function normalizeText(text: string): string {
     .trim();
 }
 
+// Gmail's plain-text version of a forwarded email marks bold text with asterisks
+// ("consumo de *S/ 2.99* con tu *Tarjeta*"). Removes those markers but keeps card masks
+// ("****1997") and merchant separators ("IZI*YOPO", "BENVID*0056604").
+export function stripBoldMarkers(text: string): string {
+  return text.replace(/(^|\s)\*(?=[^\s*])/g, '$1').replace(/(?<=[^\s*])\*(?=\s|[.,;:)]|$)/gm, '');
+}
+
 // Single-line version, for regexes that may span what were separate lines.
 export function flatten(text: string): string {
   return normalizeText(text).replace(/\n+/g, ' ');
