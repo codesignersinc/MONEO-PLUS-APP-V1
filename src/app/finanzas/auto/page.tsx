@@ -29,7 +29,7 @@ import {
 import { accountsService } from '@/lib/supabaseFinance';
 import { formatCurrency, getCurrencyInfo } from '@/lib/currency';
 import { getErrorMessage } from '@/lib/dataError';
-import { notifyDataChanged, useDataChanged } from '@/lib/dataSync';
+import { notifyDataChanged, useAutoSuggestion, useDataChanged } from '@/lib/dataSync';
 import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
 
 const BANK_LABEL: Record<string, string> = {
@@ -108,18 +108,23 @@ export default function MoneoAutoPage() {
     load();
   }, [load]);
 
-  // Forwarded emails arrive in the background: refresh the inbox while the page is visible.
+  // Forwarded emails arrive in the background: AutoLiveListener (Realtime) signals each new
+  // suggestion and app refocus; a slow poll covers a dropped socket.
+  const refreshItems = useCallback(() => {
+    autoService
+      .list()
+      .then(setItems)
+      .catch(() => {});
+  }, []);
+
+  useAutoSuggestion(refreshItems);
+
   useEffect(() => {
     const id = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        autoService
-          .list()
-          .then(setItems)
-          .catch(() => {});
-      }
-    }, 30000);
+      if (document.visibilityState === 'visible') refreshItems();
+    }, 60000);
     return () => clearInterval(id);
-  }, []);
+  }, [refreshItems]);
 
   const pending = useMemo(() => (items ?? []).filter((s) => s.status === 'pendiente'), [items]);
   const history = useMemo(

@@ -6,6 +6,7 @@ import MobileNav from '@/components/finance/MobileNav';
 import AddTransactionModal from '@/components/finance/AddTransactionModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/components/ui/Toast';
+import AutoLiveListener from '@/components/finance/AutoLiveListener';
 
 export default function FinanzasLayout({ children }: { children: React.ReactNode }) {
   const [showModal, setShowModal] = useState(false);
@@ -41,6 +42,7 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
             </div>
           )}
         </main>
+        {user && <AutoLiveListener />}
         <AddTransactionModal isOpen={showModal} onClose={() => setShowModal(false)} />
       </div>
     </ToastProvider>
