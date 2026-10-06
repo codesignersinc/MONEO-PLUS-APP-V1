@@ -174,7 +174,11 @@ export default function MoneoAutoPage() {
     setPasteMsg(null);
     setReading(0);
     try {
-      const ocrText = await readImageText(file, setReading);
+      const ocrText = await readImageText(
+        file,
+        setReading,
+        (t) => parseBankMessage({ source: 'text', text: t, receivedAt: new Date() }) !== null
+      );
       setText(ocrText);
       if (!ocrText.trim()) {
         setPasteMsg({

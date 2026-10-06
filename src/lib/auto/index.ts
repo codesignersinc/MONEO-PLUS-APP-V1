@@ -12,6 +12,7 @@ import { sameMerchant } from './merchant';
 import { stripBoldMarkers } from './normalize';
 import { parseFreeText } from './freeText';
 import { parseReceipt } from './receipt';
+import { looksLikeVoucher, parseVoucher } from './voucher';
 
 export type { BankMessage, ParsedMovement } from './types';
 
@@ -74,11 +75,19 @@ export function parseBankMessage(input: BankMessage): ParsedMovement | null {
     if (result) return result;
   }
   if (msg.source !== 'text') return null;
+  // A voucher from a bank or wallet app (screenshot): "¡Yapeaste!", "¡Operación exitosa!"…
+  // Without its amount it is not guessed from other numbers (phone, operation number).
+  const voucher = looksLikeVoucher(msg.text);
+  if (voucher) {
+    const parsed = parseVoucher(msg.text, msg.receivedAt);
+    if (parsed) return parsed;
+  }
   // A receipt or ticket read from a photo/screenshot ("TOTAL S/ 45.90").
   if (/\btotal\b/i.test(msg.text)) {
     const receipt = parseReceipt(msg.text, msg.receivedAt);
     if (receipt) return receipt;
   }
+  if (voucher) return null;
   // Text the user typed or dictated: "gasté 25 en taxi", "almuerzo 18 bcp".
   return parseFreeText(msg.text, msg.receivedAt);
 }

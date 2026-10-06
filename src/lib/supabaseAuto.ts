@@ -388,6 +388,26 @@ export interface AutoAddress {
 }
 
 // Gmail filter that forwards only bank notices.
+// Sender fragments for mail rules that match by "sender address includes" (Outlook).
+export const BANK_SENDER_KEYS = ['bcp.com.pe', 'bbva.com.pe', 'interbank', 'yape.pe'];
+
+export type MailProvider = 'gmail' | 'outlook' | 'otro';
+
+export function mailProviderOf(email: string): MailProvider {
+  const domain = email.trim().toLowerCase().split('@')[1] ?? '';
+  if (/^(gmail|googlemail)\.com$/.test(domain)) return 'gmail';
+  if (/^(outlook|hotmail|live|msn)\.[a-z.]+$/.test(domain)) return 'outlook';
+  return 'otro';
+}
+
+// Deep links that open the exact settings screen of the user's mailbox.
+export function gmailLink(email: string, hash: string): string {
+  const account = email.includes('@') ? `?authuser=${encodeURIComponent(email.trim())}` : '0/';
+  return `https://mail.google.com/mail/u/${account}#${hash}`;
+}
+
+export const OUTLOOK_RULES_URL = 'https://outlook.live.com/mail/0/options/mail/rules';
+
 export const BANK_EMAIL_FILTER =
   'from:(notificacionesbcp.com.pe OR bcp.com.pe OR bbva.com.pe OR netinterbank.com.pe OR interbank.pe OR yape.pe)';
 

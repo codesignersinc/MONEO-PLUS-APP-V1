@@ -70,11 +70,15 @@ export function parseReceipt(text: string, receivedAt: Date): ParsedMovement | n
 
 // Typical OCR slips on Peruvian amounts: "5/" or "$/" read for "S/", spaces inside.
 export function cleanOcrText(text: string): string {
-  return text
-    .replace(/\r/g, '')
-    .replace(/(^|[\s(])[5$§]\s?\/\s?\.?\s*(?=\d)/gm, '$1S/ ')
-    .replace(/\bS\s*\/\s*\.?\s*(?=\d)/g, 'S/ ')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  return (
+    text
+      .replace(/\r/g, '')
+      .replace(/(^|[\s(])[5$§]\s?\/\s?\.?\s*(?=\d)/gm, '$1S/ ')
+      // "sI 50" / "S| 50": the slash read as a letter.
+      .replace(/(^|[\s(])[sS5§][|Il]\s?\.?\s*(?=\d)/gm, '$1S/ ')
+      .replace(/\bS\s*\/\s*\.?\s*(?=\d)/g, 'S/ ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  );
 }
