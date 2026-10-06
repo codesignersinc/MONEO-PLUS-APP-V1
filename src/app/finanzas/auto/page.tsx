@@ -15,6 +15,7 @@ import {
 import LoadError from '@/components/ui/LoadError';
 import BrandLogo from '@/components/finance/BrandLogo';
 import VoiceButton from '@/components/finance/VoiceButton';
+import AutoEmailCard from '@/components/finance/AutoEmailCard';
 import { useToast } from '@/components/ui/Toast';
 import { parseBankMessage } from '@/lib/auto';
 import { readImageText } from '@/lib/ocr';
@@ -106,6 +107,19 @@ export default function MoneoAutoPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Forwarded emails arrive in the background: refresh the inbox while the page is visible.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        autoService
+          .list()
+          .then(setItems)
+          .catch(() => {});
+      }
+    }, 30000);
+    return () => clearInterval(id);
+  }, []);
 
   const pending = useMemo(() => (items ?? []).filter((s) => s.status === 'pendiente'), [items]);
   const history = useMemo(
@@ -287,6 +301,8 @@ export default function MoneoAutoPage() {
           </div>
         </div>
       </section>
+
+      <AutoEmailCard />
 
       {/* Inbox */}
       <h2 className="mb-3 text-lg font-black text-black">

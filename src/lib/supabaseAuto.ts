@@ -345,3 +345,36 @@ export function suggestDefaults(
     (s.type === 'ingreso' ? 'Ingreso' : s.type === 'gasto' ? 'Otros' : '');
   return { accountId, categoryLabel };
 }
+
+// ─── Forwarding address (u-<token>@auto.moneo.plus) ───────────────────────────
+
+export interface AutoAddress {
+  address: string;
+  lastReceivedAt: string | null;
+  gmailCode: string | null;
+  gmailCodeAt: string | null;
+}
+
+// Gmail filter that forwards only bank notices.
+export const BANK_EMAIL_FILTER =
+  'from:(notificacionesbcp.com.pe OR bcp.com.pe OR bbva.com.pe OR netinterbank.com.pe OR interbank.pe OR yape.pe)';
+
+export const addressService = {
+  async get(): Promise<AutoAddress | null> {
+    const { data, error } = await createClient().from('auto_addresses').select('*').maybeSingle();
+    if (error) throw toDataError(error);
+    if (!data) return null;
+    return {
+      address: `u-${data.token}@auto.moneo.plus`,
+      lastReceivedAt: data.last_received_at ?? null,
+      gmailCode: data.gmail_code ?? null,
+      gmailCodeAt: data.gmail_code_at ?? null,
+    };
+  },
+
+  // Creates the address on first use; regenerate = true replaces it (the old one stops working).
+  async create(regenerate = false): Promise<void> {
+    const { error } = await createClient().rpc('get_or_create_auto_address', { regenerate });
+    if (error) throw toDataError(error);
+  },
+};

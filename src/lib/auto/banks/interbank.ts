@@ -41,7 +41,7 @@ export const parseInterbank: BankParser = (msg) => {
       ...merchantFields(comercio),
       ...when(msg, valueAfter(msg.text, /Fecha/), valueAfter(msg.text, /Hora/)),
       cardLast4: last4(valueAfter(msg.text, /Tarjeta/)),
-      cardType: /cr[eé]dito/i.test(flat) ? 'credito' : 'debito',
+      cardType: cardTypeOf(flat),
       recurring,
     };
   }
@@ -102,4 +102,11 @@ function pagoWhen(receivedAt: Date, dayMonth: string, clock: string) {
   const ref = receivedAt.getTime();
   const hour = h < 12 && Math.abs(at(h + 12) - ref) < Math.abs(at(h) - ref) ? h + 12 : h;
   return { date, time: `${String(hour).padStart(2, '0')}:${String(mi).padStart(2, '0')}` };
+}
+
+// "Tarjeta Interbank Visa Débito Clásica" / "Tarjeta de Crédito": the first mention next to
+// "Tarjeta" (forwarded emails can mention credit cards elsewhere, e.g. in promotions).
+function cardTypeOf(text: string): 'debito' | 'credito' {
+  const m = text.match(/Tarjeta[^.\n]{0,40}?(D[eé]bito|Cr[eé]dito)/i);
+  return m && /cr/i.test(m[1]) ? 'credito' : 'debito';
 }

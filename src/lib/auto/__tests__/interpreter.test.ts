@@ -335,3 +335,62 @@ describe('duplicates', () => {
     expect(isLikelyDuplicate(a, b)).toBe(false);
   });
 });
+
+describe('forwarded emails (Gmail plain text)', () => {
+  it('bold markers *…* do not break the BCP template; card masks are kept', () => {
+    const text = `Hola *Carlos Andrés*,
+
+Realizaste un consumo de *S/ 2.99* con tu *Tarjeta de Crédito BCP* en *BENAVIDES C18 MIRAFLORE*.
+
+*Monto*
+Total del consumo *S/ 2.99*
+Fecha y hora *01 de octubre de 2026 - 05:56 PM*
+Número de Tarjeta de Crédito *************7391*
+Empresa *BENAVIDES C18 MIRAFLORE*
+Número de operación *0000111222*`;
+    expect(parse(email({ ...F.BCP_EMAIL_CONSUMO_1, text }))).toMatchObject({
+      bank: 'bcp',
+      amount: 2.99,
+      merchant: 'Benavides C18 Miraflore',
+      date: '2026-10-01',
+      time: '17:56',
+      cardLast4: '7391',
+      operationId: '0000111222',
+    });
+  });
+
+  it('Interbank labels with bold values', () => {
+    const text = `Conoce el detalle:\nTarjeta: *****4821*\nComercio: *EBN*SG PDFGURU*\nMonto: *S/. 103.71*\nFecha: *05/10/2026*\nHora: *02:48 PM*`;
+    expect(parse(email({ ...F.INTERBANK_EMAIL_RECURRENTE, text }))).toMatchObject({
+      amount: 103.71,
+      merchant: 'PDFGuru',
+      cardLast4: '4821',
+    });
+  });
+
+  it('Yape beneficiary followed by a separator line', () => {
+    const text = F.YAPE_EMAIL_ENVIADO.text.replace(
+      'Nombre del Beneficiario\tROSA LIMA C.',
+      'Nombre del Beneficiario\tROSA LIMA C.\n------------------------------'
+    );
+    expect(parse(email({ ...F.YAPE_EMAIL_ENVIADO, text }))).toMatchObject({
+      merchant: 'Rosa Lima C.',
+    });
+  });
+});
+
+describe('real forwarded batch (2nd round)', () => {
+  it('Interbank debit card is debit even if the email mentions credit cards elsewhere', () => {
+    const text = `${F.INTERBANK_EMAIL_CONSUMO.text}\n¿Aún no tienes tu Tarjeta de Crédito Interbank? Solicítala aquí.`;
+    expect(parse(email({ ...F.INTERBANK_EMAIL_CONSUMO, text }))).toMatchObject({
+      cardType: 'debito',
+    });
+  });
+
+  it('Facebook/Meta charges get a readable name', () => {
+    expect(cleanMerchant('FACEBK BEJBU5NF74')).toBe('Facebook Ads');
+    expect(cleanMerchant('TIENDA XYZ A1B2C3D4')).toBe('Tienda Xyz');
+    expect(cleanMerchant('BENAVIDES C18 MIRAFLORE')).toBe('Benavides C18 Miraflore');
+    expect(suggestCategory('Facebook Ads')).toBe('Servicios');
+  });
+});
