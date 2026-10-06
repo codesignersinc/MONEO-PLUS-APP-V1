@@ -17,6 +17,8 @@ interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved?: () => void;
+  // Tab shown when it opens (Home "+ Nuevo" / quick actions).
+  initialTab?: TabType;
 }
 
 type TabType = 'gasto' | 'ingreso' | 'transferencia';
@@ -33,6 +35,7 @@ export default function AddTransactionModal({
   isOpen,
   onClose,
   onSaved,
+  initialTab,
 }: AddTransactionModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('gasto');
   const [amount, setAmount] = useState('');
@@ -52,6 +55,7 @@ export default function AddTransactionModal({
 
   useEffect(() => {
     if (isOpen) {
+      if (initialTab) setActiveTab(initialTab);
       setLoadError('');
       setSaveError('');
       setSelectedAccount(null);
@@ -84,7 +88,7 @@ export default function AddTransactionModal({
           setLoadError(`No pudimos cargar tus cuentas. ${getErrorMessage(err)}`);
         });
     }
-  }, [isOpen]);
+  }, [isOpen, initialTab]);
 
   if (!isOpen) return null;
 

@@ -103,6 +103,19 @@ export default function MovimientosPage() {
   const [currencyFilter, setCurrencyFilter] = useState<string>('todas');
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+
+  // Deep links from the Home: ?q=texto (search) and ?tipo=gastos|ingresos.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) {
+      setSearch(q.slice(0, 80));
+      setShowSearch(true);
+    }
+    const tipo = params.get('tipo');
+    if (tipo === 'gastos') setFilter('pagos');
+    else if (tipo === 'ingresos') setFilter('ingresos');
+  }, []);
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
