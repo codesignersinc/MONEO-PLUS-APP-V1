@@ -19,3 +19,21 @@ export function useDataChanged(onChange: () => void): void {
     return () => window.removeEventListener(DATA_CHANGED, handler);
   }, []);
 }
+
+// MONEO AUTO: a new suggestion arrived (forwarded email, another device). Fired by
+// AutoLiveListener so the inbox refreshes without a manual reload.
+const AUTO_NEW = 'moneo:auto-new';
+
+export function notifyAutoSuggestion(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(AUTO_NEW));
+}
+
+export function useAutoSuggestion(onNew: () => void): void {
+  const ref = useRef(onNew);
+  ref.current = onNew;
+  useEffect(() => {
+    const handler = () => ref.current();
+    window.addEventListener(AUTO_NEW, handler);
+    return () => window.removeEventListener(AUTO_NEW, handler);
+  }, []);
+}

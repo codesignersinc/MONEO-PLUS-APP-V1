@@ -97,6 +97,38 @@ export const autoService = {
     return (data || []).map(fromRow);
   },
 
+  // Calls `onInsert` as soon as a new suggestion of this user is created anywhere (forwarded
+  // email, another device). Realtime applies RLS. Returns the unsubscribe function.
+  watch(userId: string, onInsert: (s: AutoSuggestion) => void): () => void {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let closed = false;
+    // Make sure the socket carries the user's JWT before joining (RLS on postgres_changes).
+    supabase.realtime
+      .setAuth()
+      .catch(() => {})
+      .then(() => {
+        if (closed) return;
+        channel = supabase
+          .channel(`auto-suggestions-${userId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'auto_suggestions',
+              filter: `user_id=eq.${userId}`,
+            },
+            (payload) => onInsert(fromRow(payload.new as Record<string, unknown>))
+          )
+          .subscribe();
+      });
+    return () => {
+      closed = true;
+      if (channel) supabase.removeChannel(channel);
+    };
+  },
+
   // Adds a parsed movement to the inbox unless it is a duplicate of one already there
   // (same bank operation, or the same purchase reported by another channel).
   async add(parsed: ParsedMovement, source: AutoSource): Promise<AddResult> {
