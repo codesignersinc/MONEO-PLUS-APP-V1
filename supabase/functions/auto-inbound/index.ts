@@ -3,7 +3,8 @@
 //
 // - Authenticated with HTTP Basic credentials in the webhook URL
 //   (https://postmark:<AUTO_INBOUND_SECRET>@<project>.supabase.co/functions/v1/auto-inbound).
-// - The recipient token identifies the user; unknown tokens are ignored.
+// - The recipient token (or Postmark's MailboxHash "u-<token>") identifies the user;
+//   unknown tokens are ignored.
 // - Only bank senders are accepted (same allowlist as the web interpreter). Emails
 //   forwarded by hand ("---------- Forwarded message ----------") use the original sender.
 // - Gmail's forwarding confirmation code is stored so the app can show it once.
@@ -111,7 +112,11 @@ Deno.serve(async (req) => {
   ]
     .filter(Boolean)
     .join(' ');
-  const token = recipients.match(ADDRESS_RE)?.[1]?.toLowerCase();
+  // Also accepted through Postmark's own address with "+": <hash>+u-<token>@inbound.postmarkapp.com
+  // (MailboxHash), useful before the auto.moneo.plus MX record exists.
+  const token = (
+    recipients.match(ADDRESS_RE)?.[1] ?? String(body.MailboxHash ?? '').match(/^u-([a-z0-9]{12})$/i)?.[1]
+  )?.toLowerCase();
   if (!token) return done('no-recipient');
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
