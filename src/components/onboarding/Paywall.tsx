@@ -200,7 +200,7 @@ export default function Paywall({
         )}
         <Benefits className="grid pt-2 lg:hidden" />
         <p className="text-center text-xs font-semibold text-gray-600">
-          Pagos seguros con Mercado Pago · Precios en soles · Cancela cuando quieras
+          Pagos seguros con Mercado Pago · Precios en soles, IGV incluido · Cancela cuando quieras
         </p>
       </div>
     </div>

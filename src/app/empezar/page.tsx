@@ -932,6 +932,9 @@ function PayStep({
             <dd className="font-black">
               {money(plan.price)}
               {plan.kind === 'subscription' ? ` / ${every}` : ' · pago único'}
+              <span className="block text-right text-xs font-semibold text-gray-500">
+                IGV incluido
+              </span>
             </dd>
           </div>
           {trial && (
