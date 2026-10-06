@@ -56,7 +56,8 @@ export default function NotificationBell() {
     let cancelled = false;
     const supabase = createClient();
     // Unique channel name per effect invocation to avoid reuse conflicts
-    const channelName = `notif-${user.id}-${Date.now()}`;
+    // (two bells can mount in the same millisecond, so add a random part too).
+    const channelName = `notif-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     // Build the channel with all listeners BEFORE calling subscribe()
     const channel = supabase
