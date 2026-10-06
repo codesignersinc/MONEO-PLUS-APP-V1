@@ -432,7 +432,7 @@ export default function AportePage() {
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#FAFAF8] border-b-2 border-black px-4 py-4 flex items-center gap-3">
+      <div className="sticky top-[env(safe-area-inset-top)] z-10 bg-[#FAFAF8] border-b-2 border-black px-4 py-4 flex items-center gap-3">
         <button
           onClick={() => router.back()}
           className="w-9 h-9 rounded-xl border-2 border-black bg-white flex items-center justify-center hover:bg-gray-50 transition-colors"

@@ -62,7 +62,8 @@ export default function TrialCountdown() {
     }
   };
 
-  const position = 'fixed bottom-[92px] right-3 z-40 lg:bottom-6 lg:right-6';
+  const position =
+    'fixed bottom-[calc(92px+env(safe-area-inset-bottom))] right-3 z-40 lg:bottom-6 lg:right-6';
 
   if (minimized) {
     return (

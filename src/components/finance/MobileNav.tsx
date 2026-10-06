@@ -1056,7 +1056,7 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
         <div className="lg:hidden fixed inset-0 z-50 flex items-end" onClick={handleSheetClose}>
           <div className="absolute inset-0 bg-black/50" />
           <div
-            className="relative w-full bg-[#F5F0E8] rounded-t-3xl border-t-2 border-black max-h-[92vh] overflow-y-auto"
+            className="relative w-full bg-[#F5F0E8] rounded-t-3xl border-t-2 border-black sheet-max overflow-y-auto pb-[env(safe-area-inset-bottom)]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* drag handle */}
@@ -1147,7 +1147,7 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
       )}
 
       {/* ── Bottom Nav Bar ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black border-t border-gray-800">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black border-t border-gray-800 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around px-2 pt-2 pb-4 relative max-w-lg mx-auto">
           {/* Inicio */}
           <Link

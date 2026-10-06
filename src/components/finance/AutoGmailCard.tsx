@@ -50,7 +50,7 @@ function ConnectGuide({
       aria-modal="true"
       aria-labelledby="gmail-guide-title"
     >
-      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-[3px] border-black bg-white p-5 shadow-[6px_6px_0px_rgba(0,0,0,1)] sm:rounded-3xl">
+      <div className="sheet-max w-full max-w-md overflow-y-auto rounded-t-3xl border-[3px] border-black bg-white p-5 shadow-[6px_6px_0px_rgba(0,0,0,1)] sm:rounded-3xl">
         <div className="mb-3 flex items-start justify-between gap-3">
           <h3 id="gmail-guide-title" className="text-lg font-black text-black">
             Así se conecta tu Gmail

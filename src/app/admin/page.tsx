@@ -198,7 +198,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] font-poppins text-black">
-      <header className="sticky top-0 z-10 border-b-[3px] border-black bg-[#FFF9EC]">
+      <header className="sticky top-[env(safe-area-inset-top)] z-10 border-b-[3px] border-black bg-[#FFF9EC]">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <MoneoLogo width={104} height={38} />

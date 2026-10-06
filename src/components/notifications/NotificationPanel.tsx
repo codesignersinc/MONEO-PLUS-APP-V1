@@ -84,7 +84,7 @@ export default function NotificationPanel({
           fixed z-50 bg-white border-[3px] border-black shadow-[6px_6px_0px_#000] rounded-2xl overflow-hidden
           flex flex-col
           /* Mobile: bottom sheet */
-          bottom-0 left-0 right-0 max-h-[80vh]
+          bottom-0 left-0 right-0 sheet-max
           /* Desktop: dropdown */
           lg:absolute lg:bottom-auto lg:top-full lg:mt-2 lg:w-[400px] lg:max-h-[520px]
           ${align === 'left' ? 'lg:left-0 lg:right-auto' : 'lg:left-auto lg:right-0'}

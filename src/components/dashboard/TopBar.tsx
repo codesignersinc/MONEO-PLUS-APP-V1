@@ -100,7 +100,7 @@ function FloatingPanel({
         aria-label={label}
         className={`fixed z-[71] overflow-auto border-2 border-[#111] bg-white font-poppins text-[#111] shadow-[0_4px_0_#111] motion-safe:animate-fade-in ${
           sheet
-            ? 'inset-x-0 bottom-0 max-h-[80vh] rounded-t-[24px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-2'
+            ? 'inset-x-0 bottom-0 sheet-max rounded-t-[24px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-2'
             : 'max-h-[70vh] rounded-2xl py-1.5'
         }`}
         style={sheet ? undefined : { top: pos.top, left: pos.left, width }}

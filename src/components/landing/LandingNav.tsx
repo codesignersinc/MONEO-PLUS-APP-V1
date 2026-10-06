@@ -48,7 +48,7 @@ export default function LandingNav() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b-[3px] transition-colors ${
+      className={`sticky top-[env(safe-area-inset-top)] z-50 border-b-[3px] transition-colors ${
         scrolled || open ? 'border-[#111] bg-[#FFF9EC]' : 'border-transparent bg-[#FFF9EC]/90'
       }`}
     >

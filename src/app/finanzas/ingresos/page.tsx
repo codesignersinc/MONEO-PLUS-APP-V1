@@ -374,7 +374,7 @@ export default function IngresosPage() {
       {/* Modal Form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md sheet-max overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b-[3px] border-black">
               <h2 className="text-lg font-black text-black">
                 {editingEntry ? 'Editar ingreso' : 'Nuevo ingreso'}
