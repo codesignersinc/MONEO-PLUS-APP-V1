@@ -8,6 +8,8 @@ const PROCESSOR_PREFIX =
 // Known merchants: pattern on the compact uppercase name → display name.
 const KNOWN: [RegExp, string][] = [
   [/OPENAI|CHATGPT/, 'ChatGPT'],
+  [/FACEBK|FACEBOOK|META\s*ADS|\bMETA\s*PLATFORMS/, 'Facebook Ads'],
+  [/GOOGLE\s*\*?\s*ADS/, 'Google Ads'],
   [/NETFLIX/, 'Netflix'],
   [/SPOTIFY/, 'Spotify'],
   [/DISNEY/, 'Disney+'],
@@ -36,6 +38,7 @@ const KNOWN: [RegExp, string][] = [
 
 // Category hints (labels of CATEGORY_PRESETS). First match wins.
 const CATEGORY_RULES: [RegExp, string][] = [
+  [/FACEBOOK ADS|GOOGLE ADS/, 'Servicios'],
   [
     /CHATGPT|OPENAI|NETFLIX|SPOTIFY|DISNEY|YOUTUBE|GOOGLE ONE|APPLE|PDFGURU|SUBSCR|HBO|PRIME/,
     'Suscripciones',
@@ -69,6 +72,8 @@ export function cleanMerchant(raw: string): string {
   s = s.replace(PROCESSOR_PREFIX, '');
   // Trailing terminal / store codes: "*0056604", " 0056604".
   s = s.replace(/\*\s*\d{3,}$/, '').replace(/\s+\d{5,}$/, '');
+  // Trailing payment reference mixing letters and digits ("FACEBK BEJBU5NF74").
+  s = s.replace(/\s+(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{6,}$/i, '');
   s = s.replace(/\*/g, ' ').replace(/\s+/g, ' ').trim();
   const upper = s.toUpperCase();
   for (const [re, name] of KNOWN) if (re.test(upper)) return name;

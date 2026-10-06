@@ -378,3 +378,19 @@ Número de operación *0000111222*`;
     });
   });
 });
+
+describe('real forwarded batch (2nd round)', () => {
+  it('Interbank debit card is debit even if the email mentions credit cards elsewhere', () => {
+    const text = `${F.INTERBANK_EMAIL_CONSUMO.text}\n¿Aún no tienes tu Tarjeta de Crédito Interbank? Solicítala aquí.`;
+    expect(parse(email({ ...F.INTERBANK_EMAIL_CONSUMO, text }))).toMatchObject({
+      cardType: 'debito',
+    });
+  });
+
+  it('Facebook/Meta charges get a readable name', () => {
+    expect(cleanMerchant('FACEBK BEJBU5NF74')).toBe('Facebook Ads');
+    expect(cleanMerchant('TIENDA XYZ A1B2C3D4')).toBe('Tienda Xyz');
+    expect(cleanMerchant('BENAVIDES C18 MIRAFLORE')).toBe('Benavides C18 Miraflore');
+    expect(suggestCategory('Facebook Ads')).toBe('Servicios');
+  });
+});

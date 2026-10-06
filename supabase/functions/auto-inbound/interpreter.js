@@ -110,6 +110,8 @@ function last4(text) {
 var PROCESSOR_PREFIX = /^(?:IZI|EBN\*SG|EBN|PAYU|DLO|DLC|MP|PP|SQ|CULQI|NIUBIZ|VISANET|OPENPAY|PAGOEFECTIVO|PAYPAL)\s*\*\s*/i;
 var KNOWN = [
   [/OPENAI|CHATGPT/, "ChatGPT"],
+  [/FACEBK|FACEBOOK|META\s*ADS|\bMETA\s*PLATFORMS/, "Facebook Ads"],
+  [/GOOGLE\s*\*?\s*ADS/, "Google Ads"],
   [/NETFLIX/, "Netflix"],
   [/SPOTIFY/, "Spotify"],
   [/DISNEY/, "Disney+"],
@@ -136,6 +138,7 @@ var KNOWN = [
   [/STARBUCKS/, "Starbucks"]
 ];
 var CATEGORY_RULES = [
+  [/FACEBOOK ADS|GOOGLE ADS/, "Servicios"],
   [
     /CHATGPT|OPENAI|NETFLIX|SPOTIFY|DISNEY|YOUTUBE|GOOGLE ONE|APPLE|PDFGURU|SUBSCR|HBO|PRIME/,
     "Suscripciones"
@@ -161,6 +164,7 @@ function cleanMerchant(raw) {
   let s = raw.replace(/\s+/g, " ").trim().replace(/[.,;]+$/, "");
   s = s.replace(PROCESSOR_PREFIX, "");
   s = s.replace(/\*\s*\d{3,}$/, "").replace(/\s+\d{5,}$/, "");
+  s = s.replace(/\s+(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{6,}$/i, "");
   s = s.replace(/\*/g, " ").replace(/\s+/g, " ").trim();
   const upper = s.toUpperCase();
   for (const [re, name] of KNOWN) if (re.test(upper)) return name;
@@ -293,7 +297,7 @@ ${msg.text}`);
       ...merchantFields(comercio),
       ...when(msg, valueAfter(msg.text, /Fecha/), valueAfter(msg.text, /Hora/)),
       cardLast4: last4(valueAfter(msg.text, /Tarjeta/)),
-      cardType: /cr[eé]dito/i.test(flat) ? "credito" : "debito",
+      cardType: cardTypeOf(flat),
       recurring
     };
   }
@@ -346,6 +350,10 @@ function pagoWhen(receivedAt, dayMonth, clock) {
   const ref = receivedAt.getTime();
   const hour = h < 12 && Math.abs(at(h + 12) - ref) < Math.abs(at(h) - ref) ? h + 12 : h;
   return { date, time: `${String(hour).padStart(2, "0")}:${String(mi).padStart(2, "0")}` };
+}
+function cardTypeOf(text) {
+  const m = text.match(/Tarjeta[^.\n]{0,40}?(D[eé]bito|Cr[eé]dito)/i);
+  return m && /cr/i.test(m[1]) ? "credito" : "debito";
 }
 
 // src/lib/auto/banks/yape.ts
