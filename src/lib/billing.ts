@@ -102,6 +102,7 @@ export type CheckoutError =
   | 'already-plus'
   | 'already-lifetime'
   | 'plan-unavailable'
+  | 'payer-email-rejected'
   | 'unknown';
 
 const BILLING_MESSAGES: Record<CheckoutError, string> = {
@@ -109,6 +110,8 @@ const BILLING_MESSAGES: Record<CheckoutError, string> = {
   'already-plus': 'Ya tienes MONEO PLUS activo.',
   'already-lifetime': 'Ya tienes MONEO PLUS de por vida.',
   'plan-unavailable': 'Este plan ya no está disponible.',
+  'payer-email-rejected':
+    'Mercado Pago no aceptó tu correo: puede estar asociado a una cuenta de Mercado Pago de otro país.',
   unknown: 'No pudimos conectar con Mercado Pago. Intenta de nuevo.',
 };
 
@@ -145,8 +148,13 @@ async function invoke(body: Record<string, unknown>): Promise<Record<string, unk
 
 export const billingService = {
   // Returns the Mercado Pago URL to complete the payment (or start the free trial).
-  async checkout(plan: PlanCode): Promise<{ url: string; trial: boolean }> {
-    const data = await invoke({ action: 'checkout', plan });
+  // `payerEmail`: optional email of the customer's Mercado Pago (Peru) account.
+  async checkout(plan: PlanCode, payerEmail?: string): Promise<{ url: string; trial: boolean }> {
+    const data = await invoke({
+      action: 'checkout',
+      plan,
+      ...(payerEmail ? { payer_email: payerEmail } : {}),
+    });
     if (typeof data.url !== 'string') throw new BillingError('unknown');
     return { url: data.url, trial: data.trial === true };
   },

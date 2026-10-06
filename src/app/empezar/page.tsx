@@ -876,6 +876,7 @@ function PayStep({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<BillingError | null>(null);
+  const [payerEmail, setPayerEmail] = useState('');
   if (!plan) {
     return (
       <Shell onBack={onBack}>
@@ -892,7 +893,7 @@ function PayStep({
     setError(null);
     track('checkout_started', { plan: plan.code });
     try {
-      const { url } = await billingService.checkout(plan.code);
+      const { url } = await billingService.checkout(plan.code, payerEmail.trim() || undefined);
       window.location.href = url;
     } catch (err) {
       setError(err instanceof BillingError ? err : new BillingError('unknown'));
@@ -976,6 +977,31 @@ function PayStep({
       {error && (
         <div role="alert" className="mt-5 rounded-2xl border-[3px] border-black bg-[#FFE1DB] p-4">
           <p className="font-black">{error.userMessage}</p>
+          {error.code === 'payer-email-rejected' && (
+            <form
+              className="mt-3 space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                pay();
+              }}
+            >
+              <label className="block text-sm font-semibold">
+                Escribe el correo de tu cuenta de Mercado Pago Perú (o uno sin cuenta de Mercado
+                Pago). Tu cuenta MONEO no cambia.
+                <input
+                  type="email"
+                  required
+                  value={payerEmail}
+                  onChange={(e) => setPayerEmail(e.target.value)}
+                  placeholder="correo@ejemplo.com"
+                  className="mt-2 min-h-[52px] w-full rounded-2xl border-[3px] border-black bg-white px-4 text-base font-semibold"
+                />
+              </label>
+              <PrimaryButton type="submit" variant="white" disabled={busy || !payerEmail.trim()}>
+                Intentar con este correo
+              </PrimaryButton>
+            </form>
+          )}
           {error.code === 'payments-not-configured' && (
             <>
               <p className="mt-1 text-sm font-semibold">
