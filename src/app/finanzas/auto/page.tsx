@@ -1,0 +1,576 @@
+'use client';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import {
+  ArrowDownLeft,
+  ArrowLeftRight,
+  ArrowUpRight,
+  ClipboardPaste,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import LoadError from '@/components/ui/LoadError';
+import BrandLogo from '@/components/finance/BrandLogo';
+import { useToast } from '@/components/ui/Toast';
+import { parseBankMessage } from '@/lib/auto';
+import {
+  autoService,
+  rulesService,
+  suggestDefaults,
+  type AutoRules,
+  type AutoSuggestion,
+} from '@/lib/supabaseAuto';
+import { accountsService } from '@/lib/supabaseFinance';
+import { formatCurrency, getCurrencyInfo } from '@/lib/currency';
+import { getErrorMessage } from '@/lib/dataError';
+import { notifyDataChanged, useDataChanged } from '@/lib/dataSync';
+import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
+
+const BANK_LABEL: Record<string, string> = {
+  bcp: 'BCP',
+  bbva: 'BBVA',
+  interbank: 'Interbank',
+  yape: 'Yape',
+  plin: 'Plin',
+};
+
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const fmtDate = (d: string) => {
+  const [y, m, day] = d.split('-').map(Number);
+  return `${day} ${MONTHS[m - 1]} ${y}`;
+};
+
+const inputClass =
+  'w-full px-4 py-3 bg-gray-50 rounded-xl border-[2px] border-gray-200 text-sm text-black outline-none focus:border-black transition-colors';
+const labelClass = 'block text-xs font-black text-black uppercase tracking-wide mb-1.5';
+
+function TypeBadge({ type }: { type: AutoSuggestion['type'] }) {
+  const cfg = {
+    gasto: { label: 'Gasto', icon: ArrowUpRight, cls: 'bg-[#FFE4DE] text-[#B42318]' },
+    ingreso: { label: 'Ingreso', icon: ArrowDownLeft, cls: 'bg-[#DDF7E9] text-[#067647]' },
+    transferencia: {
+      label: 'Transferencia',
+      icon: ArrowLeftRight,
+      cls: 'bg-[#E0EDFF] text-[#1D4ED8]',
+    },
+  }[type];
+  const Icon = cfg.icon;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black ${cfg.cls}`}
+    >
+      <Icon className="h-3 w-3" /> {cfg.label}
+    </span>
+  );
+}
+
+function signedAmount(s: AutoSuggestion) {
+  const sign = s.type === 'gasto' ? '-' : s.type === 'ingreso' ? '+' : '';
+  return `${sign}${formatCurrency(s.amount, s.currency)}`;
+}
+
+export default function MoneoAutoPage() {
+  const toast = useToast();
+  const [items, setItems] = useState<AutoSuggestion[] | null>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [rules, setRules] = useState<AutoRules>({ cardAccount: {}, merchantCategory: {} });
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [text, setText] = useState('');
+  const [pasteMsg, setPasteMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [registering, setRegistering] = useState<AutoSuggestion | null>(null);
+
+  const load = useCallback(() => {
+    setLoadError(null);
+    Promise.all([autoService.list(), accountsService.getAll(), rulesService.get()])
+      .then(([list, accs, r]) => {
+        setItems(list);
+        setAccounts(accs);
+        setRules(r);
+      })
+      .catch(setLoadError);
+  }, []);
+
+  useDataChanged(load);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const pending = useMemo(() => (items ?? []).filter((s) => s.status === 'pendiente'), [items]);
+  const history = useMemo(
+    () => (items ?? []).filter((s) => s.status !== 'pendiente').slice(0, 20),
+    [items]
+  );
+
+  // The pasted text is interpreted here, in the browser; only the result is saved.
+  const handlePaste = async () => {
+    const parsed = parseBankMessage({ source: 'text', text, receivedAt: new Date() });
+    if (!parsed) {
+      setPasteMsg({
+        ok: false,
+        text: 'No reconocimos este aviso. Por ahora entendemos avisos de BCP, BBVA, Interbank, Yape y Plin.',
+      });
+      return;
+    }
+    setAdding(true);
+    try {
+      const result = await autoService.add(parsed, 'text');
+      if (result.status === 'duplicate') {
+        setPasteMsg({
+          ok: false,
+          text: 'Este movimiento ya está en tu bandeja (no lo duplicamos).',
+        });
+      } else {
+        setItems((prev) => [result.suggestion, ...(prev ?? [])]);
+        setPasteMsg({
+          ok: true,
+          text: `Detectamos: ${parsed.merchant} · ${signedAmount(result.suggestion)}. Revísalo abajo.`,
+        });
+        setText('');
+      }
+    } catch (err) {
+      setPasteMsg({ ok: false, text: getErrorMessage(err) });
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const setStatus = async (s: AutoSuggestion, status: 'pendiente' | 'ignorada') => {
+    try {
+      await autoService.setStatus(s.id, status);
+      setItems((prev) => (prev ?? []).map((x) => (x.id === s.id ? { ...x, status } : x)));
+    } catch (err) {
+      toast.showError(err);
+    }
+  };
+
+  if (loadError) {
+    return (
+      <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+        <h1 className="text-3xl font-black text-black mb-5 leading-tight">MONEO AUTO</h1>
+        <LoadError what="tu bandeja" error={loadError} onRetry={load} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
+      <div className="mb-5">
+        <h1 className="flex items-center gap-2 text-3xl font-black text-black leading-tight">
+          MONEO AUTO
+          <span className="rounded-full border-2 border-black bg-[#FFD43B] px-2 py-0.5 text-[10px] font-black uppercase">
+            Beta
+          </span>
+        </h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Tus avisos del banco se convierten en movimientos. Tú decides: registrar, editar o
+          ignorar.
+        </p>
+      </div>
+
+      {/* Paste a notice */}
+      <section className="mb-6 rounded-3xl border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+        <div className="mb-2 flex items-center gap-2">
+          <ClipboardPaste className="h-5 w-5" />
+          <h2 className="font-black text-black">Pegar aviso</h2>
+        </div>
+        <p className="mb-3 text-xs text-gray-600">
+          Copia el texto de un correo o notificación de tu banco (BCP, BBVA, Interbank, Yape o Plin)
+          y pégalo aquí.
+        </p>
+        <textarea
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setPasteMsg(null);
+          }}
+          rows={4}
+          placeholder="Ej.: Realizaste un consumo de S/.21.00 en IZI*YOPO con tu Tarjeta de Débito."
+          className={`${inputClass} resize-y`}
+        />
+        {pasteMsg && (
+          <p
+            role="status"
+            className={`mt-2 text-sm font-semibold ${pasteMsg.ok ? 'text-green-700' : 'text-red-600'}`}
+          >
+            {pasteMsg.text}
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[11px] text-gray-500">
+            <ShieldCheck className="h-3.5 w-3.5" /> El texto no se guarda: solo monto, comercio,
+            fecha y últimos 4 dígitos.
+          </p>
+          <button
+            onClick={handlePaste}
+            disabled={adding || !text.trim()}
+            className="flex items-center gap-2 rounded-xl border-[3px] border-black bg-[#FFD43B] px-4 py-2 text-sm font-black text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 disabled:opacity-50"
+          >
+            <Sparkles className="h-4 w-4" /> {adding ? 'Leyendo…' : 'Interpretar'}
+          </button>
+        </div>
+      </section>
+
+      {/* Inbox */}
+      <h2 className="mb-3 text-lg font-black text-black">
+        Por revisar{' '}
+        {pending.length > 0 && <span className="text-gray-500">({pending.length})</span>}
+      </h2>
+      {items === null ? (
+        <div className="flex justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#FFD43B] border-t-transparent" />
+        </div>
+      ) : pending.length === 0 ? (
+        <div className="mb-6 rounded-3xl border-[3px] border-dashed border-gray-300 px-4 py-10 text-center">
+          <p className="font-bold text-gray-600">No tienes movimientos por revisar.</p>
+          <p className="mt-1 text-xs text-gray-500">Pega un aviso de tu banco para probar.</p>
+        </div>
+      ) : (
+        <ul className="mb-6 space-y-3">
+          {pending.map((s) => (
+            <li
+              key={s.id}
+              className="rounded-3xl border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]"
+            >
+              <div className="flex items-start gap-3">
+                <BrandLogo
+                  kind="account"
+                  name={BANK_LABEL[s.bank]}
+                  institution={BANK_LABEL[s.bank]}
+                  size="sm"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <TypeBadge type={s.type} />
+                    {s.recurring && (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">
+                        Recurrente
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 truncate font-black text-black">
+                    {s.merchant || 'Movimiento'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {BANK_LABEL[s.bank]}
+                    {s.cardLast4 ? ` ····${s.cardLast4}` : ''} · {fmtDate(s.date)}
+                    {s.time ? ` · ${s.time}` : ''}
+                    {s.suggestedCategory ? ` · ${s.suggestedCategory}` : ''}
+                  </p>
+                </div>
+                <p
+                  className={`shrink-0 text-lg font-black tabular-nums ${
+                    s.type === 'gasto'
+                      ? 'text-[#B42318]'
+                      : s.type === 'ingreso'
+                        ? 'text-[#067647]'
+                        : 'text-black'
+                  }`}
+                >
+                  {signedAmount(s)}
+                </p>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setRegistering(s)}
+                  className="rounded-xl border-[2.5px] border-black bg-[#45D98B] py-2 text-xs font-black text-black"
+                >
+                  Registrar
+                </button>
+                <button
+                  onClick={() => setRegistering(s)}
+                  className="rounded-xl border-[2.5px] border-black bg-white py-2 text-xs font-black text-black"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => setStatus(s, 'ignorada')}
+                  className="rounded-xl border-[2.5px] border-black bg-white py-2 text-xs font-black text-black"
+                >
+                  Ignorar
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {history.length > 0 && (
+        <>
+          <h2 className="mb-3 text-lg font-black text-black">Historial</h2>
+          <ul className="overflow-hidden rounded-3xl border-[3px] border-black bg-white">
+            {history.map((s, i) => (
+              <li
+                key={s.id}
+                className={`flex items-center gap-3 px-4 py-3 ${i < history.length - 1 ? 'border-b border-gray-100' : ''}`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-black">
+                    {s.merchant || 'Movimiento'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {fmtDate(s.date)} · {s.status === 'registrada' ? 'Registrado' : 'Ignorado'}
+                  </p>
+                </div>
+                <p className="text-sm font-black tabular-nums text-gray-700">{signedAmount(s)}</p>
+                {s.status === 'ignorada' && (
+                  <button
+                    onClick={() => setStatus(s, 'pendiente')}
+                    className="rounded-lg p-1.5 hover:bg-gray-100"
+                    aria-label="Volver a revisar"
+                    title="Volver a revisar"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {registering && (
+        <RegisterModal
+          suggestion={registering}
+          accounts={accounts}
+          rules={rules}
+          onClose={() => setRegistering(null)}
+          onDone={() => {
+            setRegistering(null);
+            notifyDataChanged();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function RegisterModal({
+  suggestion: s,
+  accounts,
+  rules,
+  onClose,
+  onDone,
+}: {
+  suggestion: AutoSuggestion;
+  accounts: Account[];
+  rules: AutoRules;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const defaults = suggestDefaults(s, rules, accounts);
+  const [name, setName] = useState(s.merchant);
+  const [accountId, setAccountId] = useState(defaults.accountId);
+  const [toAccountId, setToAccountId] = useState('');
+  const [category, setCategory] = useState(defaults.categoryLabel);
+  const [date, setDate] = useState(s.date);
+  const [time, setTime] = useState(s.time ?? '');
+  const [accountAmount, setAccountAmount] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const account = accounts.find((a) => a.id === accountId);
+  const foreign = !!account && (account.currency || 'PEN') !== s.currency;
+  const isTransfer = s.type === 'transferencia';
+  const categories = CATEGORY_PRESETS.filter((c) =>
+    s.type === 'ingreso' ? true : c.id !== 'ingreso'
+  );
+
+  const save = async () => {
+    if (!accountId) return setError(isTransfer ? 'Elige la cuenta de origen.' : 'Elige la cuenta.');
+    if (isTransfer && (!toAccountId || toAccountId === accountId))
+      return setError('Elige la cuenta de destino.');
+    const amt = parseFloat(accountAmount);
+    if (foreign && !(amt > 0)) return setError(`Indica el monto en ${account?.currency}.`);
+    setSaving(true);
+    setError('');
+    try {
+      await autoService.register(
+        s,
+        {
+          accountId,
+          toAccountId: isTransfer ? toAccountId : undefined,
+          accountAmount: foreign ? amt : undefined,
+          categoryLabel: isTransfer ? '' : category,
+          name: name.trim(),
+          date,
+          time: time || null,
+        },
+        accounts
+      );
+      onDone();
+    } catch (err) {
+      setError(getErrorMessage(err));
+      setSaving(false);
+    }
+  };
+
+  const accountOptions = (exclude?: string) =>
+    accounts
+      .filter((a) => a.id !== exclude)
+      .map((a) => (
+        <option key={a.id} value={a.id}>
+          {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency})
+        </option>
+      ));
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={() => !saving && onClose()}
+      />
+      <div className="relative max-h-[92dvh] w-full space-y-3 overflow-y-auto rounded-t-3xl border-[3px] border-black bg-white p-5 shadow-[6px_6px_0px_rgba(0,0,0,1)] sm:max-w-md sm:rounded-3xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-black text-black">
+              Registrar {s.type === 'ingreso' ? 'ingreso' : isTransfer ? 'transferencia' : 'gasto'}
+            </h2>
+            <p className="text-2xl font-black tabular-nums text-black">{signedAmount(s)}</p>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            aria-label="Cerrar"
+            className="rounded-full p-1 hover:bg-gray-100"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div>
+          <label className={labelClass}>Descripción</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+        </div>
+
+        {accounts.length === 0 ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+            Primero agrega una cuenta en{' '}
+            <Link href="/finanzas/cuentas" className="font-bold underline">
+              Cuentas
+            </Link>
+            .
+          </p>
+        ) : (
+          <>
+            <div>
+              <label className={labelClass}>{isTransfer ? 'Desde' : 'Cuenta'}</label>
+              <select
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Elige la cuenta</option>
+                {accountOptions()}
+              </select>
+              {s.cardLast4 && defaults.accountId && accountId === defaults.accountId && (
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Sugerida porque usas la tarjeta ····{s.cardLast4} en esta cuenta.
+                </p>
+              )}
+            </div>
+            {isTransfer && (
+              <div>
+                <label className={labelClass}>Hacia</label>
+                <select
+                  value={toAccountId}
+                  onChange={(e) => setToAccountId(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Elige la cuenta de destino</option>
+                  {accountOptions(accountId)}
+                </select>
+                {s.destinationBank && (
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    El banco indica destino {s.destinationBank}
+                    {s.destinationLast4 ? ` ····${s.destinationLast4}` : ''}.
+                  </p>
+                )}
+              </div>
+            )}
+            {foreign && (
+              <div>
+                <label className={labelClass}>Monto en {account?.currency}</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  value={accountAmount}
+                  onChange={(e) => setAccountAmount(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {!isTransfer && (
+          <div>
+            <label className={labelClass}>Categoría</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={inputClass}
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={c.label}>
+                  {c.icon} {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className={labelClass}>Fecha</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Hora</label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <p role="alert" className="text-sm font-semibold text-red-600">
+            {error}
+          </p>
+        )}
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 rounded-xl border-[3px] border-black bg-white py-3 text-sm font-black text-black disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={save}
+            disabled={saving || accounts.length === 0}
+            className="flex-1 rounded-xl border-[3px] border-black bg-[#FFD43B] py-3 text-sm font-black text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+          >
+            {saving ? 'Guardando…' : 'Registrar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

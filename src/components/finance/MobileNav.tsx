@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   Users,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,6 +58,7 @@ interface MobileNavProps {
 const sideNavItems = [
   { href: '/finanzas', label: 'Inicio', icon: LayoutDashboard },
   { href: '/finanzas/movimientos', label: 'Movimientos', icon: ArrowLeftRight },
+  { href: '/finanzas/auto', label: 'MONEO AUTO', icon: Sparkles },
   { href: '/finanzas/ingresos', label: 'Ingresos', icon: DollarSign },
   { href: '/finanzas/pagos', label: 'Pagos', icon: Receipt },
   { href: '/finanzas/suscripciones', label: 'Suscripciones', icon: Zap },

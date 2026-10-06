@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Users,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -38,6 +39,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/finanzas', label: 'Inicio', icon: LayoutDashboard },
   { href: '/finanzas/movimientos', label: 'Movimientos', icon: ArrowLeftRight },
+  { href: '/finanzas/auto', label: 'MONEO AUTO', icon: Sparkles },
   { href: '/finanzas/ingresos', label: 'Ingresos', icon: DollarSign },
   { href: '/finanzas/pagos', label: 'Pagos', icon: Receipt },
   { href: '/finanzas/suscripciones', label: 'Suscripciones', icon: Zap },
