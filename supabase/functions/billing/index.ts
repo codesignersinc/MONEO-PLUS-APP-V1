@@ -6,6 +6,13 @@
 //   { action: 'sync' }    → re-reads the user's recent checkouts in Mercado Pago and
 //       updates the entitlement ("Restaurar compra", return from the checkout).
 //   { action: 'cancel' }  → cancels the subscription; access stays until the period end.
+//   { action: 'config' }  → { publicKey } for the Mercado Pago JS SDK (checkout in MONEO):
+//       MP_PUBLIC_KEY, the pair of MP_PAYMENTS_ACCESS_TOKEN when that one is set.
+//   { action: 'pay', plan, method: 'card' | 'yape' | 'pagoefectivo', token?, ... }
+//       → pays inside MONEO with a token made by the Mercado Pago SDK in the browser:
+//       card subscriptions (preapproval with card_token_id), card / Yape payments of
+//       one-time plans and passes, and PagoEfectivo (pending until paid, voucher url).
+//       → { status: 'approved' | 'pending' | 'rejected', detail?, url? }
 // Mercado Pago notifications (POST /billing/webhook): signature checked with
 //   MP_WEBHOOK_SECRET; the resource is always re-read from the Mercado Pago API and
 //   resolved to a user and plan through our own billing_checkouts row.
@@ -13,7 +20,7 @@
 // The entitlement (user_entitlements) is only written here, with the service role.
 // No card data is ever received or stored. Logs carry outcomes only.
 //
-// Secrets: MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, BILLING_SITE_URLS (comma-separated
+// Secrets: MP_ACCESS_TOKEN, MP_PUBLIC_KEY, MP_WEBHOOK_SECRET, BILLING_SITE_URLS (comma-separated
 // allowed app origins, the first one is the default); staging only: MP_TEST_PAYER_EMAIL
 // (email of the Mercado Pago buyer test account that pays every test checkout).
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
@@ -24,7 +31,8 @@ type Row = Record<string, unknown>;
 type Plan = {
   code: string;
   name: string;
-  kind: 'subscription' | 'one_time';
+  // pass: prepaid interval_months, paid once. trial: granted by MONEO, never sold.
+  kind: 'subscription' | 'one_time' | 'pass' | 'trial';
   price: number;
   currency: string;
   interval_months: number | null;
@@ -50,8 +58,14 @@ function log(outcome: string) {
   console.log(`billing: ${outcome}`);
 }
 
+// Direct payments (/v1/payments: card, Yape, PagoEfectivo inside MONEO) may use their own
+// credentials: Mercado Pago tests them with the TEST- credentials of the real account,
+// while subscriptions are tested with a seller test account. In production both are unset
+// or equal, and MP_ACCESS_TOKEN is used for everything.
 async function mp(path: string, init: RequestInit = {}): Promise<Row> {
-  const token = Deno.env.get('MP_ACCESS_TOKEN');
+  const token =
+    (path.startsWith('/v1/payments') && Deno.env.get('MP_PAYMENTS_ACCESS_TOKEN')) ||
+    Deno.env.get('MP_ACCESS_TOKEN');
   if (!token) throw new Error('mp-not-configured');
   const res = await fetch(`${MP_API}${path}`, {
     ...init,
@@ -156,6 +170,7 @@ async function applyPreapproval(admin: SupabaseClient, pre: Row): Promise<string
     current_period_end: periodEnd.toISOString(),
     trial_ends_at: trialEnd?.toISOString() ?? null,
     had_trial: Boolean(current?.had_trial) || Boolean(trialEnd),
+    provider: 'mercadopago',
     provider_subscription_id: String(pre.id),
     provider_payment_id: null,
     checkout_id: checkout.id,
@@ -192,6 +207,11 @@ async function applyPayment(admin: SupabaseClient, payment: Row): Promise<string
 
   const userId = checkout.user_id as string;
   const current = await currentEntitlement(admin, userId);
+  // The same payment arrives from the in-app checkout, the webhook and "sync": apply once.
+  if (checkout.status === 'completed' && current?.provider_payment_id === String(payment.id)) {
+    return 'already-applied';
+  }
+  if (checkout.plan.kind === 'pass') return applyPass(admin, checkout, current, payment);
   // A one-time payment link can be paid more than once (reopened, paid again, or an old
   // link of someone who already has lifetime). Only the first approved payment counts;
   // any other one is refunded at once, never kept.
@@ -217,6 +237,7 @@ async function applyPayment(admin: SupabaseClient, payment: Row): Promise<string
     current_period_end: null,
     trial_ends_at: null,
     had_trial: Boolean(current?.had_trial),
+    provider: 'mercadopago',
     provider_subscription_id: null,
     provider_payment_id: String(payment.id),
     checkout_id: checkout.id,
@@ -231,6 +252,46 @@ async function applyPayment(admin: SupabaseClient, payment: Row): Promise<string
     }).catch(() => log('cancel-old-subscription-failed'));
   }
   return 'lifetime-active';
+}
+
+// A prepaid pass: interval_months more of PLUS from today, or from the end of a pass that
+// is still running (buying again extends it). A subscription running at the same time is
+// cancelled so it is not charged on top of the pass.
+async function applyPass(
+  admin: SupabaseClient,
+  checkout: Row & { plan: Plan },
+  current: (Row & { plan: { kind: string } }) | null,
+  payment: Row
+): Promise<string> {
+  const now = new Date();
+  const runningEnd =
+    current?.plan?.kind === 'pass' && current.current_period_end
+      ? new Date(String(current.current_period_end))
+      : null;
+  const from = runningEnd && runningEnd > now ? runningEnd : now;
+  const end = new Date(from);
+  end.setMonth(end.getMonth() + Number(checkout.plan.interval_months));
+  const { error } = await admin.from('user_entitlements').upsert({
+    user_id: checkout.user_id,
+    plan_code: checkout.plan.code,
+    status: 'active',
+    current_period_end: end.toISOString(),
+    trial_ends_at: null,
+    had_trial: Boolean(current?.had_trial),
+    provider: 'mercadopago',
+    provider_subscription_id: null,
+    provider_payment_id: String(payment.id),
+    checkout_id: checkout.id,
+  });
+  if (error) throw new Error('entitlement-write');
+  await admin.from('billing_checkouts').update({ status: 'completed' }).eq('id', checkout.id);
+  if (current?.provider_subscription_id) {
+    await mp(`/preapproval/${encodeURIComponent(String(current.provider_subscription_id))}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'cancelled' }),
+    }).catch(() => log('cancel-old-subscription-failed'));
+  }
+  return 'pass-active';
 }
 
 // ── Webhook ─────────────────────────────────────────────────────────────────────
@@ -327,6 +388,56 @@ async function handleWebhook(req: Request, admin: SupabaseClient): Promise<Respo
 
 // ── User actions ────────────────────────────────────────────────────────────────
 
+// Plan the user may buy now, or the error to answer. Lifetime owners cannot buy again;
+// an active subscription cannot be doubled with another subscription or a pass.
+async function sellablePlan(
+  admin: SupabaseClient,
+  userId: string,
+  planCode: string
+): Promise<
+  | { p: Plan; current: (Row & { plan: { kind: string } }) | null; error?: undefined }
+  | { error: Response }
+> {
+  const { data: plan } = await admin
+    .from('billing_plans')
+    .select('*')
+    .eq('code', planCode)
+    .maybeSingle();
+  const p = plan as Plan | null;
+  if (
+    !p ||
+    !p.active ||
+    p.kind === 'trial' ||
+    (p.available_until && new Date(p.available_until) <= new Date())
+  ) {
+    return { error: json({ error: 'plan-unavailable' }, 400) };
+  }
+  const current = await currentEntitlement(admin, userId);
+  if (isLifetime(current)) return { error: json({ error: 'already-lifetime' }, 409) };
+  const subscribed =
+    current &&
+    current.plan?.kind === 'subscription' &&
+    ['trialing', 'active'].includes(String(current.status)) &&
+    current.current_period_end &&
+    new Date(String(current.current_period_end)) > new Date();
+  if (subscribed && (p.kind === 'subscription' || p.kind === 'pass')) {
+    return { error: json({ error: 'already-plus' }, 409) };
+  }
+  return { p, current };
+}
+
+// Staging only: Mercado Pago test integrations must be paid by the buyer test account.
+// The customer may pay with the email of their Mercado Pago account (Peru) when it is not
+// the one of their MONEO account.
+function payerEmailFor(user: Row, askedPayer?: unknown): string {
+  const asked =
+    typeof askedPayer === 'string' &&
+    /^[^\s@]{1,64}@[^\s@]{1,100}\.[a-z]{2,}$/i.test(askedPayer.trim())
+      ? askedPayer.trim()
+      : '';
+  return Deno.env.get('MP_TEST_PAYER_EMAIL') || asked || String(user.email);
+}
+
 async function checkout(
   req: Request,
   admin: SupabaseClient,
@@ -334,24 +445,9 @@ async function checkout(
   planCode: string,
   askedPayer?: unknown
 ) {
-  const { data: plan } = await admin
-    .from('billing_plans')
-    .select('*')
-    .eq('code', planCode)
-    .maybeSingle();
-  const p = plan as Plan | null;
-  if (!p || !p.active || (p.available_until && new Date(p.available_until) <= new Date())) {
-    return json({ error: 'plan-unavailable' }, 400);
-  }
-  const current = await currentEntitlement(admin, user.id as string);
-  if (isLifetime(current)) return json({ error: 'already-lifetime' }, 409);
-  const subscribed =
-    current &&
-    current.plan?.kind === 'subscription' &&
-    ['trialing', 'active'].includes(String(current.status)) &&
-    current.current_period_end &&
-    new Date(String(current.current_period_end)) > new Date();
-  if (subscribed && p.kind === 'subscription') return json({ error: 'already-plus' }, 409);
+  const sold = await sellablePlan(admin, user.id as string, planCode);
+  if (sold.error) return sold.error;
+  const { p, current } = sold;
 
   const withTrial = p.kind === 'subscription' && p.trial_days > 0 && !current?.had_trial;
   const { data: row, error } = await admin
@@ -367,15 +463,7 @@ async function checkout(
     .single();
   if (error || !row) return json({ error: 'checkout-failed' }, 500);
 
-  // Staging only: Mercado Pago test integrations must be paid by the buyer test account.
-  // The customer may pay with the email of their Mercado Pago account (Peru) when it is not
-  // the one of their MONEO account.
-  const asked =
-    typeof askedPayer === 'string' &&
-    /^[^\s@]{1,64}@[^\s@]{1,100}\.[a-z]{2,}$/i.test(askedPayer.trim())
-      ? askedPayer.trim()
-      : '';
-  const payerEmail = Deno.env.get('MP_TEST_PAYER_EMAIL') || asked || String(user.email);
+  const payerEmail = payerEmailFor(user, askedPayer);
   const site = siteUrl(req);
   const back = `${site}/empezar?paso=confirmando&checkout=${row.id}`;
   const notify = `${Deno.env.get('SUPABASE_URL')}/functions/v1/billing/webhook`;
@@ -434,6 +522,158 @@ async function checkout(
   await admin.from('billing_checkouts').update({ provider_id: providerId }).eq('id', row.id);
   log(`checkout ${p.code}${withTrial ? ' trial' : ''}`);
   return json({ url, checkoutId: row.id, trial: withTrial });
+}
+
+// ── Checkout inside MONEO (Mercado Pago SDK tokens) ──────────────────────────
+
+type PayMethod = 'card' | 'yape' | 'pagoefectivo';
+
+async function pay(req: Request, admin: SupabaseClient, user: Row, body: Row) {
+  const method = String(body.method ?? '') as PayMethod;
+  if (!['card', 'yape', 'pagoefectivo'].includes(method)) {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const sold = await sellablePlan(admin, user.id as string, String(body.plan ?? ''));
+  if (sold.error) return sold.error;
+  const { p, current } = sold;
+  // Subscriptions renew on a card; Yape and PagoEfectivo only pay one-time plans and passes.
+  if (p.kind === 'subscription' && method !== 'card') {
+    return json({ error: 'method-not-allowed' }, 400);
+  }
+  const token = typeof body.token === 'string' ? body.token : '';
+  if (method !== 'pagoefectivo' && !/^[\w-]{8,200}$/.test(token)) {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const cardMethod = String(body.payment_method_id ?? '');
+  if (method === 'card' && p.kind !== 'subscription' && !/^[a-z_]{2,30}$/.test(cardMethod)) {
+    return json({ error: 'bad-request' }, 400);
+  }
+
+  const withTrial = p.kind === 'subscription' && p.trial_days > 0 && !current?.had_trial;
+  const { data: row, error } = await admin
+    .from('billing_checkouts')
+    .insert({
+      user_id: user.id,
+      plan_code: p.code,
+      amount: p.price,
+      currency: p.currency,
+      with_trial: withTrial,
+      method,
+    })
+    .select('*, plan:billing_plans(*)')
+    .single();
+  if (error || !row) return json({ error: 'checkout-failed' }, 500);
+  const payerEmail = payerEmailFor(user, body.payer_email);
+  const notify = `${Deno.env.get('SUPABASE_URL')}/functions/v1/billing/webhook`;
+
+  const fail = async (detail: string) => {
+    await admin.from('billing_checkouts').update({ status: 'failed' }).eq('id', row.id);
+    log(`pay ${p.code} ${method} rejected`);
+    return json({ status: 'rejected', detail: detail.slice(0, 60) });
+  };
+
+  // Card subscription: authorized at once with the card token (no redirect).
+  if (p.kind === 'subscription') {
+    let pre: Row;
+    try {
+      pre = await mp('/preapproval', {
+        method: 'POST',
+        body: JSON.stringify({
+          reason: p.name,
+          external_reference: row.id,
+          payer_email: payerEmail,
+          card_token_id: token,
+          back_url: `${siteUrl(req)}/finanzas`,
+          status: 'authorized',
+          auto_recurring: {
+            frequency: p.interval_months,
+            frequency_type: 'months',
+            transaction_amount: Number(p.price),
+            currency_id: p.currency,
+            ...(withTrial
+              ? { free_trial: { frequency: p.trial_days, frequency_type: 'days' } }
+              : {}),
+          },
+        }),
+      });
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : 'error';
+      if (/^mp-5|^mp-429/.test(reason)) throw e;
+      return fail(reason.replace(/^mp-\d+:?\s*/, '') || 'card-rejected');
+    }
+    await admin.from('billing_checkouts').update({ provider_id: String(pre.id) }).eq('id', row.id);
+    const outcome = await applyPreapproval(admin, pre);
+    log(`pay ${p.code} card ${outcome}`);
+    if (pre.status === 'authorized') return json({ status: 'approved', trial: withTrial });
+    return fail(String(pre.status ?? 'not-authorized'));
+  }
+
+  // One-time plans and passes: a payment with the card / Yape token, or PagoEfectivo.
+  const identification = body.identification as Row | undefined;
+  const payment = await mp('/v1/payments', {
+    method: 'POST',
+    headers: { 'X-Idempotency-Key': `pay-${row.id}` },
+    body: JSON.stringify({
+      transaction_amount: Number(p.price),
+      description: p.name,
+      external_reference: row.id,
+      notification_url: notify,
+      statement_descriptor: 'MONEO PLUS',
+      payer: {
+        email: payerEmail,
+        ...(identification &&
+        typeof identification.type === 'string' &&
+        typeof identification.number === 'string'
+          ? {
+              identification: {
+                type: identification.type.slice(0, 10),
+                number: identification.number.replace(/\D/g, '').slice(0, 20),
+              },
+            }
+          : {}),
+      },
+      ...(method === 'pagoefectivo'
+        ? {
+            payment_method_id: 'pagoefectivo_atm',
+            date_of_expiration: new Date(Date.now() + 48 * 3600e3).toISOString(),
+          }
+        : method === 'yape'
+          ? { payment_method_id: 'yape', token, installments: 1 }
+          : {
+              payment_method_id: cardMethod,
+              token,
+              installments: Math.min(Math.max(Number(body.installments) || 1, 1), 12),
+              ...(/^\d{1,10}$/.test(String(body.issuer_id ?? ''))
+                ? { issuer_id: Number(body.issuer_id) }
+                : {}),
+            }),
+    }),
+  });
+  await admin
+    .from('billing_checkouts')
+    .update({ provider_id: String(payment.id) })
+    .eq('id', row.id);
+
+  if (payment.status === 'approved') {
+    const outcome = await applyPayment(admin, payment);
+    log(`pay ${p.code} ${method} ${outcome}`);
+    return json({ status: 'approved' });
+  }
+  if (payment.status === 'pending' || payment.status === 'in_process') {
+    const details = (payment.transaction_details ?? {}) as Row;
+    const url =
+      typeof details.external_resource_url === 'string' ? details.external_resource_url : null;
+    await admin
+      .from('billing_checkouts')
+      .update({
+        pending_url: url?.slice(0, 500) ?? null,
+        pending_expires_at: (payment.date_of_expiration as string | null) ?? null,
+      })
+      .eq('id', row.id);
+    log(`pay ${p.code} ${method} pending`);
+    return json({ status: 'pending', url, detail: String(payment.status_detail ?? '') });
+  }
+  return fail(String(payment.status_detail ?? payment.status ?? 'rejected'));
 }
 
 async function sync(admin: SupabaseClient, user: Row) {
@@ -529,6 +769,28 @@ Deno.serve(async (req) => {
     }
     if (body.action === 'sync') return await sync(admin, user);
     if (body.action === 'cancel') return await cancel(admin, user);
+    if (body.action === 'config') {
+      return json({ publicKey: Deno.env.get('MP_PUBLIC_KEY') ?? null });
+    }
+    if (body.action === 'pay') {
+      try {
+        return await pay(req, admin, user, body);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : 'unknown';
+        await admin.from('billing_events').insert({
+          provider: 'mercadopago',
+          event_key: `pay-error:${crypto.randomUUID()}`,
+          topic: 'pay-error',
+          resource_id: String(body.plan ?? '').slice(0, 80) || 'unknown',
+          outcome: reason.slice(0, 60),
+        });
+        log(`pay-error ${reason}`);
+        if (/different site|payer_email|invalid.*email|email.*invalid/i.test(reason)) {
+          return json({ error: 'payer-email-rejected', reason: reason.slice(0, 120) }, 400);
+        }
+        return json({ error: 'provider-error', reason: reason.slice(0, 120) }, 502);
+      }
+    }
     return json({ error: 'unknown-action' }, 400);
   } catch (e) {
     log(`error ${e instanceof Error ? e.message : 'unknown'}`);

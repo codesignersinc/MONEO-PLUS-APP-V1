@@ -7,6 +7,9 @@ import AddTransactionModal from '@/components/finance/AddTransactionModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import AutoLiveListener from '@/components/finance/AutoLiveListener';
+import TrialCountdown from '@/components/billing/TrialCountdown';
+import TrialEndedModal from '@/components/billing/TrialEndedModal';
+import { PlusProvider } from '@/contexts/PlusContext';
 
 export default function FinanzasLayout({ children }: { children: React.ReactNode }) {
   const [showModal, setShowModal] = useState(false);
@@ -22,29 +25,33 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-[#FAFAF8] font-poppins">
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
-        />
-        <MobileNav onFabClick={() => setShowModal(true)} />
-        <main
-          className={`pb-24 lg:pb-0 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60'}`}
-        >
-          {!loading && user ? (
-            children
-          ) : (
-            <div className="flex items-center justify-center min-h-screen">
-              <div className="text-center">
-                <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                <p className="text-sm text-gray-500">Cargando...</p>
+      <PlusProvider>
+        <div className="min-h-screen bg-[#FAFAF8] font-poppins">
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+          />
+          <MobileNav onFabClick={() => setShowModal(true)} />
+          <main
+            className={`pb-24 lg:pb-0 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60'}`}
+          >
+            {!loading && user ? (
+              children
+            ) : (
+              <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                  <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-sm text-gray-500">Cargando...</p>
+                </div>
               </div>
-            </div>
-          )}
-        </main>
-        {user && <AutoLiveListener />}
-        <AddTransactionModal isOpen={showModal} onClose={() => setShowModal(false)} />
-      </div>
+            )}
+          </main>
+          {user && <AutoLiveListener />}
+          {user && <TrialCountdown />}
+          {user && <TrialEndedModal />}
+          <AddTransactionModal isOpen={showModal} onClose={() => setShowModal(false)} />
+        </div>
+      </PlusProvider>
     </ToastProvider>
   );
 }

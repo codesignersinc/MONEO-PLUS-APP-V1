@@ -6,9 +6,9 @@ import { ArrowRight, Bell, Loader2, Lock, ShieldCheck, Sparkles } from 'lucide-r
 import { useAuth } from '@/contexts/AuthContext';
 import {
   billingService,
-  BillingError,
   entitlementService,
   hasPlusNow,
+  trialService,
   plansService,
   type BillingPlan,
   type Entitlement,
@@ -35,6 +35,7 @@ import { markWelcomeSeen } from '@/lib/onboarding';
 import { track } from '@/lib/analytics';
 import { notifyDataChanged } from '@/lib/dataSync';
 import BrandLogo from '@/components/finance/BrandLogo';
+import CheckoutPanel from '@/components/billing/CheckoutPanel';
 import Paywall, { money } from '@/components/onboarding/Paywall';
 import {
   CheckRow,
@@ -254,9 +255,28 @@ function Onboarding() {
     if (!ready || authLoading) return;
     if (!user && NEEDS_USER.includes(step)) go('cuenta', true);
     else if (user && step === 'cuenta')
-      go(state.plan && state.plan !== 'free' && !plus ? 'pago' : plus ? 'activo' : 'dinero', true);
+      go(
+        state.plan === 'trial' || plus
+          ? 'activo'
+          : state.plan && state.plan !== 'free'
+            ? 'pago'
+            : 'dinero',
+        true
+      );
     else if (plus && (step === 'planes' || step === 'pago')) go('activo', true);
   }, [ready, authLoading, user, step, plus, state.plan, go]);
+
+  // "Empezar mis 14 días gratis": the server grants the trial once (no card).
+  useEffect(() => {
+    if (!ready || !user || state.plan !== 'trial' || ent !== null) return;
+    trialService
+      .start()
+      .then(async (started) => {
+        if (started) track('free_trial_started');
+        setEnt(await entitlementService.get());
+      })
+      .catch(() => {});
+  }, [ready, user, state.plan, ent]);
 
   useEffect(() => {
     if (step === 'inicio') track('onboarding_started');
@@ -516,7 +536,7 @@ function Onboarding() {
     // ── 07 · Planes ─────────────────────────────────────────────────────────
     case 'planes': {
       const code =
-        (state.plan && state.plan !== 'free' ? state.plan : null) ??
+        (state.plan && state.plan !== 'free' && state.plan !== 'trial' ? state.plan : null) ??
         (plans.some((p) => p.code === 'plus_yearly') ? 'plus_yearly' : (plans[0]?.code ?? null));
       const chosen = plans.find((p) => p.code === code);
       const trial =
@@ -527,38 +547,41 @@ function Onboarding() {
           onBack={back('perfil')}
           footer={
             <div className="mx-auto max-w-xl">
-              <PrimaryButton
-                variant="yellow"
-                disabled={!chosen}
-                onClick={() => {
-                  if (!chosen) return;
-                  update({ plan: chosen.code });
-                  track('plan_selected', { plan: chosen.code });
-                  go(user ? 'pago' : 'cuenta');
-                }}
-              >
-                {trial
-                  ? `Probar ${chosen!.trialDays} días gratis`
-                  : chosen?.kind === 'one_time'
-                    ? 'Comprar de por vida'
-                    : 'Activar MONEO PLUS'}{' '}
-                <ArrowRight className="h-5 w-5" />
-              </PrimaryButton>
-              {trial && (
-                <p className="mt-2 text-center text-xs font-semibold text-gray-700">
-                  Hoy pagas S/ 0. Luego {money(chosen!.price)}{' '}
-                  {chosen!.intervalMonths === 12 ? 'al año' : 'al mes'}. Cancela cuando quieras.
-                </p>
+              {!ent?.hadTrial && (
+                <>
+                  <PrimaryButton
+                    variant="yellow"
+                    onClick={() => {
+                      update({ plan: 'trial' });
+                      track('plan_selected', { plan: 'trial' });
+                      go(user ? 'activo' : 'cuenta');
+                    }}
+                  >
+                    Empezar mis 14 días gratis <ArrowRight className="h-5 w-5" />
+                  </PrimaryButton>
+                  <p className="mt-2 text-center text-xs font-semibold text-gray-700">
+                    Sin tarjeta. Al terminar eliges un plan o sigues gratis con MONEO FREE.
+                  </p>
+                </>
               )}
-              <TextButton
-                onClick={() => {
-                  update({ plan: 'free' });
-                  track('plan_selected', { plan: 'free' });
-                  go(user ? 'dinero' : 'cuenta');
-                }}
-              >
-                Seguir con MONEO FREE (con anuncios)
-              </TextButton>
+              <div className="mt-2">
+                <PrimaryButton
+                  variant={ent?.hadTrial ? 'yellow' : 'white'}
+                  disabled={!chosen}
+                  onClick={() => {
+                    if (!chosen) return;
+                    update({ plan: chosen.code });
+                    track('plan_selected', { plan: chosen.code });
+                    go(user ? 'pago' : 'cuenta');
+                  }}
+                >
+                  {trial
+                    ? `Suscribirme con ${chosen!.trialDays} días gratis`
+                    : chosen?.kind === 'one_time'
+                      ? `Pagar ${money(chosen.price)} de por vida`
+                      : 'Pagar ahora'}
+                </PrimaryButton>
+              </div>
             </div>
           }
         >
@@ -581,9 +604,14 @@ function Onboarding() {
       return (
         <AccountStep
           onBack={back(state.plan === 'free' ? 'planes' : 'planes')}
-          paid={Boolean(state.plan && state.plan !== 'free')}
+          paid={Boolean(state.plan && state.plan !== 'free' && state.plan !== 'trial')}
           onGoogle={() => {
-            const next = state.plan && state.plan !== 'free' ? 'pago' : 'dinero';
+            const next =
+              state.plan === 'trial'
+                ? 'activo'
+                : state.plan && state.plan !== 'free'
+                  ? 'pago'
+                  : 'dinero';
             return signInWithProvider('google', `/empezar?paso=${next}`);
           }}
           onSignUp={async (name, email, password) => {
@@ -603,9 +631,13 @@ function Onboarding() {
           plan={selectedPlan}
           hadTrial={Boolean(ent?.hadTrial)}
           onBack={back('planes')}
-          onFree={() => {
-            update({ plan: 'free' });
-            go('dinero');
+          onPaid={async () => {
+            setEnt(await entitlementService.get().catch(() => null));
+            go('activo', true);
+          }}
+          onTrial={() => {
+            update({ plan: 'trial' });
+            go('activo');
           }}
         />
       );
@@ -649,7 +681,15 @@ function Onboarding() {
               ✓
             </div>
             <h1 className="mt-5 text-[32px] font-black leading-tight">
-              ¡MONEO <Highlight>PLUS</Highlight> está activo!
+              {ent?.kind === 'trial' ? (
+                <>
+                  ¡Empezó tu prueba de MONEO <Highlight>PLUS</Highlight>!
+                </>
+              ) : (
+                <>
+                  ¡MONEO <Highlight>PLUS</Highlight> está activo!
+                </>
+              )}
             </h1>
             <p className="mt-2 font-medium text-gray-700">
               Ahora vamos a configurar tu experiencia.
@@ -658,11 +698,15 @@ function Onboarding() {
               <p className="mt-3 rounded-xl border-2 border-black bg-white px-3 py-2 text-sm font-bold">
                 {ent.lifetime
                   ? 'Plan de por vida · sin renovaciones'
-                  : ent.status === 'trialing' && ent.trialEndsAt
-                    ? `Prueba gratis hasta el ${fmtDate(new Date(ent.trialEndsAt))}`
-                    : ent.currentPeriodEnd
-                      ? `Próxima renovación: ${fmtDate(new Date(ent.currentPeriodEnd))}`
-                      : 'Plan activo'}
+                  : ent.kind === 'trial' && ent.currentPeriodEnd
+                    ? `14 días gratis, hasta el ${fmtDate(new Date(ent.currentPeriodEnd))} · sin tarjeta`
+                    : ent.kind === 'pass' && ent.currentPeriodEnd
+                      ? `Activo hasta el ${fmtDate(new Date(ent.currentPeriodEnd))} · sin renovaciones`
+                      : ent.status === 'trialing' && ent.trialEndsAt
+                        ? `Prueba gratis hasta el ${fmtDate(new Date(ent.trialEndsAt))}`
+                        : ent.currentPeriodEnd
+                          ? `Próxima renovación: ${fmtDate(new Date(ent.currentPeriodEnd))}`
+                          : 'Plan activo'}
               </p>
             )}
           </div>
@@ -867,16 +911,15 @@ function PayStep({
   plan,
   hadTrial,
   onBack,
-  onFree,
+  onPaid,
+  onTrial,
 }: {
   plan: BillingPlan | null;
   hadTrial: boolean;
   onBack: () => void;
-  onFree: () => void;
+  onPaid: () => void;
+  onTrial: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<BillingError | null>(null);
-  const [payerEmail, setPayerEmail] = useState('');
   if (!plan) {
     return (
       <Shell onBack={onBack}>
@@ -885,134 +928,32 @@ function PayStep({
     );
   }
   const trial = plan.kind === 'subscription' && plan.trialDays > 0 && !hadTrial;
-  const firstCharge = new Date(Date.now() + (trial ? plan.trialDays : 0) * 86400e3);
   const every = plan.intervalMonths === 12 ? 'año' : 'mes';
 
-  const pay = async () => {
-    setBusy(true);
-    setError(null);
-    track('checkout_started', { plan: plan.code });
-    try {
-      const { url } = await billingService.checkout(plan.code, payerEmail.trim() || undefined);
-      window.location.href = url;
-    } catch (err) {
-      setError(err instanceof BillingError ? err : new BillingError('unknown'));
-      track('payment_failed', { plan: plan.code, stage: 'checkout' });
-      setBusy(false);
-    }
-  };
-
   return (
-    <Shell
-      onBack={onBack}
-      footer={
-        <>
-          <PrimaryButton variant="yellow" onClick={pay} disabled={busy}>
-            {busy && <Loader2 className="h-5 w-5 animate-spin" />}
-            {trial
-              ? 'Comenzar mi prueba'
-              : plan.kind === 'one_time'
-                ? `Pagar ${money(plan.price)}`
-                : `Suscribirme por ${money(plan.price)}`}
-            <ArrowRight className="h-5 w-5" />
-          </PrimaryButton>
-          <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-600">
-            <ShieldCheck className="h-4 w-4" /> Pagas en Mercado Pago. MONEO nunca ve ni guarda tu
-            tarjeta.
-          </p>
-        </>
-      }
-    >
+    <Shell onBack={onBack}>
       <Title>Activa MONEO PLUS</Title>
-      <div className="rounded-3xl border-[3px] border-black bg-white p-5 shadow-[4px_4px_0_#111]">
-        <p className="text-xs font-black uppercase tracking-wide text-gray-500">Tu plan</p>
-        <p className="text-xl font-black">{plan.name}</p>
-        <dl className="mt-4 space-y-3 text-[15px]">
-          <div className="flex justify-between gap-3">
-            <dt className="font-semibold text-gray-600">Precio</dt>
-            <dd className="font-black">
-              {money(plan.price)}
-              {plan.kind === 'subscription' ? ` / ${every}` : ' · pago único'}
-              <span className="block text-right text-xs font-semibold text-gray-500">
-                IGV incluido
-              </span>
-            </dd>
-          </div>
-          {trial && (
-            <>
-              <div className="flex justify-between gap-3">
-                <dt className="font-semibold text-gray-600">Prueba gratis</dt>
-                <dd className="font-black">{plan.trialDays} días</dd>
-              </div>
-              <div className="flex justify-between gap-3 rounded-xl bg-[#DDF7E9] px-3 py-2">
-                <dt className="font-bold">Hoy pagas</dt>
-                <dd className="font-black">S/ 0.00</dd>
-              </div>
-            </>
-          )}
-          {plan.kind === 'subscription' && (
-            <div className="flex justify-between gap-3">
-              <dt className="font-semibold text-gray-600">Primer cobro</dt>
-              <dd className="text-right font-black">
-                {fmtDate(firstCharge)}
-                <span className="block text-xs font-semibold text-gray-500">
-                  luego cada {every}
-                </span>
-              </dd>
-            </div>
-          )}
-        </dl>
-      </div>
-      <ul className="mt-5 space-y-2 text-sm font-semibold text-gray-700">
-        {trial && (
-          <li>
-            • Al terminar tu prueba se cobrará {money(plan.price)} y luego cada {every}, salvo que
-            canceles antes.
-          </li>
-        )}
-        {plan.kind === 'subscription' && <li>• Puedes cancelar cuando quieras desde MONEO.</li>}
-        {plan.kind === 'one_time' && <li>• Un solo pago. Sin renovaciones ni cobros futuros.</li>}
-        <li>• Te avisaremos antes de cada cobro.</li>
-      </ul>
-      {error && (
-        <div role="alert" className="mt-5 rounded-2xl border-[3px] border-black bg-[#FFE1DB] p-4">
-          <p className="font-black">{error.userMessage}</p>
-          {error.code === 'payer-email-rejected' && (
-            <form
-              className="mt-3 space-y-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                pay();
-              }}
-            >
-              <label className="block text-sm font-semibold">
-                Escribe el correo de tu cuenta de Mercado Pago Perú (o uno sin cuenta de Mercado
-                Pago). Tu cuenta MONEO no cambia.
-                <input
-                  type="email"
-                  required
-                  value={payerEmail}
-                  onChange={(e) => setPayerEmail(e.target.value)}
-                  placeholder="correo@ejemplo.com"
-                  className="mt-2 min-h-[52px] w-full rounded-2xl border-[3px] border-black bg-white px-4 text-base font-semibold"
-                />
-              </label>
-              <PrimaryButton type="submit" variant="white" disabled={busy || !payerEmail.trim()}>
-                Intentar con este correo
-              </PrimaryButton>
-            </form>
-          )}
-          {error.code === 'payments-not-configured' && (
-            <>
-              <p className="mt-1 text-sm font-semibold">
-                Mientras tanto puedes empezar gratis y activar PLUS después.
-              </p>
-              <PrimaryButton variant="white" onClick={onFree}>
-                Empezar con MONEO FREE
-              </PrimaryButton>
-            </>
-          )}
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border-[3px] border-black bg-white px-4 py-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-gray-500">Tu plan</p>
+          <p className="font-black">{plan.name}</p>
         </div>
+        <p className="text-right font-black">
+          {money(plan.price)}
+          {plan.kind === 'subscription' ? ` / ${every}` : ''}
+          <span className="block text-xs font-semibold text-gray-500">IGV incluido</span>
+        </p>
+      </div>
+      <CheckoutPanel
+        plan={plan}
+        trial={trial}
+        onApproved={() => {
+          track(trial ? 'trial_started' : 'payment_approved', { plan: plan.code });
+          onPaid();
+        }}
+      />
+      {!hadTrial && (
+        <TextButton onClick={onTrial}>Mejor empiezo con 14 días gratis (sin tarjeta)</TextButton>
       )}
     </Shell>
   );

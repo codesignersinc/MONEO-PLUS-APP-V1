@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,8 +29,7 @@ import MoneoLogo from '@/components/ui/MoneoLogo';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useToast } from '@/components/ui/Toast';
 import { PlusCard } from '@/components/dashboard/RailCards';
-import { ONBOARDING_V2 } from '@/lib/onboardingFlow';
-import { entitlementService, type Entitlement } from '@/lib/billing';
+import { usePlus } from '@/contexts/PlusContext';
 
 interface NavItem {
   href: string;
@@ -76,14 +75,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   };
 
   // MONEO PLUS status for the card at the bottom (only where the plans are live).
-  const [ent, setEnt] = useState<Entitlement | null | undefined>(undefined);
-  useEffect(() => {
-    if (!ONBOARDING_V2 || !user) return;
-    entitlementService
-      .get()
-      .then(setEnt)
-      .catch(() => setEnt(undefined));
-  }, [user]);
+  const { ent, plansLive } = usePlus();
   const home = pathname === '/finanzas';
 
   async function handleSignOut() {
@@ -172,7 +164,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
       {/* MONEO PLUS (where the plans are live) or the brand note */}
       {!collapsed && (
         <div className="shrink-0 px-4 pb-2 pt-3">
-          {ONBOARDING_V2 && ent !== undefined ? (
+          {plansLive && ent !== undefined ? (
             <PlusCard ent={ent} variant="sidebar" />
           ) : (
             <div className="bg-[#FFD93D] rounded-2xl border-2 border-black p-3">

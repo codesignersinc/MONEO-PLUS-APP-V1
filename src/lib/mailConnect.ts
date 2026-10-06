@@ -16,6 +16,8 @@ export interface MailConnection {
 
 export interface MailStatus {
   configured: boolean;
+  // Paid MONEO PLUS (the free trial without card does not include Gmail).
+  plus: boolean;
   connection: MailConnection | null;
 }
 
@@ -24,6 +26,7 @@ const MESSAGES: Record<string, string> = {
     'Los cupos de la beta de Gmail están llenos. Te avisaremos cuando se abran más; mientras, usa capturas o pega el texto.',
   'not-configured': 'La conexión con Gmail se activa muy pronto.',
   'not-connected': 'Conecta tu Gmail primero.',
+  'plus-required': 'Gmail automático es para planes pagados de MONEO PLUS.',
 };
 
 async function invoke(body: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -51,6 +54,7 @@ export const MAIL_RETURN_MESSAGES: Record<string, { ok: boolean; text: string }>
     ok: false,
     text: 'Falta el permiso para leer tus correos: marca la casilla de Gmail al conectar.',
   },
+  plus: { ok: false, text: 'Gmail automático es para planes pagados de MONEO PLUS.' },
   error: { ok: false, text: 'No pudimos conectar Gmail. Intenta de nuevo.' },
 };
 
@@ -59,6 +63,7 @@ export const mailService = {
     const data = await invoke({ action: 'status' });
     return {
       configured: data.configured === true,
+      plus: data.plus === true,
       connection: (data.connection as MailConnection | null) ?? null,
     };
   },

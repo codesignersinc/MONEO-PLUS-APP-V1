@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
 import AutoGmailCard from '@/components/finance/AutoGmailCard';
+import PlusGate from '@/components/billing/PlusGate';
 import BrandLogo from '@/components/finance/BrandLogo';
 import VoiceButton from '@/components/finance/VoiceButton';
 import { useToast } from '@/components/ui/Toast';
@@ -78,6 +79,17 @@ function signedAmount(s: AutoSuggestion) {
 }
 
 export default function MoneoAutoPage() {
+  return (
+    <PlusGate
+      feature="MONEO AUTO"
+      description="Registra tus movimientos con capturas, tu voz, el texto de tu banco o tu Gmail, sin escribirlos uno por uno. Tus sugerencias guardadas siguen aquí."
+    >
+      <MoneoAuto />
+    </PlusGate>
+  );
+}
+
+function MoneoAuto() {
   const toast = useToast();
   const [items, setItems] = useState<AutoSuggestion[] | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
