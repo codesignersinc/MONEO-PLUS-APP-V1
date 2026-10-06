@@ -18,7 +18,8 @@
 //
 // Secrets: GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, MAIL_TOKEN_KEY (base64, 32 bytes),
 // MAIL_CRON_SECRET, BILLING_SITE_URLS (allowed app origins, the first one is the default),
-// optional MAIL_GOOGLE_USER_CAP (default 95: Google allows 100 users while unverified).
+// optional MAIL_GOOGLE_USER_CAP (default 95: Google allows 100 users while unverified) and
+// MAIL_REDIRECT_URI (see redirectUri).
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import {
   bankForEmail,
@@ -77,8 +78,13 @@ function siteUrl(req: Request): string {
   return allowed.includes(origin) ? origin : allowed[0];
 }
 
+// MAIL_REDIRECT_URI (e.g. https://moneo.plus/auth/gmail, which forwards here) makes Google
+// show the app's domain on its consent screen. It must be registered in Google Cloud.
 function redirectUri(): string {
-  return `${Deno.env.get('SUPABASE_URL')}/functions/v1/mail-oauth/google`;
+  return (
+    Deno.env.get('MAIL_REDIRECT_URI') ||
+    `${Deno.env.get('SUPABASE_URL')}/functions/v1/mail-oauth/google`
+  );
 }
 
 function googleConfigured(): boolean {

@@ -43,10 +43,10 @@ export async function middleware(request: NextRequest) {
   const isFinanzasRoute =
     request.nextUrl.pathname.startsWith('/finanzas') ||
     request.nextUrl.pathname.startsWith('/admin');
-  const isAuthRoute =
-    request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/register') ||
-    request.nextUrl.pathname.startsWith('/recuperar');
+  // Exact pages only: a prefix match would also catch static files like /register-sw.js.
+  const isAuthRoute = ['/login', '/register', '/recuperar'].some(
+    (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(`${p}/`)
+  );
 
   if (!user && isFinanzasRoute) {
     const url = request.nextUrl.clone();
@@ -65,5 +65,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|js|json|webmanifest|txt|xml|gz|wasm)$).*)',
+  ],
 };

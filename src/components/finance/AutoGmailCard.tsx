@@ -70,12 +70,13 @@ function ConnectGuide({
         <ol className="space-y-3">
           <GuideStep n={1}>Elige tu cuenta de Gmail.</GuideStep>
           <GuideStep n={2}>
-            En el aviso &quot;Google no verificó esta app&quot; toca <b>Configuración avanzada</b> y
-            luego <b>Ir a MONEO+ (no seguro)</b>.
+            Verás el aviso &quot;Google no verificó esta app&quot;. Toca{' '}
+            <b>Configuración avanzada</b> y luego el enlace de abajo,{' '}
+            <b>Ir a moneo.plus (no seguro)</b>.
           </GuideStep>
           <GuideStep n={3}>
-            <b>Marca la casilla</b> &quot;Ver tus mensajes de correo electrónico y tu
-            configuración&quot; y toca <b>Continuar</b>.
+            Revisa que diga &quot;Ver mensajes de correo electrónico&quot; y toca <b>Continuar</b>.
+            Si aparece una casilla, márcala.
           </GuideStep>
         </ol>
         <ul className="mt-4 space-y-1.5 rounded-2xl border-2 border-black p-3 text-[13px] text-gray-800">
