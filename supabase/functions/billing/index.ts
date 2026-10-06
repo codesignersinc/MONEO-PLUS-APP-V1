@@ -327,7 +327,13 @@ async function handleWebhook(req: Request, admin: SupabaseClient): Promise<Respo
 
 // ── User actions ────────────────────────────────────────────────────────────────
 
-async function checkout(req: Request, admin: SupabaseClient, user: Row, planCode: string) {
+async function checkout(
+  req: Request,
+  admin: SupabaseClient,
+  user: Row,
+  planCode: string,
+  askedPayer?: unknown
+) {
   const { data: plan } = await admin
     .from('billing_plans')
     .select('*')
@@ -362,7 +368,14 @@ async function checkout(req: Request, admin: SupabaseClient, user: Row, planCode
   if (error || !row) return json({ error: 'checkout-failed' }, 500);
 
   // Staging only: Mercado Pago test integrations must be paid by the buyer test account.
-  const payerEmail = Deno.env.get('MP_TEST_PAYER_EMAIL') || String(user.email);
+  // The customer may pay with the email of their Mercado Pago account (Peru) when it is not
+  // the one of their MONEO account.
+  const asked =
+    typeof askedPayer === 'string' &&
+    /^[^\s@]{1,64}@[^\s@]{1,100}\.[a-z]{2,}$/i.test(askedPayer.trim())
+      ? askedPayer.trim()
+      : '';
+  const payerEmail = Deno.env.get('MP_TEST_PAYER_EMAIL') || asked || String(user.email);
   const site = siteUrl(req);
   const back = `${site}/empezar?paso=confirmando&checkout=${row.id}`;
   const notify = `${Deno.env.get('SUPABASE_URL')}/functions/v1/billing/webhook`;
@@ -495,7 +508,7 @@ Deno.serve(async (req) => {
   try {
     if (body.action === 'checkout') {
       try {
-        return await checkout(req, admin, user, String(body.plan ?? ''));
+        return await checkout(req, admin, user, String(body.plan ?? ''), body.payer_email);
       } catch (e) {
         const reason = e instanceof Error ? e.message : 'unknown';
         await admin.from('billing_events').insert({
@@ -506,6 +519,11 @@ Deno.serve(async (req) => {
           outcome: reason.slice(0, 60),
         });
         log(`checkout-error ${reason}`);
+        // The email belongs to a Mercado Pago account of another country, or is not valid
+        // for Mercado Pago: the customer can try with another email.
+        if (/different site|payer_email|invalid.*email|email.*invalid/i.test(reason)) {
+          return json({ error: 'payer-email-rejected', reason: reason.slice(0, 120) }, 400);
+        }
         return json({ error: 'provider-error', reason: reason.slice(0, 120) }, 502);
       }
     }
