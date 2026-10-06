@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
+import AutoGmailCard from '@/components/finance/AutoGmailCard';
 import BrandLogo from '@/components/finance/BrandLogo';
 import VoiceButton from '@/components/finance/VoiceButton';
 import { useToast } from '@/components/ui/Toast';
@@ -310,8 +311,9 @@ export default function MoneoAutoPage() {
         </div>
       </section>
 
-      {/* Correo automático (reenvío) oculto por ahora: casi nadie configura el reenvío.
-          El componente sigue en src/components/finance/AutoEmailCard.tsx. */}
+      {/* Gmail conectado por OAuth. El reenvío de correos (AutoEmailCard) sigue oculto:
+          casi nadie lo configuraba. */}
+      <AutoGmailCard />
 
       {/* Inbox */}
       <h2 className="mb-3 text-lg font-black text-black">
