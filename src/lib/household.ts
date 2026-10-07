@@ -351,3 +351,119 @@ export function latestRecurring(expenses: HouseholdExpense[]): HouseholdExpense[
   }
   return [...series.values()];
 }
+
+// ---------- Budget, goals, simulator, insights, projection ----------
+
+export interface HouseholdBudget {
+  id: string;
+  category: string;
+  monthlyLimit: number;
+}
+
+export interface BudgetProgress extends HouseholdBudget {
+  spent: number;
+  pct: number; // 0–100+ (can go over)
+  status: 'ok' | 'warning' | 'over'; // warning from 80%
+}
+
+// Spending of the month against each category limit (same grouping as the views:
+// Comida + Supermercado = Alimentación).
+export function budgetProgress(
+  budgets: HouseholdBudget[],
+  monthExpenses: HouseholdExpense[]
+): BudgetProgress[] {
+  const totals = new Map(categoryTotals(monthExpenses).map((c) => [c.category, c.total]));
+  return budgets.map((b) => {
+    const spent = totals.get(householdCategory(b.category)) ?? 0;
+    const pct = b.monthlyLimit > 0 ? Math.round((spent / b.monthlyLimit) * 100) : 0;
+    return { ...b, spent, pct, status: pct >= 100 ? 'over' : pct >= 80 ? 'warning' : 'ok' };
+  });
+}
+
+// Budgets that crossed 80% with the last change (to notify once, not on every expense).
+export function budgetsCrossing(
+  before: BudgetProgress[],
+  after: BudgetProgress[]
+): BudgetProgress[] {
+  const prev = new Map(before.map((b) => [b.id, b.pct]));
+  return after.filter((b) => b.pct >= 80 && (prev.get(b.id) ?? 0) < 80);
+}
+
+// Average monthly spending of the last `months` full months that have expenses
+// (falls back to the current month when there is no history yet).
+export function averageMonthly(
+  expenses: HouseholdExpense[],
+  currentMonth: string,
+  months = 3
+): number {
+  const totals: number[] = [];
+  for (let i = 1; i <= months; i++) {
+    const t = inMonth(expenses, shiftMonth(currentMonth, -i)).reduce((s, e) => s + e.baseAmount, 0);
+    if (t > 0) totals.push(t);
+  }
+  if (totals.length === 0) {
+    return round2(inMonth(expenses, currentMonth).reduce((s, e) => s + e.baseAmount, 0));
+  }
+  return round2(totals.reduce((s, t) => s + t, 0) / totals.length);
+}
+
+// Suggested emergency fund: `months` of monthly spending (an estimate, not advice).
+export function emergencyFundTarget(monthly: number, months: number): number {
+  return Math.round(monthly * months);
+}
+
+export interface Cut {
+  key: string;
+  label: string;
+  monthly: number; // what it costs per month
+  cut: number; // how much would be saved per month (0..monthly)
+}
+
+// Simulator lines: this month's expenses grouped by description (recurring ones by
+// their monthly equivalent).
+export function simulatorLines(monthExpenses: HouseholdExpense[]): Cut[] {
+  const map = new Map<string, Cut>();
+  for (const e of monthExpenses) {
+    const key = `${e.name.trim().toLowerCase()}|${householdCategory(e.category).toLowerCase()}`;
+    const monthly = e.isRecurring ? monthlyEquivalent(e.baseAmount, e.frequency) : e.baseAmount;
+    const cur = map.get(key);
+    if (cur) cur.monthly = round2(cur.monthly + monthly);
+    else map.set(key, { key, label: e.name.trim(), monthly: round2(monthly), cut: 0 });
+  }
+  return [...map.values()].sort((a, b) => b.monthly - a.monthly);
+}
+
+export function simulatedSaving(cuts: Cut[]): { monthly: number; yearly: number } {
+  const monthly = round2(cuts.reduce((s, c) => s + Math.min(Math.max(c.cut, 0), c.monthly), 0));
+  return { monthly, yearly: round2(monthly * 12) };
+}
+
+export interface Insight {
+  category: string;
+  monthly: number;
+  pct: number; // share of the month
+  tenPercent: number; // what cutting 10% frees per month
+}
+
+// Deterministic insight: the biggest category of the month (no AI, only the data).
+export function topInsight(monthExpenses: HouseholdExpense[]): Insight | null {
+  const cats = categoryTotals(monthExpenses);
+  const total = cats.reduce((s, c) => s + c.total, 0);
+  if (cats.length === 0 || total <= 0) return null;
+  const top = cats[0];
+  return {
+    category: top.category,
+    monthly: top.total,
+    pct: Math.round((top.total / total) * 100),
+    tenPercent: round2(top.total * 0.1),
+  };
+}
+
+// Annual projection of a month (× 12), with the same breakdown by category.
+export function annualProjection(monthExpenses: HouseholdExpense[]): {
+  total: number;
+  byCategory: CategoryTotal[];
+} {
+  const cats = categoryTotals(monthExpenses).map((c) => ({ ...c, total: round2(c.total * 12) }));
+  return { total: round2(cats.reduce((s, c) => s + c.total, 0)), byCategory: cats };
+}

@@ -10,6 +10,7 @@ import type { Account } from '@/lib/financeStore';
 import type {
   Frequency,
   Household,
+  HouseholdBudget,
   HouseholdExpense,
   HouseholdMember,
   HouseholdSettlement,
@@ -618,3 +619,294 @@ export async function discardOwnMovement(id: string): Promise<void> {
     // Best effort: the user still sees the movement in Movimientos and can delete it.
   }
 }
+
+// ---------- Budget ----------
+
+export const householdBudgetsService = {
+  async list(householdId: string): Promise<HouseholdBudget[]> {
+    const { data, error } = await createClient()
+      .from('household_budgets')
+      .select('id, category, monthly_limit')
+      .eq('household_id', householdId)
+      .order('category');
+    if (error) throw toDataError(error);
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      category: r.category,
+      monthlyLimit: Number(r.monthly_limit),
+    }));
+  },
+
+  // One limit per category: creates it or replaces its amount. (Not an upsert: members
+  // may only update the limit columns, never move a row to another household.)
+  async upsert(householdId: string, category: string, monthlyLimit: number): Promise<void> {
+    const supabase = createClient();
+    const { data: found, error: e1 } = await supabase
+      .from('household_budgets')
+      .select('id')
+      .eq('household_id', householdId)
+      .eq('category', category.trim())
+      .maybeSingle();
+    if (e1) throw toDataError(e1);
+    const { error } = found
+      ? await supabase
+          .from('household_budgets')
+          .update({ monthly_limit: monthlyLimit })
+          .eq('id', found.id)
+      : await supabase.from('household_budgets').insert({
+          household_id: householdId,
+          category: category.trim(),
+          monthly_limit: monthlyLimit,
+        });
+    if (error) throw rpcError(error);
+  },
+
+  async remove(id: string): Promise<void> {
+    const { data, error } = await createClient()
+      .from('household_budgets')
+      .delete()
+      .eq('id', id)
+      .select('id');
+    if (error) throw toDataError(error);
+    if (!data?.length) throw new DataError('permission');
+  },
+};
+
+// ---------- Goals ----------
+
+export type GoalKind = 'emergency' | 'travel' | 'home' | 'car' | 'education' | 'other';
+
+export interface GoalContribution {
+  id: string;
+  memberId: string;
+  amount: number;
+  date: string;
+  createdBy: string | null;
+}
+
+export interface HouseholdGoal {
+  id: string;
+  name: string;
+  kind: GoalKind;
+  emoji: string;
+  targetAmount: number;
+  targetDate: string | null;
+  createdBy: string | null;
+  saved: number;
+  contributions: GoalContribution[];
+}
+
+export const householdGoalsService = {
+  async list(householdId: string): Promise<HouseholdGoal[]> {
+    const { data, error } = await createClient()
+      .from('household_goals')
+      .select(
+        'id, name, kind, emoji, target_amount, target_date, created_by, household_goal_contributions(id, member_id, amount, contributed_on, created_by)'
+      )
+      .eq('household_id', householdId)
+      .order('created_at');
+    if (error) throw toDataError(error);
+    return (
+      (data ?? []) as unknown as {
+        id: string;
+        name: string;
+        kind: GoalKind;
+        emoji: string | null;
+        target_amount: number | string;
+        target_date: string | null;
+        created_by: string | null;
+        household_goal_contributions: {
+          id: string;
+          member_id: string;
+          amount: number | string;
+          contributed_on: string;
+          created_by: string | null;
+        }[];
+      }[]
+    ).map((g) => {
+      const contributions = (g.household_goal_contributions ?? [])
+        .map((c) => ({
+          id: c.id,
+          memberId: c.member_id,
+          amount: Number(c.amount),
+          date: c.contributed_on,
+          createdBy: c.created_by,
+        }))
+        .sort((a, b) => b.date.localeCompare(a.date));
+      return {
+        id: g.id,
+        name: g.name,
+        kind: g.kind,
+        emoji: g.emoji ?? '🎯',
+        targetAmount: Number(g.target_amount),
+        targetDate: g.target_date,
+        createdBy: g.created_by,
+        saved: Math.round(contributions.reduce((s, c) => s + c.amount, 0) * 100) / 100,
+        contributions,
+      };
+    });
+  },
+
+  async create(
+    householdId: string,
+    g: {
+      name: string;
+      kind: GoalKind;
+      emoji: string;
+      targetAmount: number;
+      targetDate: string | null;
+    }
+  ): Promise<string> {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new DataError('auth');
+    const { data, error } = await supabase
+      .from('household_goals')
+      .insert({
+        household_id: householdId,
+        created_by: user.id,
+        name: g.name.trim(),
+        kind: g.kind,
+        emoji: g.emoji,
+        target_amount: g.targetAmount,
+        target_date: g.targetDate,
+      })
+      .select('id')
+      .single();
+    if (error) throw rpcError(error);
+    return data.id;
+  },
+
+  async update(
+    id: string,
+    g: { name: string; emoji: string; targetAmount: number; targetDate: string | null }
+  ): Promise<void> {
+    const { data, error } = await createClient()
+      .from('household_goals')
+      .update({
+        name: g.name.trim(),
+        emoji: g.emoji,
+        target_amount: g.targetAmount,
+        target_date: g.targetDate,
+      })
+      .eq('id', id)
+      .select('id');
+    if (error) throw rpcError(error);
+    if (!data?.length) throw new DataError('permission');
+  },
+
+  // Its creator or the owner (RLS).
+  async remove(id: string): Promise<void> {
+    const { data, error } = await createClient()
+      .from('household_goals')
+      .delete()
+      .eq('id', id)
+      .select('id');
+    if (error) throw toDataError(error);
+    if (!data?.length) {
+      throw new DataError(
+        'permission',
+        undefined,
+        'Solo quien creó la meta o quien administra el hogar puede eliminarla.'
+      );
+    }
+  },
+
+  // The caller's own contribution (optionally linked to their own movement).
+  async contribute(
+    householdId: string,
+    goalId: string,
+    memberId: string,
+    amount: number,
+    date: string,
+    transactionId: string | null
+  ): Promise<void> {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new DataError('auth');
+    const { error } = await supabase.from('household_goal_contributions').insert({
+      goal_id: goalId,
+      household_id: householdId,
+      member_id: memberId,
+      created_by: user.id,
+      amount,
+      contributed_on: date,
+      transaction_id: transactionId,
+    });
+    if (error) throw rpcError(error);
+  },
+
+  async removeContribution(id: string): Promise<void> {
+    const { data, error } = await createClient()
+      .from('household_goal_contributions')
+      .delete()
+      .eq('id', id)
+      .select('id');
+    if (error) throw toDataError(error);
+    if (!data?.length) throw new DataError('permission');
+  },
+};
+
+// ---------- Simulations ----------
+
+export interface SavedSimulation {
+  id: string;
+  name: string;
+  monthlySaving: number;
+  createdAt: string;
+  createdBy: string | null;
+}
+
+export const householdSimulationsService = {
+  async list(householdId: string): Promise<SavedSimulation[]> {
+    const { data, error } = await createClient()
+      .from('household_simulations')
+      .select('id, name, monthly_saving, created_at, created_by')
+      .eq('household_id', householdId)
+      .order('created_at', { ascending: false });
+    if (error) throw toDataError(error);
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      monthlySaving: Number(r.monthly_saving),
+      createdAt: r.created_at,
+      createdBy: r.created_by,
+    }));
+  },
+
+  // Never touches real movements: it only stores the chosen cuts.
+  async save(
+    householdId: string,
+    name: string,
+    cuts: { label: string; cut: number }[],
+    monthlySaving: number
+  ): Promise<void> {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new DataError('auth');
+    const { error } = await supabase.from('household_simulations').insert({
+      household_id: householdId,
+      created_by: user.id,
+      name: name.trim(),
+      cuts: cuts.filter((c) => c.cut > 0).slice(0, 100),
+      monthly_saving: monthlySaving,
+    });
+    if (error) throw rpcError(error);
+  },
+
+  async remove(id: string): Promise<void> {
+    const { data, error } = await createClient()
+      .from('household_simulations')
+      .delete()
+      .eq('id', id)
+      .select('id');
+    if (error) throw toDataError(error);
+    if (!data?.length) throw new DataError('permission');
+  },
+};

@@ -11,6 +11,8 @@ import {
   Repeat,
   Scale,
   Settings,
+  Sparkles,
+  TrendingUp,
   UserPlus,
 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
@@ -26,8 +28,15 @@ import { todayLocal } from '@/lib/dates';
 import { getErrorMessage } from '@/lib/dataError';
 import { track } from '@/lib/analytics';
 import {
+  annualProjection,
+  averageMonthly,
+  budgetProgress,
+  budgetsCrossing,
   categoryTotals,
   changePct,
+  emergencyFundTarget,
+  topInsight,
+  type HouseholdBudget,
   householdShares,
   inMonth,
   latestRecurring,
@@ -42,23 +51,34 @@ import {
   type SplitMethod,
 } from '@/lib/household';
 import {
+  householdBudgetsService,
   householdExpensesService,
+  householdGoalsService,
   householdService,
   householdSettlementsService,
+  type HouseholdGoal,
   type MyHousehold,
 } from '@/lib/supabaseHousehold';
+import { getCurrencyInfo } from '@/lib/currency';
+import BudgetTab from '@/components/household/BudgetTab';
+import GoalsTab, { type GoalDraft } from '@/components/household/GoalsTab';
+import SimulatorTab from '@/components/household/SimulatorTab';
+import HouseholdPlusLocked from '@/components/household/HouseholdPlusLocked';
 import { Avatar, Choice, memberColor } from '@/components/household/ui';
 import ExpenseSheet from '@/components/household/ExpenseSheet';
 import InviteSheet from '@/components/household/InviteSheet';
 import SettingsSheet from '@/components/household/SettingsSheet';
 import SettleSheet from '@/components/household/SettleSheet';
 
-type Tab = 'resumen' | 'gastos' | 'pagos' | 'movimientos';
+type Tab = 'resumen' | 'gastos' | 'presupuesto' | 'metas' | 'pagos' | 'simulador' | 'movimientos';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'gastos', label: 'Gastos' },
+  { id: 'presupuesto', label: 'Presupuesto' },
+  { id: 'metas', label: 'Metas' },
   { id: 'pagos', label: 'Pagos' },
+  { id: 'simulador', label: 'Simulador' },
   { id: 'movimientos', label: 'Movimientos' },
 ];
 
@@ -100,6 +120,11 @@ export default function HouseholdView({
   const [expenses, setExpenses] = useState<HouseholdExpense[] | null>(null);
   const [recurring, setRecurring] = useState<HouseholdExpense[]>([]);
   const [settlements, setSettlements] = useState<HouseholdSettlement[]>([]);
+  const [budgets, setBudgets] = useState<HouseholdBudget[]>([]);
+  const [goals, setGoals] = useState<HouseholdGoal[]>([]);
+  // PLUS for the whole household when one member has it (undefined while loading).
+  const [hasPlus, setHasPlus] = useState<boolean | undefined>(undefined);
+  const [goalDraft, setGoalDraft] = useState<GoalDraft | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [sheet, setSheet] = useState<
     | null
@@ -119,22 +144,46 @@ export default function HouseholdView({
       householdExpensesService.list(household.id, from),
       householdExpensesService.recurring(household.id),
       householdSettlementsService.list(household.id, from),
+      householdBudgetsService.list(household.id),
+      householdGoalsService.list(household.id),
     ])
-      .then(([e, r, s]) => {
+      .then(([e, r, s, b, g]) => {
         setExpenses(e);
         setRecurring(r);
         setSettlements(s);
+        setBudgets(b);
+        setGoals(g);
       })
       .catch(setLoadError);
+    householdService
+      .hasPlus(household.id)
+      .then(setHasPlus)
+      .catch(() => setHasPlus(false));
   }, [household.id]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const afterSave = () => {
+  // After a new expense: tell the household once when a budget crosses 80%.
+  const afterSave = async () => {
     setSheet(null);
+    const thisMonth = monthKey(todayLocal());
+    const before = budgetProgress(budgets, inMonth(expenses ?? [], thisMonth));
     load();
+    try {
+      const fresh = await householdExpensesService.list(household.id, `${thisMonth}-01`);
+      for (const b of budgetsCrossing(before, budgetProgress(budgets, fresh))) {
+        householdService.notify(
+          household.id,
+          'household_budget',
+          `Presupuesto de ${b.category} al ${b.pct >= 100 ? '100' : '80'}%`,
+          `El hogar ya usó el ${b.pct}% del presupuesto de ${b.category} de este mes.`
+        );
+      }
+    } catch {
+      // the notice is a courtesy
+    }
   };
 
   const monthExpenses = useMemo(() => inMonth(expenses ?? [], month), [expenses, month]);
@@ -150,6 +199,14 @@ export default function HouseholdView({
   const pendingTransfers = settleUp(summary, monthSettlements);
   const cats = categoryTotals(monthExpenses);
   const upcoming = upcomingPayments(latestRecurring(recurring), todayLocal());
+  const sym = getCurrencyInfo(household.baseCurrency).symbol;
+  const insight = topInsight(monthExpenses);
+  const projection = annualProjection(monthExpenses);
+  const suggestedEmergency = emergencyFundTarget(
+    averageMonthly(expenses ?? [], monthKey(todayLocal())),
+    household.emergencyMonths
+  );
+  const mainGoal = goals.find((g) => g.saved < g.targetAmount) ?? goals[0] ?? null;
 
   const canEdit = (e: HouseholdExpense) => isOwner || e.createdBy === me.userId;
 
@@ -483,6 +540,91 @@ export default function HouseholdView({
     </section>
   );
 
+  const insightCard = insight && (
+    <section className={`${card} p-5`} aria-label="Insight de MONEO">
+      <div className="mb-2 flex items-center gap-2">
+        <Sparkles className="h-5 w-5" />
+        <h2 className="text-[17px] font-black">Insight de MONEO</h2>
+      </div>
+      <p className="text-[15px] font-bold">
+        Su hogar gasta {money(insight.monthly)} al mes en {insight.category.toLowerCase()} (
+        {insight.pct}% del mes).
+      </p>
+      <p className="mt-1 text-[14px] font-semibold text-gray-700">
+        Reducir 10% liberaría aproximadamente {money(insight.tenPercent)} al mes.
+      </p>
+      <button
+        type="button"
+        onClick={() => {
+          setGoalDraft({
+            kind: 'other',
+            name: `Ahorro en ${insight.category.toLowerCase()}`,
+            target: String(Math.round(insight.tenPercent * 12)),
+          });
+          setTab('metas');
+        }}
+        className="mt-3 rounded-xl border-2 border-[#111] bg-[#FFD83D] px-3 py-2 text-[13px] font-black shadow-[0_2px_0_#111]"
+      >
+        Crear meta
+      </button>
+    </section>
+  );
+
+  const projectionCard = projection.total > 0 && (
+    <section className={`${card} p-5`} aria-label="Proyección anual">
+      <div className="mb-2 flex items-center gap-2">
+        <TrendingUp className="h-5 w-5" />
+        <h2 className="text-[17px] font-black">Proyección anual</h2>
+      </div>
+      <p className="text-[13px] font-semibold text-gray-600">
+        Si cada mes fuera como {monthLabel(month)}:
+      </p>
+      <p className="text-[28px] font-black tabular-nums">{money(projection.total)}</p>
+      <ul className="mt-2 space-y-1">
+        {projection.byCategory.slice(0, 5).map((c) => (
+          <li key={c.category} className="flex justify-between text-[13px] font-bold">
+            <span>{c.category}</span>
+            <span className="tabular-nums">{money(c.total)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+
+  const goalMini = mainGoal && (
+    <button
+      type="button"
+      onClick={() => setTab('metas')}
+      className={`${card} block w-full p-5 text-left`}
+      aria-label="Meta del hogar"
+    >
+      <p className="text-[13px] font-black text-gray-600">Meta del hogar</p>
+      <p className="mt-1 truncate text-[16px] font-black">
+        {mainGoal.emoji} {mainGoal.name}
+      </p>
+      <div className="mt-2 h-3 overflow-hidden rounded-full border-2 border-[#111] bg-[#F1EDE3]">
+        <div
+          className="h-full bg-[#45D98B]"
+          style={{
+            width: `${Math.max(2, Math.min(100, (mainGoal.saved / mainGoal.targetAmount) * 100))}%`,
+          }}
+        />
+      </div>
+      <p className="mt-1 text-[13px] font-bold">
+        {money(mainGoal.saved)} de {money(mainGoal.targetAmount)}
+      </p>
+    </button>
+  );
+
+  const plusGate = (feature: string, description: string, node: React.ReactNode) =>
+    hasPlus === undefined ? (
+      <p className="py-10 text-center text-sm font-bold text-gray-600">Cargando…</p>
+    ) : hasPlus ? (
+      node
+    ) : (
+      <HouseholdPlusLocked feature={feature} description={description} />
+    );
+
   const expenseRow = (e: HouseholdExpense) => (
     <li key={e.id}>
       <button
@@ -616,10 +758,13 @@ export default function HouseholdView({
               {hero}
               {difference}
               {categoriesCard}
+              {insightCard}
             </div>
             <aside className="min-w-0 space-y-4">
               {splitCard}
               {upcomingCard}
+              {hasPlus && goalMini}
+              {projectionCard}
             </aside>
           </div>
         </>
@@ -659,6 +804,50 @@ export default function HouseholdView({
           </section>
           {categoriesCard}
         </div>
+      ) : tab === 'presupuesto' ? (
+        <div className="space-y-4">
+          <div className="flex justify-start">{monthNav}</div>
+          <BudgetTab
+            householdId={household.id}
+            budgets={budgets}
+            monthExpenses={monthExpenses}
+            month={month}
+            money={money}
+            currencySymbol={sym}
+            onChanged={load}
+          />
+        </div>
+      ) : tab === 'metas' ? (
+        plusGate(
+          'Metas del hogar',
+          'Fondo de emergencia, viaje o casa, con los aportes de cada persona.',
+          <GoalsTab
+            household={household}
+            members={members}
+            me={me}
+            goals={goals}
+            money={money}
+            currencySymbol={sym}
+            suggestedEmergency={suggestedEmergency}
+            draft={goalDraft}
+            onDraftUsed={() => setGoalDraft(null)}
+            onChanged={load}
+          />
+        )
+      ) : tab === 'simulador' ? (
+        plusGate(
+          'El simulador de ahorro',
+          'Prueba recortes en los gastos del hogar y mira cuánto ahorrarían al mes y al año.',
+          <div className="space-y-4">
+            <div className="flex justify-start">{monthNav}</div>
+            <SimulatorTab
+              householdId={household.id}
+              me={me}
+              monthExpenses={monthExpenses}
+              money={money}
+            />
+          </div>
+        )
       ) : tab === 'pagos' ? (
         <div className="space-y-4">
           {upcomingCard}
