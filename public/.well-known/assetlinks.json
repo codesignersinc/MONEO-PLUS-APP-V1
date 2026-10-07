@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "plus.moneo.app",
+      "sha256_cert_fingerprints": [
+        "55:4B:B0:BF:74:53:31:F7:31:87:E5:A1:BD:88:21:DE:F0:0C:FC:6D:9A:73:81:00:03:87:B3:EB:41:4F:7F:1C"
+      ]
+    }
+  }
+]

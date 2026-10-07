@@ -19,6 +19,7 @@ import {
   type PlanCode,
 } from '@/lib/billing';
 import { track } from '@/lib/analytics';
+import { useIsAndroidApp } from '@/lib/appShell';
 
 // MONEO PLUS plans and checkout inside the app (from the trial countdown, locked features,
 // the sidebar card). Subscriptions renew on a card; passes and lifetime are paid once with
@@ -61,6 +62,8 @@ export default function PlusPage() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [selected, setSelected] = useState<PlanCode | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  // Google Play: no other payment system for digital plans inside the Android app.
+  const inApp = useIsAndroidApp();
 
   const load = () => {
     setLoadError(null);
@@ -177,7 +180,27 @@ export default function PlusPage() {
         />
       )}
 
-      {plans && !ent?.lifetime && (
+      {inApp && !ent?.lifetime && (
+        <div className="space-y-4">
+          {!paid && !viaPack && (
+            <p className="rounded-2xl border-2 border-dashed border-[#111] bg-[#FFF9EC] px-4 py-3 text-sm font-semibold text-[#111]">
+              Por ahora la suscripción a MONEO PLUS no está disponible dentro de la app.
+            </p>
+          )}
+          <ul className="grid gap-1.5 rounded-2xl border-2 border-[#111] bg-[#FFF9EC] p-4 sm:grid-cols-2">
+            {PLUS_BENEFITS.map((b) => (
+              <li key={b} className="flex items-center gap-2 text-sm font-semibold text-[#111]">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#45D98B]">
+                  <Check className="h-3 w-3" strokeWidth={3.5} />
+                </span>
+                {b}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!inApp && plans && !ent?.lifetime && (
         <div
           role="tablist"
           aria-label="Para quién es el plan"
@@ -205,7 +228,7 @@ export default function PlusPage() {
           ))}
         </div>
       )}
-      {audience !== 'individual' && plans && !ent?.lifetime && (
+      {!inApp && audience !== 'individual' && plans && !ent?.lifetime && (
         <p className="mb-4 rounded-2xl border-2 border-dashed border-[#111] bg-[#FFF9EC] px-4 py-3 text-sm font-semibold text-[#111]">
           Pagas tú e invitas a {audience === 'duo' ? '1 persona' : 'hasta 5 personas'} con un
           enlace. Cada uno tiene su propia cuenta MONEO PLUS, 100% privada: compartir el pack no
@@ -213,7 +236,7 @@ export default function PlusPage() {
         </p>
       )}
 
-      {ent?.lifetime ? null : !plans ? (
+      {ent?.lifetime || inApp ? null : !plans ? (
         <p className="flex items-center justify-center gap-2 py-16 text-sm font-semibold text-gray-600">
           <Loader2 className="h-4 w-4 animate-spin" /> Cargando planes…
         </p>

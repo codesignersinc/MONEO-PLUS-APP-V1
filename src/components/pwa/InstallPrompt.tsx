@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { MoreVertical, Share, SquarePlus, X } from 'lucide-react';
 import { track } from '@/lib/analytics';
+import { isAndroidApp } from '@/lib/appShell';
 import { useDataChanged } from '@/lib/dataSync';
 import { todayLocal } from '@/lib/dates';
 import {
@@ -69,7 +70,8 @@ export default function InstallPrompt() {
     if (s.engaged) return;
     const next = { ...s, engaged: true };
     writeState(next);
-    if (shouldShowInstall(platform, isStandalone(), next, todayLocal())) setVisible(true);
+    if (shouldShowInstall(platform, isStandalone() || isAndroidApp(), next, todayLocal()))
+      setVisible(true);
   });
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export default function InstallPrompt() {
     writeState(next);
     // A few seconds in, not on top of the first paint.
     const t = window.setTimeout(() => {
-      if (shouldShowInstall(p, isStandalone(), next, today)) setVisible(true);
+      if (shouldShowInstall(p, isStandalone() || isAndroidApp(), next, today)) setVisible(true);
     }, 4000);
 
     const onAvailable = () => setCanPrompt(true);

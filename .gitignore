@@ -44,3 +44,4 @@ turbo/
 
 # OCR assets copied from node_modules (scripts/copy-ocr-assets.mjs)
 /public/ocr/
+/llave-android-NO-SUBIR/
