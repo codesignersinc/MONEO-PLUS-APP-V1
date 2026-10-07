@@ -6,6 +6,7 @@ import { getFxContext } from '@/lib/supabaseCurrency';
 import { formatCurrency, getCurrencyInfo, getRateFromMap } from '@/lib/currency';
 import { getErrorMessage } from '@/lib/dataError';
 import type { Account } from '@/lib/financeStore';
+import { TAGGED, Tag } from '@/components/finance/formKit';
 
 // The account chosen to pay/collect an amount expressed in the base currency. When the
 // account uses another currency, `accountAmount` is what it really moves (prefilled
@@ -117,17 +118,17 @@ export function AccountAmountFields({
 
   return (
     <div className="space-y-2">
-      <div>
-        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
-          {label}
-        </label>
+      <div className="relative">
+        <span className="sr-only">{label}</span>
+        {value.accountId && <Tag>{label}</Tag>}
         <select
           value={value.accountId}
           onChange={(e) => select(e.target.value)}
           disabled={!accounts}
-          className={selectClassName}
+          aria-label={label}
+          className={`${selectClassName} ${value.accountId ? TAGGED : 'text-gray-400'}`}
         >
-          <option value="">{accounts ? 'Elige la cuenta' : 'Cargando cuentas…'}</option>
+          <option value="">{accounts ? label : 'Cargando cuentas…'}</option>
           {accounts?.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency} ·{' '}
@@ -137,17 +138,17 @@ export function AccountAmountFields({
         </select>
       </div>
       {selected && value.foreign && (
-        <div>
-          <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
-            Monto en {selected.currency} ({formatCurrency(amount, baseCurrency)} {baseCurrency})
-          </label>
+        <div className="relative">
+          {value.accountAmount && <Tag>Monto en {selected.currency}</Tag>}
           <input
             type="number"
             inputMode="decimal"
             min="0"
             value={value.accountAmount}
             onChange={(e) => onChange({ ...value, accountAmount: e.target.value })}
-            className={selectClassName}
+            placeholder={`Monto en ${selected.currency} (${formatCurrency(amount, baseCurrency)} ${baseCurrency})`}
+            aria-label={`Monto en ${selected.currency}`}
+            className={`${selectClassName} ${value.accountAmount ? TAGGED : ''}`}
           />
         </div>
       )}
