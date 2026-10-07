@@ -85,7 +85,7 @@ export interface OnboardingState {
   leaks: LeakId[];
   methods: MethodId[];
   firstGoal: FirstGoalId | null;
-  // null = not chosen yet; 'trial' = 14 days of PLUS without card; 'free' = MONEO FREE.
+  // null = not chosen yet; 'trial' = 7 days of PLUS without card; 'free' = MONEO FREE.
   plan: PlanCode | 'free' | 'trial' | null;
   notify: Record<NotifyId, boolean>;
   step: string;

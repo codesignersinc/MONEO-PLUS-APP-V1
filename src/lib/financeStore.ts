@@ -172,6 +172,9 @@ export const CATEGORY_PRESETS = [
   { id: 'educacion', label: 'Educación', icon: '📚', color: '#0D9488' },
   { id: 'supermercado', label: 'Supermercado', icon: '🛒', color: '#D97706' },
   { id: 'servicios', label: 'Servicios', icon: '💡', color: '#64748B' },
+  { id: 'hogar', label: 'Hogar', icon: '🛋️', color: '#B45309' },
+  { id: 'hijos', label: 'Hijos', icon: '🧸', color: '#DB2777' },
+  { id: 'seguros', label: 'Seguros', icon: '🛡️', color: '#0369A1' },
   { id: 'ingreso', label: 'Ingreso', icon: '💼', color: '#16A34A' },
   { id: 'otros', label: 'Otros', icon: '📦', color: '#64748B' },
 ];

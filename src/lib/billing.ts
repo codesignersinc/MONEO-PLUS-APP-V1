@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
-import { toDataError } from '@/lib/dataError';
+import { DataError, toDataError } from '@/lib/dataError';
 
 // MONEO PLUS: plans, the user's entitlement and Mercado Pago checkout.
 // The entitlement is written only by the `billing` Edge Function after Mercado Pago
@@ -12,7 +12,20 @@ export type PlanCode =
   | 'founder'
   | 'pass_3m'
   | 'pass_12m'
-  | 'free_trial';
+  | 'free_trial'
+  | 'duo_monthly'
+  | 'duo_3m'
+  | 'duo_12m'
+  | 'family_monthly'
+  | 'family_3m'
+  | 'family_12m';
+
+// Who a plan is for: 1 person, Duo (2) or Familiar (up to 6).
+export type Audience = 'individual' | 'duo' | 'family';
+
+export function audienceOf(seats: number): Audience {
+  return seats >= 3 ? 'family' : seats === 2 ? 'duo' : 'individual';
+}
 
 // subscription: card, renews · one_time: lifetime · pass: prepaid months, paid once
 // (card, Yape or PagoEfectivo) · trial: the free trial without card (never sold).
@@ -26,6 +39,7 @@ export interface BillingPlan {
   currency: string;
   intervalMonths: number | null;
   trialDays: number;
+  seats: number;
 }
 
 export interface Entitlement {
@@ -42,7 +56,7 @@ export const LIFETIME_PLANS: PlanCode[] = ['plus_lifetime', 'founder'];
 
 export function planKindOf(code: PlanCode): PlanKind {
   if (LIFETIME_PLANS.includes(code)) return 'one_time';
-  if (code === 'pass_3m' || code === 'pass_12m') return 'pass';
+  if (/^(pass_|duo_|family_)\d+m$/.test(code)) return 'pass';
   if (code === 'free_trial') return 'trial';
   return 'subscription';
 }
@@ -98,6 +112,7 @@ export const plansService = {
       currency: r.currency,
       intervalMonths: r.interval_months,
       trialDays: r.trial_days,
+      seats: r.seats ?? 1,
     }));
   },
 };
@@ -204,7 +219,7 @@ export const billingService = {
 };
 
 export const trialService = {
-  // Starts the 14-day trial without card once per user (the server decides). Returns true
+  // Starts the 7-day trial without card once per user (the server decides). Returns true
   // when it started now.
   async start(): Promise<boolean> {
     const { data, error } = await createClient().rpc('start_free_trial');
@@ -284,5 +299,154 @@ export const paymentsService = {
       url: typeof data.url === 'string' ? data.url : null,
       trial: data.trial === true,
     };
+  },
+};
+
+// ---------- Duo / Familiar ----------
+
+export interface PackMember {
+  id: string;
+  name: string;
+  joinedAt: string;
+  covered: boolean; // has a seat with the current plan
+}
+
+export type MyPack =
+  | { role: null }
+  | {
+      role: 'owner';
+      planCode: PlanCode;
+      planName: string;
+      seats: number;
+      ownerName: string | null;
+      members: PackMember[];
+    }
+  | {
+      role: 'member';
+      planCode: PlanCode | null;
+      planName: string | null;
+      seats: number | null;
+      ownerName: string | null;
+      covered: boolean;
+      periodEnd: string | null;
+    };
+
+export type PackInviteStatus =
+  | 'valid'
+  | 'expired'
+  | 'used'
+  | 'revoked'
+  | 'invalid'
+  | 'inactive'
+  | 'full';
+
+// Keeps the messages the database writes for the user (Spanish) on validation errors.
+function packError(error: unknown) {
+  const e = error as { code?: string; message?: string };
+  if (e?.code && ['42501', '22023', '23505'].includes(e.code) && e.message) {
+    return new DataError(
+      e.code === '42501' ? 'permission' : e.code === '23505' ? 'conflict' : 'validation',
+      error,
+      e.message
+    );
+  }
+  return toDataError(error);
+}
+
+export const packService = {
+  // The pack the user pays (owner) or belongs to (member). Members never see the others.
+  async mine(): Promise<MyPack> {
+    const { data, error } = await createClient().rpc('my_plus_pack');
+    if (error) throw toDataError(error);
+    const r = (data ?? {}) as Record<string, unknown>;
+    if (r.role === 'owner') {
+      return {
+        role: 'owner',
+        planCode: r.plan_code as PlanCode,
+        planName: String(r.plan_name ?? ''),
+        seats: Number(r.seats ?? 1),
+        ownerName: (r.owner_name as string | null) ?? null,
+        members: ((r.members as Record<string, unknown>[] | null) ?? []).map((m) => ({
+          id: String(m.id),
+          name: String(m.name),
+          joinedAt: String(m.joined_at),
+          covered: m.covered === true,
+        })),
+      };
+    }
+    if (r.role === 'member') {
+      return {
+        role: 'member',
+        planCode: (r.plan_code as PlanCode | null) ?? null,
+        planName: (r.plan_name as string | null) ?? null,
+        seats: r.seats == null ? null : Number(r.seats),
+        ownerName: (r.owner_name as string | null) ?? null,
+        covered: r.covered === true,
+        periodEnd: (r.period_end as string | null) ?? null,
+      };
+    }
+    return { role: null };
+  },
+
+  // Single-use link token (7 days); optionally only for one email.
+  async invite(ownerName: string, email?: string): Promise<string> {
+    const { data, error } = await createClient().rpc('create_plus_pack_invite', {
+      p_owner_name: ownerName,
+      p_email: email?.trim() || null,
+    });
+    if (error) throw packError(error);
+    return data as string;
+  },
+
+  async invitations(): Promise<{ id: string; email: string | null; expiresAt: string }[]> {
+    const { data, error } = await createClient().rpc('my_plus_pack_invitations');
+    if (error) throw toDataError(error);
+    return ((data ?? []) as { id: string; email: string | null; expires_at: string }[]).map(
+      (r) => ({
+        id: r.id,
+        email: r.email,
+        expiresAt: r.expires_at,
+      })
+    );
+  },
+
+  async revoke(invitationId: string): Promise<void> {
+    const { error } = await createClient().rpc('revoke_plus_pack_invite', {
+      p_invitation: invitationId,
+    });
+    if (error) throw toDataError(error);
+  },
+
+  async inviteInfo(
+    token: string
+  ): Promise<{ ownerName: string | null; planName: string | null; status: PackInviteStatus }> {
+    const { data, error } = await createClient().rpc('plus_pack_invite_info', { p_token: token });
+    if (error) throw toDataError(error);
+    const r = (
+      data as { owner_name: string | null; plan_name: string | null; status: PackInviteStatus }[]
+    )[0];
+    return {
+      ownerName: r?.owner_name ?? null,
+      planName: r?.plan_name ?? null,
+      status: r?.status ?? 'invalid',
+    };
+  },
+
+  async accept(token: string, displayName: string): Promise<void> {
+    const { error } = await createClient().rpc('accept_plus_pack_invite', {
+      p_token: token,
+      p_display_name: displayName,
+    });
+    if (error) throw packError(error);
+  },
+
+  async remove(memberId: string): Promise<void> {
+    const { error } = await createClient().rpc('remove_plus_pack_member', { p_member: memberId });
+    if (error) throw packError(error);
+  },
+
+  async leave(): Promise<void> {
+    const { error } = await createClient().rpc('leave_plus_pack');
+    if (error) throw toDataError(error);
   },
 };

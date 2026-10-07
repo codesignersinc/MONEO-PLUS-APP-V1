@@ -266,7 +266,7 @@ function Onboarding() {
     else if (plus && (step === 'planes' || step === 'pago')) go('activo', true);
   }, [ready, authLoading, user, step, plus, state.plan, go]);
 
-  // "Empezar mis 14 días gratis": the server grants the trial once (no card).
+  // "Empezar mis 7 días gratis": the server grants the trial once (no card).
   useEffect(() => {
     if (!ready || !user || state.plan !== 'trial' || ent !== null) return;
     trialService
@@ -557,7 +557,7 @@ function Onboarding() {
                       go(user ? 'activo' : 'cuenta');
                     }}
                   >
-                    Empezar mis 14 días gratis <ArrowRight className="h-5 w-5" />
+                    Empezar mis 7 días gratis <ArrowRight className="h-5 w-5" />
                   </PrimaryButton>
                   <p className="mt-2 text-center text-xs font-semibold text-gray-700">
                     Sin tarjeta. Al terminar eliges un plan o sigues gratis con MONEO FREE.
@@ -699,7 +699,7 @@ function Onboarding() {
                 {ent.lifetime
                   ? 'Plan de por vida · sin renovaciones'
                   : ent.kind === 'trial' && ent.currentPeriodEnd
-                    ? `14 días gratis, hasta el ${fmtDate(new Date(ent.currentPeriodEnd))} · sin tarjeta`
+                    ? `7 días gratis, hasta el ${fmtDate(new Date(ent.currentPeriodEnd))} · sin tarjeta`
                     : ent.kind === 'pass' && ent.currentPeriodEnd
                       ? `Activo hasta el ${fmtDate(new Date(ent.currentPeriodEnd))} · sin renovaciones`
                       : ent.status === 'trialing' && ent.trialEndsAt
@@ -953,7 +953,7 @@ function PayStep({
         }}
       />
       {!hadTrial && (
-        <TextButton onClick={onTrial}>Mejor empiezo con 14 días gratis (sin tarjeta)</TextButton>
+        <TextButton onClick={onTrial}>Mejor empiezo con 7 días gratis (sin tarjeta)</TextButton>
       )}
     </Shell>
   );

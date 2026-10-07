@@ -260,7 +260,7 @@ const PLUS_FEATURES = [
 ];
 
 export function plusStatus(ent: Entitlement | null): { active: boolean; line: string } {
-  if (!ent) return { active: false, line: '14 días gratis para probarlo' };
+  if (!ent) return { active: false, line: '7 días gratis para probarlo' };
   if (ent.lifetime) return { active: ent.status === 'active', line: 'Plan de por vida' };
   const end = ent.currentPeriodEnd ? new Date(ent.currentPeriodEnd) : null;
   const days = end ? Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400e3)) : 0;

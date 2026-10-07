@@ -1,6 +1,8 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, Crown, Loader2 } from 'lucide-react';
+import { Check, Crown, Loader2, User, Users, UsersRound } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import PackPanel from '@/components/billing/PackPanel';
 import LoadError from '@/components/ui/LoadError';
 import CheckoutPanel from '@/components/billing/CheckoutPanel';
 import { useToast } from '@/components/ui/Toast';
@@ -8,9 +10,11 @@ import { usePlus } from '@/contexts/PlusContext';
 import {
   PLUS_BENEFITS,
   annualSavingsPercent,
+  audienceOf,
   billingService,
   plansService,
   trialDaysLeft,
+  type Audience,
   type BillingPlan,
   type PlanCode,
 } from '@/lib/billing';
@@ -34,6 +38,11 @@ function priceLine(p: BillingPlan): string {
 }
 
 function subLine(p: BillingPlan, monthly?: BillingPlan): string {
+  if (p.seats > 1) {
+    const perMonth = p.price / (p.intervalMonths ?? 1);
+    const extra = p.kind === 'subscription' ? 'se renueva cada mes' : 'sin renovación';
+    return `Desde ${money(perMonth / p.seats)} por persona al mes · ${extra}`;
+  }
   if (p.kind === 'subscription')
     return p.intervalMonths === 12 && monthly
       ? `${money(p.price / 12)} al mes · ahorra ${annualSavingsPercent(monthly.price, p.price)}%`
@@ -45,7 +54,9 @@ function subLine(p: BillingPlan, monthly?: BillingPlan): string {
 
 export default function PlusPage() {
   const toast = useToast();
-  const { ent, paid, refresh } = usePlus();
+  const { ent, paid, pack, viaPack, refresh } = usePlus();
+  const { user } = useAuth();
+  const [audience, setAudience] = useState<Audience>('individual');
   const [plans, setPlans] = useState<BillingPlan[] | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [selected, setSelected] = useState<PlanCode | null>(null);
@@ -61,6 +72,9 @@ export default function PlusPage() {
           (s) =>
             s ?? (list.some((p) => p.code === 'pass_12m') ? 'pass_12m' : (list[0]?.code ?? null))
         );
+        // ?pack=duo|familiar (e.g. from MONEO HOGAR) opens that tab.
+        const q = new URLSearchParams(window.location.search).get('pack');
+        if (q === 'duo' || q === 'familiar') pickAudience(q === 'duo' ? 'duo' : 'family', list);
       })
       .catch(setLoadError);
   };
@@ -69,14 +83,22 @@ export default function PlusPage() {
     track('paywall_viewed', { from: 'app' });
   }, []);
 
+  // Each tab selects its 1-year pass (the best value) by default.
+  const pickAudience = (a: Audience, list = plans ?? []) => {
+    setAudience(a);
+    const inTab = list.filter((p) => audienceOf(p.seats) === a);
+    const best = inTab.find((p) => p.kind === 'pass' && p.intervalMonths === 12) ?? inTab[0];
+    if (best) setSelected(best.code);
+  };
+
   const monthly = plans?.find((p) => p.code === 'plus_monthly');
   const groups = useMemo(() => {
-    const list = plans ?? [];
+    const list = (plans ?? []).filter((p) => audienceOf(p.seats) === audience);
     return {
       once: list.filter((p) => p.kind === 'pass' || p.kind === 'one_time'),
       subs: list.filter((p) => p.kind === 'subscription'),
     };
-  }, [plans]);
+  }, [plans, audience]);
   const plan = plans?.find((p) => p.code === selected) ?? null;
   const days = trialDaysLeft(ent ?? null);
   const trial = Boolean(
@@ -113,15 +135,17 @@ export default function PlusPage() {
             MONEO <span className="rounded bg-[#FFD83D] px-1.5">PLUS</span>
           </h1>
           <p className="text-sm font-semibold text-gray-700">
-            {days !== null
-              ? `Estás en tu prueba gratis: ${days === 0 ? 'hoy es el último día' : `te quedan ${days} días`}. Elige cómo seguir.`
-              : paid && ent
-                ? ent.lifetime
-                  ? 'Tienes MONEO PLUS de por vida.'
-                  : ent.currentPeriodEnd
-                    ? `Tienes MONEO PLUS hasta el ${fmtDate(ent.currentPeriodEnd)}.`
-                    : 'Tienes MONEO PLUS.'
-                : 'Registra solo, entiende tu dinero y ahorra más.'}
+            {viaPack && pack?.role === 'member'
+              ? `Tienes MONEO PLUS gracias al ${pack.planName ?? 'pack'} de ${pack.ownerName ?? 'otra persona'}.`
+              : days !== null
+                ? `Estás en tu prueba gratis: ${days === 0 ? 'hoy es el último día' : `te quedan ${days} días`}. Elige cómo seguir.`
+                : paid && ent
+                  ? ent.lifetime
+                    ? 'Tienes MONEO PLUS de por vida.'
+                    : ent.currentPeriodEnd
+                      ? `Tienes MONEO PLUS hasta el ${fmtDate(ent.currentPeriodEnd)}.`
+                      : 'Tienes MONEO PLUS.'
+                  : 'Registra solo, entiende tu dinero y ahorra más.'}
           </p>
         </div>
       </div>
@@ -141,6 +165,50 @@ export default function PlusPage() {
             {cancelling && <Loader2 className="h-4 w-4 animate-spin" />} Cancelar suscripción
           </button>
         </div>
+      )}
+
+      {pack && pack.role !== null && (
+        <PackPanel
+          pack={pack}
+          defaultName={(user?.user_metadata?.full_name || '').trim().split(/\s+/)[0] || ''}
+          onChanged={refresh}
+        />
+      )}
+
+      {plans && !ent?.lifetime && (
+        <div
+          role="tablist"
+          aria-label="Para quién es el plan"
+          className="mb-5 grid grid-cols-3 gap-2"
+        >
+          {(
+            [
+              { id: 'individual', label: 'Para mí', hint: '1 persona', icon: User },
+              { id: 'duo', label: 'Duo', hint: '2 personas', icon: Users },
+              { id: 'family', label: 'Familiar', hint: 'hasta 6', icon: UsersRound },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={audience === t.id}
+              onClick={() => pickAudience(t.id)}
+              className={`flex flex-col items-center gap-0.5 rounded-2xl border-[3px] border-[#111] px-2 py-2.5 text-[#111] ${audience === t.id ? 'bg-[#FFD83D] shadow-[0_3px_0_#111]' : 'bg-white'}`}
+            >
+              <t.icon className="h-5 w-5" />
+              <span className="text-[15px] font-black">{t.label}</span>
+              <span className="text-[11px] font-semibold text-[#111]/70">{t.hint}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {audience !== 'individual' && plans && !ent?.lifetime && (
+        <p className="mb-4 rounded-2xl border-2 border-dashed border-[#111] bg-[#FFF9EC] px-4 py-3 text-sm font-semibold text-[#111]">
+          Pagas tú e invitas a {audience === 'duo' ? '1 persona' : 'hasta 5 personas'} con un
+          enlace. Cada uno tiene su propia cuenta MONEO PLUS, 100% privada: compartir el pack no
+          comparte sus finanzas.
+        </p>
       )}
 
       {ent?.lifetime ? null : !plans ? (

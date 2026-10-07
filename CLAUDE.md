@@ -27,7 +27,7 @@ ejecuta en cada pull request (`.github/workflows/ci.yml`). Las pruebas SQL
 - **Acceso a datos solo en `src/lib/`**. Las páginas llaman a servicios
   (`accountsService`, `transactionsService`, `transfersService`, `subscriptionsService`, … en
   `supabaseFinance.ts`; pagos e ingresos en `supabaseObligations.ts`; juntas en
-  `supabaseJuntas.ts`; monedas en `supabaseCurrency.ts`). No llamar a Supabase directamente
+  `supabaseJuntas.ts`; hogar en `supabaseHousehold.ts`; monedas en `supabaseCurrency.ts`). No llamar a Supabase directamente
   desde componentes.
 - **Errores**: los servicios resuelven con datos reales o lanzan `DataError`
   (`src/lib/dataError.ts`). Un array vacío significa "sin registros", nunca "falló".
@@ -48,6 +48,11 @@ ejecuta en cada pull request (`.github/workflows/ci.yml`). Las pruebas SQL
   registrada preseleccionada (`accountsService.getAll()` ordena por `created_at`), visible y
   editable; en transferencias/conversiones el destino es otra cuenta. Al editar se conserva la
   cuenta del movimiento.
+- **MONEO HOGAR**: los datos compartidos viven solo en tablas `household_*` (RLS por
+  pertenencia con `is_household_member`). Nunca leas ni muestres cuentas, saldos o movimientos
+  de otro miembro. El reparto es una capa de responsabilidad: solo se mueve el saldo de quien
+  pagó, con un movimiento en _su_ cuenta (`recordOwnMovement`); la compensación se confirma por
+  cada lado con su propio movimiento. Cálculos puros en `src/lib/household.ts`.
 - **pg_trigger_depth()**: en triggers BEFORE distingue sentencia directa (= 1) de la hecha por
   el sistema (> 1, incluidas acciones referenciales). En triggers AFTER de una acción
   referencial vale 1: no lo uses ahí.
