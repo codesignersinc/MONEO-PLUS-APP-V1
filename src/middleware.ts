@@ -42,7 +42,8 @@ export async function middleware(request: NextRequest) {
 
   const isFinanzasRoute =
     request.nextUrl.pathname.startsWith('/finanzas') ||
-    request.nextUrl.pathname.startsWith('/admin');
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname === '/mini';
   // Exact pages only: a prefix match would also catch static files like /register-sw.js.
   const isAuthRoute = ['/login', '/register', '/recuperar'].some(
     (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(`${p}/`)
@@ -51,13 +52,17 @@ export async function middleware(request: NextRequest) {
   if (!user && isFinanzasRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
+    // MONEO Mini returns to itself after signing in.
+    url.search = request.nextUrl.pathname === '/mini' ? '?next=/mini' : '';
     return NextResponse.redirect(url);
   }
 
   // Signed-in users skip the public landing.
   if (user && (isAuthRoute || request.nextUrl.pathname === '/')) {
     const url = request.nextUrl.clone();
-    url.pathname = '/finanzas';
+    const next = request.nextUrl.searchParams.get('next');
+    url.pathname = next === '/mini' ? '/mini' : '/finanzas';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 
