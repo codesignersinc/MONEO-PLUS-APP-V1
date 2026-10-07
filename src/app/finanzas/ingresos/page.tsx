@@ -82,7 +82,7 @@ export default function IngresosPage() {
 
   const openAdd = () => {
     setEditingEntry(null);
-    setForm(defaultForm);
+    setForm({ ...defaultForm, collectionDate: todayLocal() });
     setFormError('');
     setShowForm(true);
   };

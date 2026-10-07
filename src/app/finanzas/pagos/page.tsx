@@ -103,7 +103,7 @@ export default function PagosPage() {
 
   const openAdd = () => {
     setEditingEntry(null);
-    setForm(defaultForm);
+    setForm({ ...defaultForm, paymentDate: todayLocal() });
     setFormError('');
     setShowForm(true);
   };
