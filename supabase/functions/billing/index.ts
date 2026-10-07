@@ -36,6 +36,8 @@ type Plan = {
   price: number;
   currency: string;
   interval_months: number | null;
+  // People covered: 1 individual, 2 Duo, 6 Familiar (the payer invites the others).
+  seats?: number;
   trial_days: number;
   active: boolean;
   available_until: string | null;
@@ -114,10 +116,10 @@ async function loadCheckout(admin: SupabaseClient, id: unknown) {
 async function currentEntitlement(admin: SupabaseClient, userId: string) {
   const { data } = await admin
     .from('user_entitlements')
-    .select('*, plan:billing_plans(kind)')
+    .select('*, plan:billing_plans(kind, seats)')
     .eq('user_id', userId)
     .maybeSingle();
-  return data as (Row & { plan: { kind: string } }) | null;
+  return data as (Row & { plan: { kind: string; seats?: number } }) | null;
 }
 
 // A lifetime / Founder purchase is never replaced by subscription events.
@@ -178,6 +180,14 @@ async function applyPreapproval(admin: SupabaseClient, pre: Row): Promise<string
   if (error) throw new Error('entitlement-write');
   if (status === 'authorized') {
     await admin.from('billing_checkouts').update({ status: 'completed' }).eq('id', checkout.id);
+    // Upgrade (e.g. individual → Duo / Familiar): the previous subscription must not be
+    // charged on top of the new one.
+    if (current?.provider_subscription_id && current.provider_subscription_id !== pre.id) {
+      await mp(`/preapproval/${encodeURIComponent(String(current.provider_subscription_id))}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'cancelled' }),
+      }).catch(() => log('cancel-old-subscription-failed'));
+    }
   }
   return `subscription-${entStatus}`;
 }
@@ -420,7 +430,10 @@ async function sellablePlan(
     ['trialing', 'active'].includes(String(current.status)) &&
     current.current_period_end &&
     new Date(String(current.current_period_end)) > new Date();
-  if (subscribed && (p.kind === 'subscription' || p.kind === 'pass')) {
+  // Moving to a plan for more people (Duo / Familiar) is allowed: the old subscription
+  // is cancelled once the new one is active.
+  const upgrade = Number(p.seats ?? 1) > Number(current?.plan?.seats ?? 1);
+  if (subscribed && !upgrade && (p.kind === 'subscription' || p.kind === 'pass')) {
     return { error: json({ error: 'already-plus' }, 409) };
   }
   return { p, current };

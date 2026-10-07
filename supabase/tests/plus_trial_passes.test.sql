@@ -56,7 +56,7 @@ BEGIN
   -- Prueba gratis sin tarjeta
   PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT public.start_free_trial()') = 'true', 'A inicia su prueba gratis');
   PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT public.has_plus()') = 'true', 'en prueba gratis tiene PLUS');
-  PERFORM moneo_test.ok(moneo_test.run(ua, $$SELECT (current_period_end - now()) BETWEEN interval '13 days 23 hours' AND interval '14 days' FROM public.user_entitlements$$) = 'true', 'la prueba dura 14 días');
+  PERFORM moneo_test.ok(moneo_test.run(ua, $$SELECT (current_period_end - now()) BETWEEN interval '6 days 23 hours' AND interval '7 days' FROM public.user_entitlements$$) = 'true', 'la prueba dura 7 días');
   PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT provider || status || had_trial FROM public.user_entitlements') = 'moneotrialingtrue', 'queda marcada como prueba de MONEO');
   PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT public.start_free_trial()') = 'false', 'no se puede iniciar dos veces');
   PERFORM moneo_test.ok(moneo_test.run(ub, 'SELECT public.has_plus()') = 'false', 'B sigue FREE');

@@ -375,6 +375,15 @@ export const householdService = {
     if (error) throw rpcError(error);
   },
 
+  // MONEO HOGAR's PLUS features are open for everyone when one active member has PLUS.
+  async hasPlus(householdId: string): Promise<boolean> {
+    const { data, error } = await createClient().rpc('household_has_plus', {
+      p_household: householdId,
+    });
+    if (error) throw toDataError(error);
+    return data === true;
+  },
+
   // Tells the other members (no amounts in the text). Never fails the caller's action.
   async notify(
     householdId: string,
