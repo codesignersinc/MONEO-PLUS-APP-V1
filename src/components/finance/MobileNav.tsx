@@ -53,6 +53,10 @@ import {
   TextField,
 } from '@/components/finance/formKit';
 import TransferForm from '@/components/finance/TransferForm';
+import HouseholdShareToggle, {
+  useHouseholdShare,
+} from '@/components/household/HouseholdShareToggle';
+import { shareOwnMovement } from '@/lib/supabaseHousehold';
 import {
   EntryMethodPicker,
   ImageReader,
@@ -215,6 +219,8 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   const [error, setError] = useState('');
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [accountId, setAccountId] = useState('');
+  const toast = useToast();
+  const home = useHouseholdShare(category, mode === 'manual');
 
   useEffect(() => {
     accountsService
@@ -253,7 +259,7 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
       const fx = await getFxContext();
       const accCurrency = account.currency || 'PEN';
       const amt = -Math.abs(parseFloat(amount));
-      await transactionsService.create({
+      const tx = await transactionsService.create({
         name: name.trim(),
         type: 'gasto',
         amount: amt,
@@ -272,6 +278,19 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
           date,
         }),
       });
+      if (home.checked) {
+        // The expense is saved: a failure here only skips the household.
+        await shareOwnMovement({
+          transactionId: tx.id,
+          name: name.trim(),
+          category,
+          amount: Math.abs(amt),
+          currency: accCurrency,
+          date,
+        }).catch((err) =>
+          toast.showError(`Se registró, pero no se pudo agregar al hogar: ${getErrorMessage(err)}`)
+        );
+      }
       onSuccess();
     } catch (err) {
       console.error(err);
@@ -353,6 +372,14 @@ function GastoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
         saving={saving}
         onSave={handleSave}
         saveLabel="Registrar gasto"
+        extra={
+          <HouseholdShareToggle
+            householdName={home.householdName}
+            suggested={home.suggested}
+            checked={home.checked}
+            onChange={home.setChecked}
+          />
+        }
       />
     </FormWrapper>
   );
@@ -804,6 +831,7 @@ function FormFields({
   onSave,
   saveLabel,
   hideCategories,
+  extra,
 }: {
   name: string;
   setName: (v: string) => void;
@@ -821,6 +849,7 @@ function FormFields({
   onSave: () => void;
   saveLabel: string;
   hideCategories?: boolean;
+  extra?: React.ReactNode;
 }) {
   return (
     <div className="space-y-5">
@@ -839,6 +868,7 @@ function FormFields({
         <CategoryChips categories={categories} value={category} onChange={onCategoryChange} />
       )}
       <NotesField value={notes} onChange={setNotes} />
+      {extra}
       {error && (
         <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
           {error}

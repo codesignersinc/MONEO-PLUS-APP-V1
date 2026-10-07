@@ -22,6 +22,11 @@ import {
 import { getErrorMessage } from '@/lib/dataError';
 import TransferForm from '@/components/finance/TransferForm';
 import { notifyDataChanged } from '@/lib/dataSync';
+import { useToast } from '@/components/ui/Toast';
+import HouseholdShareToggle, {
+  useHouseholdShare,
+} from '@/components/household/HouseholdShareToggle';
+import { shareOwnMovement } from '@/lib/supabaseHousehold';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -87,6 +92,14 @@ export default function AddTransactionModal({
     }
   }, [isOpen, initialTab]);
 
+  // MONEO HOGAR: an expense can be shared with the user's household (before the early
+  // return: hooks run on every render).
+  const home = useHouseholdShare(
+    CATEGORY_PRESETS.find((c) => c.id === selectedCategory)?.label ?? '',
+    isOpen && activeTab === 'gasto'
+  );
+  const toast = useToast();
+
   if (!isOpen) return null;
 
   const selectedCat = CATEGORY_PRESETS.find((c) => c.id === selectedCategory);
@@ -109,7 +122,7 @@ export default function AddTransactionModal({
       const hh = String(today.getHours()).padStart(2, '0');
       const min = String(today.getMinutes()).padStart(2, '0');
 
-      await transactionsService.create({
+      const tx = await transactionsService.create({
         name,
         type: activeTab,
         amount: finalAmt,
@@ -128,6 +141,20 @@ export default function AddTransactionModal({
           date,
         }),
       });
+
+      if (activeTab === 'gasto' && home.checked) {
+        // The expense is saved: a failure here only skips the household.
+        await shareOwnMovement({
+          transactionId: tx.id,
+          name,
+          category: selectedCat?.label || 'Otros',
+          amount: Math.abs(finalAmt),
+          currency: accountCurrency,
+          date,
+        }).catch((err) =>
+          toast.showError(`Se registró, pero no se pudo agregar al hogar: ${getErrorMessage(err)}`)
+        );
+      }
 
       notifyDataChanged();
       onSaved?.();
@@ -250,6 +277,14 @@ export default function AddTransactionModal({
                 initial={8}
               />
               <NotesField value={note} onChange={setNote} />
+              {isGasto && (
+                <HouseholdShareToggle
+                  householdName={home.householdName}
+                  suggested={home.suggested}
+                  checked={home.checked}
+                  onChange={home.setChecked}
+                />
+              )}
 
               {(loadError || saveError) && (
                 <p

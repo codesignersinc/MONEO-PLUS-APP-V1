@@ -12,6 +12,7 @@ import {
   changePct,
   householdShares,
   latestRecurring,
+  looksLikeHouseholdExpense,
   monthSummary,
   monthlyEquivalent,
   nextOccurrence,
@@ -366,5 +367,13 @@ describe('budget, emergency fund, simulator, insights and projection', () => {
     const p = annualProjection(oct);
     expect(p.total).toBe(51000);
     expect(p.byCategory[0]).toEqual({ category: 'Vivienda', total: 31200 });
+  });
+});
+
+describe('looksLikeHouseholdExpense', () => {
+  it('household categories only', () => {
+    expect(looksLikeHouseholdExpense('Servicios')).toBe(true);
+    expect(looksLikeHouseholdExpense('Supermercado')).toBe(true);
+    expect(looksLikeHouseholdExpense('Entretenimiento')).toBe(false);
   });
 });

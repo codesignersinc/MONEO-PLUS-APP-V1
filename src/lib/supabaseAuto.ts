@@ -195,8 +195,12 @@ export const autoService = {
 
   // Registers a suggestion as a movement. The suggestion is claimed first (pendiente →
   // registrada), so a double tap cannot create two movements; if creating the movement
-  // fails it goes back to pendiente.
-  async register(s: AutoSuggestion, input: RegisterInput, accounts: Account[]): Promise<void> {
+  // fails it goes back to pendiente. Returns the movement created (a transfer has none).
+  async register(
+    s: AutoSuggestion,
+    input: RegisterInput,
+    accounts: Account[]
+  ): Promise<{ transactionId: string | null }> {
     const supabase = createClient();
     const { data: claimed, error: claimError } = await supabase
       .from('auto_suggestions')
@@ -208,8 +212,9 @@ export const autoService = {
     if (!claimed?.length)
       throw new DataError('conflict', undefined, 'Esta sugerencia ya fue registrada.');
 
+    let link: { transaction_id?: string; transfer_id?: string };
     try {
-      const link = await createMovement(s, input, accounts);
+      link = await createMovement(s, input, accounts);
       const { error } = await supabase.from('auto_suggestions').update(link).eq('id', s.id);
       if (error) throw toDataError(error);
     } catch (err) {
@@ -221,6 +226,7 @@ export const autoService = {
     }
     // Learning is best effort: a failure here never undoes the registered movement.
     await rulesService.learn(s, input).catch((e) => console.error(e));
+    return { transactionId: link.transaction_id ?? null };
   },
 };
 
