@@ -27,6 +27,10 @@ android {
         resValue 'string', 'asset_statements',
                 "[{ \\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://${host}\\\"} }]"
         resValue 'string', 'provider_authority', 'plus.moneo.app.fileprovider'
+        // MONEO Companion widget: public Supabase URL and anon key (the same the website
+        // ships); the widget only calls companion_widget(token).
+        resValue 'string', 'supabase_url', 'https://zbebwrjqaktmbjzmrlsc.supabase.co'
+        resValue 'string', 'supabase_anon_key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiZWJ3cmpxYWt0bWJqem1ybHNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MDE2NzQsImV4cCI6MjEwNjM3NzY3NH0.uzLU32yEDLxH3KgshAiMBh9pu5uSlAqreBrUBgBQXVU'
     }
 
     signingConfigs {
