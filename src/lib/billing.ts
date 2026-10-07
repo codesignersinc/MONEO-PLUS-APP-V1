@@ -204,7 +204,7 @@ export const billingService = {
 };
 
 export const trialService = {
-  // Starts the 14-day trial without card once per user (the server decides). Returns true
+  // Starts the 7-day trial without card once per user (the server decides). Returns true
   // when it started now.
   async start(): Promise<boolean> {
     const { data, error } = await createClient().rpc('start_free_trial');

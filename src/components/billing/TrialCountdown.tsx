@@ -10,7 +10,7 @@ import { trialDaysLeft } from '@/lib/billing';
 // The bar empties as days pass and turns coral with a heartbeat in the last 3 days.
 // It can be minimized; it opens again the next day.
 
-const TRIAL_DAYS = 14;
+const TRIAL_DAYS = 7;
 const MIN_KEY = 'moneo:trial-countdown-min';
 
 function today(): string {
@@ -118,7 +118,7 @@ export default function TrialCountdown() {
           className="mt-2.5 h-3 overflow-hidden rounded-full border-2 border-[#111] bg-[#F1EDE3]"
           role="progressbar"
           aria-valuemin={0}
-          aria-valuemax={TRIAL_DAYS}
+          aria-valuemax={Math.max(TRIAL_DAYS, days ?? 0)}
           aria-valuenow={days}
           aria-label="Días de prueba restantes"
         >

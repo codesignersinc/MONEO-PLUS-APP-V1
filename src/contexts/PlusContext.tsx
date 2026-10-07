@@ -10,7 +10,7 @@ import {
 } from '@/lib/billing';
 import { ONBOARDING_V2 } from '@/lib/onboardingFlow';
 
-// MONEO PLUS status for the whole app. Users without any plan get the 14-day free trial
+// MONEO PLUS status for the whole app. Users without any plan get the 7-day free trial
 // (no card) the first time they open MONEO; the server grants it once per user.
 // Where the plans are not live (ONBOARDING_V2 off) nothing is locked.
 
