@@ -6,8 +6,9 @@ import { getErrorMessage } from '@/lib/dataError';
 import { pagosService, type NewPago, type PagoEntry } from '@/lib/supabaseObligations';
 import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
 import { todayLocal } from '@/lib/dates';
-import { Plus, X, Pencil, Trash2, Clock, CheckCircle2, Calendar, RefreshCw } from 'lucide-react';
+import { Plus, X, Clock, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useDataChanged } from '@/lib/dataSync';
+import PagoRow from '@/components/finance/PagoRow';
 
 interface PagoForm {
   name: string;
@@ -56,6 +57,8 @@ export default function PagosPage() {
   const [formError, setFormError] = useState('');
   // Payment waiting for the user to choose the account it is paid from.
   const [picking, setPicking] = useState<PagoEntry | null>(null);
+  // Row whose actions are open (hover on desktop, tap on the phone).
+  const [openId, setOpenId] = useState<string | null>(null);
   const toast = useToast();
 
   const load = useCallback(() => {
@@ -174,6 +177,21 @@ export default function PagosPage() {
     try {
       await pagosService.delete(id);
       setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      toast.showError(err);
+    }
+  };
+
+  // "Reprogramar fecha": a new date for a pending payment (its day of the month too, for a
+  // recurring one).
+  const handleReschedule = async (entry: PagoEntry, date: string) => {
+    try {
+      await pagosService.update(entry.id, {
+        paymentDate: date,
+        paymentDay: new Date(date + 'T00:00:00').getDate(),
+      });
+      toast.showSuccess(`Nueva fecha: ${formatDate(date)}`);
+      load();
     } catch (err) {
       toast.showError(err);
     }
@@ -333,107 +351,77 @@ export default function PagosPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] overflow-hidden">
+        <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-1">
           {filtered.map((entry, i) => (
             <div
               key={entry.id}
-              className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors group ${
-                i < filtered.length - 1 ? 'border-b border-gray-50' : ''
-              }`}
+              className={
+                i < filtered.length - 1 && openId !== entry.id ? 'border-b border-gray-100' : ''
+              }
             >
-              <div className="w-10 h-10 rounded-xl bg-white border-[2px] border-black flex items-center justify-center text-lg flex-shrink-0">
-                {entry.categoryIcon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p
-                    className={`text-sm font-semibold truncate ${entry.status === 'pagado' ? 'text-gray-400 line-through' : 'text-black'}`}
-                  >
-                    {entry.name}
-                  </p>
-                  {entry.isRecurring && (
-                    <RefreshCw className="w-3 h-3 text-blue-400 flex-shrink-0" strokeWidth={2} />
-                  )}
-                  {entry.status === 'pagado' && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold shrink-0">
-                      Pagado
-                    </span>
-                  )}
-                  {isOverdue(entry.paymentDate, entry.status) && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold shrink-0">
-                      Vencido
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs px-2 py-0.5 rounded-full text-gray-500 bg-white border-[1.5px] border-black font-bold">
-                    {entry.category}
-                  </span>
-                  {entry.paymentDate && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      <Calendar className="w-3 h-3" strokeWidth={1.75} />
-                      {formatDate(entry.paymentDate)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="text-right flex-shrink-0 flex items-center gap-2">
-                {editAmountId === entry.id ? (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-400">S/</span>
-                    <input
-                      type="number"
-                      value={editAmountValue}
-                      onChange={(e) => setEditAmountValue(e.target.value)}
-                      onBlur={() => handleSaveAmount(entry)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveAmount(entry);
-                        if (e.key === 'Escape') {
-                          setEditAmountId(null);
-                          setEditAmountValue('');
-                        }
-                      }}
-                      className="w-20 px-2 py-1 border-[2px] border-black rounded-lg text-sm font-bold text-black outline-none text-right"
-                      autoFocus
-                    />
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditAmountId(entry.id);
-                      setEditAmountValue(String(entry.amount));
-                    }}
-                    className="text-sm font-black text-black hover:text-blue-600 transition-colors"
-                    title="Clic para editar monto"
-                  >
-                    -S/ {entry.amount.toFixed(2)}
-                  </button>
-                )}
-                <div className="hidden group-hover:flex items-center gap-1 ml-1">
-                  <button
-                    onClick={() => handleMarkPagado(entry)}
-                    title={entry.status === 'pagado' ? 'Marcar pendiente' : 'Marcar pagado'}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg border-[2px] border-black bg-white hover:bg-green-50 transition-colors"
-                  >
-                    <CheckCircle2
-                      className={`w-3.5 h-3.5 ${entry.status === 'pagado' ? 'text-green-500' : 'text-black'}`}
-                      strokeWidth={1.75}
-                    />
-                  </button>
-                  <button
-                    onClick={() => openEdit(entry)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg border-[2px] border-black bg-white hover:bg-gray-100 transition-colors"
-                  >
-                    <Pencil className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(entry.id)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg border-[2px] border-black bg-white hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-black" strokeWidth={1.75} />
-                  </button>
-                </div>
-              </div>
+              <PagoRow
+                entry={entry}
+                open={openId === entry.id}
+                onOpenChange={(o) =>
+                  setOpenId(o ? entry.id : (cur) => (cur === entry.id ? null : cur))
+                }
+                overdue={isOverdue(entry.paymentDate, entry.status)}
+                dateLabel={formatDate(entry.paymentDate)}
+                amountSlot={
+                  <>
+                    {editAmountId === entry.id ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-400">S/</span>
+                        <input
+                          type="number"
+                          value={editAmountValue}
+                          onChange={(e) => setEditAmountValue(e.target.value)}
+                          onBlur={() => handleSaveAmount(entry)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveAmount(entry);
+                            if (e.key === 'Escape') {
+                              setEditAmountId(null);
+                              setEditAmountValue('');
+                            }
+                          }}
+                          className="w-20 px-2 py-1 border-[2px] border-black rounded-lg text-sm font-bold text-black outline-none text-right"
+                          autoFocus
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditAmountId(entry.id);
+                          setEditAmountValue(String(entry.amount));
+                        }}
+                        className="whitespace-nowrap text-[14px] font-black tabular-nums text-black transition-colors hover:text-blue-600 sm:text-[15px]"
+                        title="Clic para editar monto"
+                      >
+                        -S/{' '}
+                        {entry.amount.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </button>
+                    )}
+                  </>
+                }
+                onTogglePaid={() => {
+                  setOpenId(null);
+                  handleMarkPagado(entry);
+                }}
+                onEdit={() => {
+                  setOpenId(null);
+                  openEdit(entry);
+                }}
+                onReschedule={(date) => handleReschedule(entry, date)}
+                onDelete={() => {
+                  if (window.confirm(`¿Eliminar "${entry.name}"?`)) {
+                    setOpenId(null);
+                    handleDelete(entry.id);
+                  }
+                }}
+              />
             </div>
           ))}
         </div>
