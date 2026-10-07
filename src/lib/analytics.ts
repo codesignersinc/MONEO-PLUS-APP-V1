@@ -60,6 +60,14 @@ export type HouseholdEvent =
   | 'household_excel_import_completed'
   | 'household_simulation_created';
 
+// "Instala MONEO+" card. Properties are the platform only.
+export type PwaEvent =
+  | 'pwa_install_prompt_shown'
+  | 'pwa_install_clicked'
+  | 'pwa_install_accepted'
+  | 'pwa_install_dismissed'
+  | 'pwa_installed';
+
 type Props = Record<string, string | number | boolean>;
 
 interface AnalyticsWindow extends Window {
@@ -68,7 +76,7 @@ interface AnalyticsWindow extends Window {
 }
 
 export function track(
-  event: LandingEvent | OnboardingEvent | HouseholdEvent,
+  event: LandingEvent | OnboardingEvent | HouseholdEvent | PwaEvent,
   props: Props = {}
 ): void {
   if (typeof window === 'undefined') return;

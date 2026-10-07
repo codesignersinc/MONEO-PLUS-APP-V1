@@ -10,6 +10,7 @@ import TrialCountdown from '@/components/billing/TrialCountdown';
 import TrialEndedModal from '@/components/billing/TrialEndedModal';
 import { PlusProvider } from '@/contexts/PlusContext';
 import PendingInvite from '@/components/household/PendingInvite';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
 
 export default function FinanzasLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -49,6 +50,7 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
           {user && <TrialCountdown />}
           {user && <TrialEndedModal />}
           {user && <PendingInvite />}
+          {user && <InstallPrompt />}
         </div>
       </PlusProvider>
     </ToastProvider>
