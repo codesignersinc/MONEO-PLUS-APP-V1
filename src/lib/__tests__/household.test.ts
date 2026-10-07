@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  annualProjection,
+  averageMonthly,
+  budgetProgress,
+  budgetsCrossing,
   categoryTotals,
+  emergencyFundTarget,
+  simulatedSaving,
+  simulatorLines,
+  topInsight,
   changePct,
   householdShares,
   latestRecurring,
@@ -291,5 +299,72 @@ describe('latestRecurring', () => {
       expense('a', 9, [['a', 100]], { name: 'Pan', isRecurring: false }),
     ]);
     expect(r.map((e) => e.nextDate)).toEqual(['2026-11-05']);
+  });
+});
+
+describe('budget, emergency fund, simulator, insights and projection', () => {
+  const oct = [
+    expense('a', 1000, [['a', 100]], { category: 'Comida', name: 'Súper' }),
+    expense('a', 650, [['a', 100]], { category: 'Supermercado', name: 'Mercado' }),
+    expense('a', 2600, [['a', 100]], { category: 'Vivienda', name: 'Alquiler' }),
+  ];
+
+  it('budget progress groups Alimentación and flags 80% and over', () => {
+    const p = budgetProgress(
+      [
+        { id: 'b1', category: 'Alimentación', monthlyLimit: 2000 },
+        { id: 'b2', category: 'Vivienda', monthlyLimit: 2600 },
+        { id: 'b3', category: 'Servicios', monthlyLimit: 500 },
+      ],
+      oct
+    );
+    expect(p.map((b) => [b.spent, b.pct, b.status])).toEqual([
+      [1650, 83, 'warning'],
+      [2600, 100, 'over'],
+      [0, 0, 'ok'],
+    ]);
+  });
+
+  it('budgetsCrossing only reports the ones that just crossed 80%', () => {
+    const before = budgetProgress(
+      [{ id: 'b1', category: 'Comida', monthlyLimit: 2000 }],
+      oct.slice(0, 1)
+    );
+    const after = budgetProgress([{ id: 'b1', category: 'Comida', monthlyLimit: 2000 }], oct);
+    expect(budgetsCrossing(before, after).map((b) => b.id)).toEqual(['b1']);
+    expect(budgetsCrossing(after, after)).toEqual([]);
+  });
+
+  it('average monthly uses past months with data, else the current month', () => {
+    const sep = expense('a', 900, [['a', 100]], { expenseDate: '2026-09-10' });
+    const aug = expense('a', 1100, [['a', 100]], { expenseDate: '2026-08-10' });
+    expect(averageMonthly([...oct, sep, aug], '2026-10')).toBe(1000);
+    expect(averageMonthly(oct, '2026-10')).toBe(4250);
+    expect(emergencyFundTarget(11013, 6)).toBe(66078);
+  });
+
+  it('simulator lines and savings (brief example: S/ 750 / month)', () => {
+    const lines = simulatorLines(oct);
+    expect(lines.map((l) => l.label)).toEqual(['Alquiler', 'Súper', 'Mercado']);
+    const cuts = [
+      { key: 'a', label: 'Alquiler', monthly: 2600, cut: 300 },
+      { key: 'd', label: 'Delivery', monthly: 400, cut: 200 },
+      { key: 'g', label: 'Gasolina', monthly: 450, cut: 150 },
+      { key: 's', label: 'Suscripciones', monthly: 100, cut: 9999 },
+    ];
+    expect(simulatedSaving(cuts)).toEqual({ monthly: 750, yearly: 9000 });
+  });
+
+  it('insight and annual projection', () => {
+    expect(topInsight(oct)).toEqual({
+      category: 'Vivienda',
+      monthly: 2600,
+      pct: 61,
+      tenPercent: 260,
+    });
+    expect(topInsight([])).toBeNull();
+    const p = annualProjection(oct);
+    expect(p.total).toBe(51000);
+    expect(p.byCategory[0]).toEqual({ category: 'Vivienda', total: 31200 });
   });
 });
