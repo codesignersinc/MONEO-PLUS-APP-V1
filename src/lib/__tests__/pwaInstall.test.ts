@@ -91,3 +91,13 @@ describe('shouldShowInstall', () => {
     );
   });
 });
+
+describe('detectShell', () => {
+  it('recognizes the Android app by its start URL or referrer', async () => {
+    const { detectShell } = await import('@/lib/appShell');
+    expect(detectShell('?source=android', '')).toBe('android');
+    expect(detectShell('', 'android-app://plus.moneo.app/')).toBe('android');
+    expect(detectShell('?source=web', 'https://google.com/')).toBe(null);
+    expect(detectShell('', '')).toBe(null);
+  });
+});

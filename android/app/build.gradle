@@ -1,0 +1,60 @@
+plugins {
+    id 'com.android.application'
+}
+
+// MONEO+ for Android: a Trusted Web Activity that opens https://moneo.plus in Chrome,
+// full screen, with the MONEO+ icon and splash. Web updates reach the app without a new
+// release. The signing key comes from environment variables (GitHub Actions secrets);
+// without them the release build is left unsigned and only the debug APK is installable.
+
+def host = 'moneo.plus'
+def keystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
+
+android {
+    namespace 'plus.moneo.app'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'plus.moneo.app'
+        minSdk 24
+        targetSdk 36
+        versionCode Integer.parseInt(System.getenv('ANDROID_VERSION_CODE') ?: '1')
+        versionName System.getenv('ANDROID_VERSION_NAME') ?: '1.0.0'
+
+        resValue 'string', 'app_name', 'MONEO+'
+        resValue 'string', 'launch_url', "https://${host}/finanzas?source=android"
+        resValue 'string', 'host_name', host
+        resValue 'string', 'asset_statements',
+                "[{ \\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://${host}\\\"} }]"
+        resValue 'string', 'provider_authority', 'plus.moneo.app.fileprovider'
+    }
+
+    signingConfigs {
+        if (keystorePath) {
+            release {
+                storeFile file(keystorePath)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (keystorePath) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}
