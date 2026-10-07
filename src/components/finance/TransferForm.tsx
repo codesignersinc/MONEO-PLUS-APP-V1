@@ -7,6 +7,7 @@ import { buildTransferAmounts, formatCurrency, getCurrencyInfo } from '@/lib/cur
 import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
 import { getErrorMessage } from '@/lib/dataError';
 import type { Account } from '@/lib/financeStore';
+import { DateField, NotesField, TAGGED, Tag, TextField } from '@/components/finance/formKit';
 
 interface TransferFormProps {
   onSaved: () => void;
@@ -122,66 +123,62 @@ export default function TransferForm({
 
   return (
     <div className="space-y-3">
-      <div>
-        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
-          Desde
-        </label>
+      <div className="relative">
+        {fromId && <Tag>Desde</Tag>}
         <select
+          aria-label="Desde"
           value={fromId}
           onChange={(e) => {
             setFromId(e.target.value);
             if (e.target.value === toId) setToId('');
             setReceived('');
           }}
-          className={inputClass}
+          className={`${inputClass} ${fromId ? TAGGED : 'text-gray-400'}`}
         >
-          <option value="">Elige la cuenta de origen</option>
+          <option value="">Desde (cuenta de origen)</option>
           {accounts.map(accountOption)}
         </select>
       </div>
-      <div>
-        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
-          Hacia
-        </label>
+      <div className="relative">
+        {toId && <Tag>Hacia</Tag>}
         <select
+          aria-label="Hacia"
           value={toId}
           onChange={(e) => {
             setToId(e.target.value);
             setReceived('');
           }}
-          className={inputClass}
+          className={`${inputClass} ${toId ? TAGGED : 'text-gray-400'}`}
         >
-          <option value="">Elige la cuenta de destino</option>
+          <option value="">Hacia (cuenta de destino)</option>
           {accounts.filter((a) => a.id !== fromId).map(accountOption)}
         </select>
       </div>
-      <div>
-        <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
-          Monto enviado {from ? `(${fromCurrency})` : ''}
-        </label>
+      <div className="relative">
+        {amount && <Tag>Monto enviado {from ? `(${fromCurrency})` : ''}</Tag>}
         <input
+          aria-label="Monto enviado"
           type="number"
           inputMode="decimal"
           min="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.00"
-          className={inputClass}
+          placeholder={`Monto enviado${from ? ` (${fromCurrency})` : ''}`}
+          className={`${inputClass} ${amount ? TAGGED : ''}`}
         />
       </div>
       {crossCurrency && (
-        <div>
-          <label className="block text-xs font-black text-black uppercase tracking-wide mb-1.5">
-            Monto recibido ({toCurrency})
-          </label>
+        <div className="relative">
+          {received && <Tag>Monto recibido ({toCurrency})</Tag>}
           <input
+            aria-label={`Monto recibido (${toCurrency})`}
             type="number"
             inputMode="decimal"
             min="0"
             value={received}
             onChange={(e) => setReceived(e.target.value)}
-            placeholder={amounts.toAmount ? amounts.toAmount.toFixed(2) : '0.00'}
-            className={inputClass}
+            placeholder={`Monto recibido (${toCurrency})${amounts.toAmount ? `: ${amounts.toAmount.toFixed(2)}` : ''}`}
+            className={`${inputClass} ${received ? TAGGED : ''}`}
           />
           <p className="text-xs text-blue-600 mt-1">
             Si lo dejas vacío se usa tu tipo de cambio:{' '}
@@ -189,26 +186,9 @@ export default function TransferForm({
           </p>
         </div>
       )}
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Descripción"
-        className={inputClass}
-      />
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className={inputClass}
-      />
-      <input
-        type="text"
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        placeholder="Nota (opcional)"
-        className={inputClass}
-      />
+      <TextField label="Descripción" value={name} onChange={setName} />
+      <DateField label="Fecha" value={date} onChange={setDate} />
+      <NotesField label="Nota (opcional)" value={notes} onChange={setNotes} />
       {error && (
         <p role="alert" className="text-sm font-semibold text-red-600">
           {error}

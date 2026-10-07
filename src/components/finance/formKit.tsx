@@ -8,27 +8,38 @@ import type { Account } from '@/lib/financeStore';
 
 // Building blocks of the quick-add forms (MONEO 3D retro pop): tall fields with thick black
 // borders, dark text, an icon slot, pastel category chips and a yellow call to action.
-// 16px text so iOS does not zoom into the field.
+// 16px text so iOS does not zoom into the field. No titles above the fields: the placeholder
+// says what goes in each one and, once filled, a small tag inside the field keeps the title.
 
 export const FIELD =
   'h-14 w-full rounded-2xl border-[3px] border-[#111] bg-white px-4 text-[16px] font-bold text-[#111] outline-none transition-shadow placeholder:font-semibold placeholder:text-gray-400 focus:shadow-[0_0_0_3px_#FFD83D]';
 export const LABEL = 'mb-2 block text-[13px] font-black uppercase tracking-wide text-gray-600';
 
-export function Field({
-  label,
-  aside,
-  children,
-}: {
-  label: string;
-  aside?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+// Title inside the field (top-left) once it has a value; the placeholder says it while empty.
+export const TAG =
+  'pointer-events-none absolute left-4 top-[7px] z-[1] max-w-[calc(100%-4rem)] truncate text-[10px] font-black uppercase leading-none tracking-wide text-gray-500';
+// Pushes the value under the tag.
+export const TAGGED = 'pt-[14px]';
+
+export function Tag({ children, left }: { children: React.ReactNode; left?: number }) {
+  return (
+    <span className={TAG} style={left ? { left } : undefined} aria-hidden>
+      {children}
+    </span>
+  );
+}
+
+// "Ej. Sueldo enero" + "Nombre" → "Nombre (ej. Sueldo enero)".
+export function titledPlaceholder(title: string, example?: string): string {
+  if (!example) return title;
+  return `${title} (${example.replace(/^Ej\.\s*/i, 'ej. ')})`;
+}
+
+// Wraps a field: the title is kept for screen readers only.
+export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className={LABEL}>{label}</span>
-        {aside && <span className="mb-2 text-[13px] font-bold text-gray-600">{aside}</span>}
-      </div>
+      <span className="sr-only">{label}</span>
       {children}
     </div>
   );
@@ -94,11 +105,13 @@ export function AccountSelect({
     );
   }
   return (
-    <Field
-      label={label}
-      aside={acc ? `Saldo: ${formatCurrency(acc.balance, acc.currency || 'PEN')}` : undefined}
-    >
+    <Field label={label}>
       <div className="relative">
+        {acc && (
+          <Tag left={60}>
+            {label} · Saldo {formatCurrency(acc.balance, acc.currency || 'PEN')}
+          </Tag>
+        )}
         {acc && (
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
             <BrandLogo
@@ -115,9 +128,9 @@ export function AccountSelect({
           onChange={(e) => onChange(e.target.value)}
           disabled={!accounts}
           aria-label={label}
-          className={`${FIELD} appearance-none pr-12 ${acc ? 'pl-[60px]' : ''} ${value ? '' : 'text-gray-400'}`}
+          className={`${FIELD} appearance-none pr-12 ${acc ? `pl-[60px] ${TAGGED}` : ''} ${value ? '' : 'text-gray-400'}`}
         >
-          <option value="">{accounts ? 'Elige la cuenta' : 'Cargando cuentas…'}</option>
+          <option value="">{accounts ? label : 'Cargando cuentas…'}</option>
           {accounts?.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name} ({a.currency || 'PEN'})
@@ -151,11 +164,13 @@ export function TextField({
             {icon}
           </span>
         )}
+        {value && <Tag left={icon ? 56 : undefined}>{label}</Tag>}
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`${FIELD} ${icon ? 'pl-14' : ''} ${value ? 'pr-12' : ''}`}
+          placeholder={titledPlaceholder(label, placeholder)}
+          aria-label={label}
+          className={`${FIELD} ${icon ? 'pl-14' : ''} ${value ? `pr-12 ${TAGGED}` : ''}`}
         />
         {value && (
           <button
@@ -221,6 +236,11 @@ export function evalAmount(expr: string): number | null {
   }
 }
 
+// "Monto (S/)" → "Monto": the currency already shows inside the field.
+export function plainTitle(label: string): string {
+  return label.replace(/\s*\([^)]*\)\s*$/, '');
+}
+
 // Amount with the currency prefix and a calculator mode ("12+8+4.50" → 24.50).
 export function AmountField({
   label,
@@ -247,8 +267,10 @@ export function AmountField({
         <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[16px] font-black text-[#111]">
           {currency}
         </span>
+        {(calc ? expr : value) && <Tag left={44}>{plainTitle(label)}</Tag>}
         <input
           ref={ref}
+          aria-label={label}
           type={calc ? 'text' : 'number'}
           inputMode={calc ? 'text' : 'decimal'}
           step="0.01"
@@ -262,8 +284,8 @@ export function AmountField({
               apply();
             }
           }}
-          placeholder={calc ? '12+8.50' : '0.00'}
-          className={`${FIELD} pl-11 pr-14`}
+          placeholder={calc ? '12+8.50' : plainTitle(label)}
+          className={`${FIELD} pl-11 pr-14 ${(calc ? expr : value) ? TAGGED : ''}`}
         />
         <button
           type="button"
@@ -305,7 +327,7 @@ export function DateField({
   label,
   value,
   onChange,
-  placeholder = 'Elegir fecha',
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -315,12 +337,13 @@ export function DateField({
   return (
     <Field label={label}>
       <label className="relative block">
+        {value && <Tag left={44}>{label}</Tag>}
         <span
-          className={`${FIELD} flex items-center gap-2 px-3.5 ${value ? '' : 'text-gray-400'}`}
+          className={`${FIELD} flex items-center gap-2 px-3.5 ${value ? `${TAGGED} text-[#111]` : 'text-gray-400'}`}
           aria-hidden
         >
           <CalendarDays className="h-5 w-5 shrink-0 text-[#111]" />
-          <span className="truncate">{value ? fmtShortDate(value) : placeholder}</span>
+          <span className="truncate">{value ? fmtShortDate(value) : (placeholder ?? label)}</span>
         </span>
         <input
           type="date"
@@ -400,7 +423,7 @@ export function NotesField({
   value,
   onChange,
   label = 'Notas (opcional)',
-  placeholder = 'Agrega una nota…',
+  placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -411,11 +434,13 @@ export function NotesField({
     <Field label={label}>
       <div className="relative">
         <FileText className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#111]" />
+        {value && <Tag left={48}>{label}</Tag>}
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`${FIELD} pl-12`}
+          placeholder={placeholder ?? label}
+          aria-label={label}
+          className={`${FIELD} pl-12 ${value ? TAGGED : ''}`}
         />
       </div>
     </Field>

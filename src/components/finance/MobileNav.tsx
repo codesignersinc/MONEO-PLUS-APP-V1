@@ -47,7 +47,6 @@ import {
   DateField,
   FIELD,
   FormHero,
-  LABEL,
   NotesField,
   SubmitButton,
   TextField,
@@ -418,28 +417,11 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   return (
     <FormWrapper title="Nuevo Ingreso" emoji="➕" accentBg="bg-[#e1c2fd]" onClose={onClose}>
       <div className="space-y-5">
+        <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Sueldo enero" />
+        <AmountField label="Monto (S/)" value={amount} onChange={setAmount} />
         <div>
-          <label className={LABEL}>Nombre</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Sueldo enero"
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Monto (S/)</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Estado</label>
-          <div className="mt-1 flex gap-2">
+          <span className="sr-only">Estado</span>
+          <div className="flex gap-2">
             {(['cobrado', 'pendiente'] as const).map((s) => (
               <button
                 key={s}
@@ -460,25 +442,9 @@ function IngresoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
             selectClassName={FIELD}
           />
         )}
-        <div>
-          <label className={LABEL}>Fecha de cobro</label>
-          <input
-            type="date"
-            value={collectionDate}
-            onChange={(e) => setCollectionDate(e.target.value)}
-            className={FIELD}
-          />
-        </div>
+        <DateField label="Fecha de cobro" value={collectionDate} onChange={setCollectionDate} />
         <CategoryChips categories={INCOME_CATEGORIES} value={category} onChange={handleCat} />
-        <div>
-          <label className={LABEL}>Notas</label>
-          <input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Opcional"
-            className={FIELD}
-          />
-        </div>
+        <NotesField value={notes} onChange={setNotes} />
         {error && (
           <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
             {error}
@@ -560,28 +526,11 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
   return (
     <FormWrapper title="Nuevo Pago" emoji="📅" accentBg="bg-[#ffd5cc]" onClose={onClose}>
       <div className="space-y-5">
+        <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Alquiler" />
+        <AmountField label="Monto (S/)" value={amount} onChange={setAmount} />
         <div>
-          <label className={LABEL}>Nombre</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Alquiler"
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Monto (S/)</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Estado</label>
-          <div className="mt-1 flex gap-2">
+          <span className="sr-only">Estado</span>
+          <div className="flex gap-2">
             {(['pendiente', 'pagado'] as const).map((s) => (
               <button
                 key={s}
@@ -602,25 +551,9 @@ function PagoForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () =
             selectClassName={FIELD}
           />
         )}
-        <div>
-          <label className={LABEL}>Fecha de pago</label>
-          <input
-            type="date"
-            value={paymentDate}
-            onChange={(e) => setPaymentDate(e.target.value)}
-            className={FIELD}
-          />
-        </div>
+        <DateField label="Fecha de pago" value={paymentDate} onChange={setPaymentDate} />
         <CategoryChips categories={PAGO_CATEGORIES} value={category} onChange={handleCat} />
-        <div>
-          <label className={LABEL}>Notas</label>
-          <input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Opcional"
-            className={FIELD}
-          />
-        </div>
+        <NotesField value={notes} onChange={setNotes} />
         {error && (
           <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
             {error}
@@ -679,37 +612,12 @@ function SuscripcionForm({ onClose, onSuccess }: { onClose: () => void; onSucces
   return (
     <FormWrapper title="Nueva Suscripción" emoji="📺" accentBg="bg-[#bfdbfe]" onClose={onClose}>
       <div className="space-y-5">
+        <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Netflix" />
+        <AmountField label="Monto mensual (S/)" value={amount} onChange={setAmount} />
+        <DateField label="Próximo pago" value={nextPaymentDate} onChange={setNextPaymentDate} />
         <div>
-          <label className={LABEL}>Nombre</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Netflix"
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Monto mensual (S/)</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Próximo pago</label>
-          <input
-            type="date"
-            value={nextPaymentDate}
-            onChange={(e) => setNextPaymentDate(e.target.value)}
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Ícono</label>
-          <div className="mt-1 flex flex-wrap gap-2">
+          <span className="sr-only">Ícono</span>
+          <div className="flex flex-wrap gap-2">
             {['🎬', '🎵', '📡', '☁️', '📱', '🎮', '📚', '🔄'].map((ic) => (
               <button
                 key={ic}
@@ -786,49 +694,24 @@ function AhorroForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
   return (
     <FormWrapper title="Nueva Meta de Ahorro" emoji="🐷" accentBg="bg-[#BBF7D0]" onClose={onClose}>
       <div className="space-y-5">
-        <div>
-          <label className={LABEL}>Nombre de la meta</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Fondo de emergencia"
-            className={FIELD}
-          />
-        </div>
+        <TextField
+          label="Nombre de la meta"
+          value={name}
+          onChange={setName}
+          placeholder="Ej. Fondo de emergencia"
+        />
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className={LABEL}>Meta (S/)</label>
-            <input
-              type="number"
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-              placeholder="0.00"
-              className={FIELD}
-            />
+            <AmountField label="Meta (S/)" value={target} onChange={setTarget} />
           </div>
           <div className="flex-1">
-            <label className={LABEL}>Ya tengo (S/)</label>
-            <input
-              type="number"
-              value={current}
-              onChange={(e) => setCurrent(e.target.value)}
-              placeholder="0.00"
-              className={FIELD}
-            />
+            <AmountField label="Ya tengo (S/)" value={current} onChange={setCurrent} />
           </div>
         </div>
+        <DateField label="Fecha objetivo" value={targetDate} onChange={setTargetDate} />
         <div>
-          <label className={LABEL}>Fecha objetivo</label>
-          <input
-            type="date"
-            value={targetDate}
-            onChange={(e) => setTargetDate(e.target.value)}
-            className={FIELD}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Ícono</label>
-          <div className="mt-1 flex flex-wrap gap-2">
+          <span className="sr-only">Ícono</span>
+          <div className="flex flex-wrap gap-2">
             {GOAL_ICONS.map((ic) => (
               <button
                 key={ic}
