@@ -3,10 +3,11 @@
 import { createClient } from '@/lib/supabase/client';
 import { DataError, toDataError, type DataErrorKind } from '@/lib/dataError';
 import { transactionsService } from '@/lib/supabaseFinance';
-import type { FxContext } from '@/lib/supabaseCurrency';
+import { getFxContext, type FxContext } from '@/lib/supabaseCurrency';
 import { buildCurrencyFields, getRateFromMap } from '@/lib/currency';
 import { localDateTimeToISO, nowTimeLocal } from '@/lib/dates';
 import type { Account } from '@/lib/financeStore';
+import { householdShares } from '@/lib/household';
 import type {
   Frequency,
   Household,
@@ -910,3 +911,53 @@ export const householdSimulationsService = {
     if (!data?.length) throw new DataError('permission');
   },
 };
+
+// Shares one of the caller's own movements with their household (e.g. registered from
+// MONEO AUTO or the quick-add form): paid by the caller, split as the household decides
+// (equal parts while that split cannot be applied). The movement stays private.
+export async function shareOwnMovement(input: {
+  transactionId: string;
+  name: string;
+  category: string;
+  amount: number; // positive, in `currency`
+  currency: string;
+  date: string; // YYYY-MM-DD
+  source?: 'manual' | 'auto';
+}): Promise<boolean> {
+  const mine = await householdService.getMine();
+  if (!mine) return false;
+  const { household, members, me } = mine;
+  const def = householdShares(household.splitMethod, members);
+  const eq = householdShares('equal', members);
+  const shares = def.ok ? def.shares : eq.ok ? eq.shares : null;
+  if (!shares) return false;
+  let rate = 1;
+  if (input.currency !== household.baseCurrency) {
+    const fx = await getFxContext();
+    rate = getRateFromMap(fx.ratesMap, input.currency, household.baseCurrency);
+  }
+  await householdExpensesService.save(household.id, null, {
+    paidBy: me.id,
+    name: input.name.slice(0, 80) || 'Gasto',
+    category: input.category || 'Otros',
+    amount: Math.abs(input.amount),
+    currency: input.currency,
+    exchangeRate: rate,
+    date: input.date,
+    responsibility: 'shared',
+    shares,
+    isRecurring: false,
+    frequency: null,
+    nextDate: null,
+    notes: '',
+    transactionId: input.transactionId,
+    source: input.source ?? 'manual',
+  });
+  householdService.notify(
+    household.id,
+    'household_expense',
+    'Nuevo gasto compartido',
+    `${me.displayName} agregó "${input.name.slice(0, 60)}" al hogar.`
+  );
+  return true;
+}

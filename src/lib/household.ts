@@ -467,3 +467,12 @@ export function annualProjection(monthExpenses: HouseholdExpense[]): {
   const cats = categoryTotals(monthExpenses).map((c) => ({ ...c, total: round2(c.total * 12) }));
   return { total: round2(cats.reduce((s, c) => s + c.total, 0)), byCategory: cats };
 }
+
+// Categories that usually belong to the household (MONEO AUTO suggests "¿Es un gasto del
+// hogar?" for them; the user always confirms).
+const HOUSEHOLD_CATEGORIES =
+  /^(vivienda|servicios|supermercado|hogar|hijos|seguros|alimentaci[oó]n)$/i;
+
+export function looksLikeHouseholdExpense(category: string): boolean {
+  return HOUSEHOLD_CATEGORIES.test(category.trim());
+}

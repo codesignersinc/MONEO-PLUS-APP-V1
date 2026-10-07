@@ -10,6 +10,8 @@ import {
   Plus,
   Repeat,
   Scale,
+  Crown,
+  FileSpreadsheet,
   Settings,
   Sparkles,
   TrendingUp,
@@ -64,6 +66,7 @@ import BudgetTab from '@/components/household/BudgetTab';
 import GoalsTab, { type GoalDraft } from '@/components/household/GoalsTab';
 import SimulatorTab from '@/components/household/SimulatorTab';
 import HouseholdPlusLocked from '@/components/household/HouseholdPlusLocked';
+import ImportSheet from '@/components/household/ImportSheet';
 import { Avatar, Choice, memberColor } from '@/components/household/ui';
 import ExpenseSheet from '@/components/household/ExpenseSheet';
 import InviteSheet from '@/components/household/InviteSheet';
@@ -132,6 +135,7 @@ export default function HouseholdView({
     | { kind: 'invite' }
     | { kind: 'settings' }
     | { kind: 'settle'; settlement: HouseholdSettlement; side: 'pay' | 'receive' }
+    | { kind: 'import' }
   >(null);
   const [personTab, setPersonTab] = useState<string>(me.id);
   const [busy, setBusy] = useState(false);
@@ -207,6 +211,30 @@ export default function HouseholdView({
     household.emergencyMonths
   );
   const mainGoal = goals.find((g) => g.saved < g.targetAmount) ?? goals[0] ?? null;
+
+  const addButton = (
+    <button
+      type="button"
+      onClick={() => setSheet({ kind: 'expense' })}
+      className="flex h-12 items-center gap-2 rounded-2xl border-[3px] border-[#111] bg-[#FFD83D] px-4 text-[15px] font-black shadow-[0_3px_0_#111] active:translate-y-0.5"
+    >
+      <Plus className="h-5 w-5" strokeWidth={3} /> Agregar gasto
+    </button>
+  );
+
+  // Excel import is a PLUS feature of the household: without it, the button leads to plans.
+  const importButton = (
+    <button
+      type="button"
+      onClick={() =>
+        hasPlus ? setSheet({ kind: 'import' }) : (window.location.href = '/finanzas/plus?pack=duo')
+      }
+      className="flex h-12 items-center gap-2 rounded-2xl border-[3px] border-[#111] bg-white px-4 text-[15px] font-black shadow-[0_3px_0_#111] active:translate-y-0.5"
+    >
+      {hasPlus ? <FileSpreadsheet className="h-5 w-5" /> : <Crown className="h-5 w-5" />} Importar
+      Excel
+    </button>
+  );
 
   const canEdit = (e: HouseholdExpense) => isOwner || e.createdBy === me.userId;
 
@@ -462,7 +490,16 @@ export default function HouseholdView({
     <section className={`${card} p-5`} aria-label="Gastos del hogar por categoría">
       <h2 className="mb-3 text-[17px] font-black">Gastos del hogar por categoría</h2>
       {cats.length === 0 ? (
-        <EmptyNote>Agreguen su primer gasto compartido.</EmptyNote>
+        <EmptyNote
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              {addButton}
+              {importButton}
+            </div>
+          }
+        >
+          Agreguen su primer gasto compartido o traigan el Excel donde ya los llevan.
+        </EmptyNote>
       ) : (
         <ul className="space-y-2.5">
           {cats.map((c, i) => {
@@ -661,16 +698,6 @@ export default function HouseholdView({
     </li>
   );
 
-  const addButton = (
-    <button
-      type="button"
-      onClick={() => setSheet({ kind: 'expense' })}
-      className="flex h-12 items-center gap-2 rounded-2xl border-[3px] border-[#111] bg-[#FFD83D] px-4 text-[15px] font-black shadow-[0_3px_0_#111] active:translate-y-0.5"
-    >
-      <Plus className="h-5 w-5" strokeWidth={3} /> Agregar gasto
-    </button>
-  );
-
   // Gastos por persona: what each one paid; "Ambos" = shared responsibility.
   const personList =
     personTab === 'shared'
@@ -772,7 +799,10 @@ export default function HouseholdView({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             {monthNav}
-            {addButton}
+            <div className="flex flex-wrap gap-2">
+              {importButton}
+              {addButton}
+            </div>
           </div>
           <section className={`${card} p-4`} aria-label="Gastos por persona">
             <h2 className="mb-3 text-[17px] font-black">Gastos por persona</h2>
@@ -927,6 +957,20 @@ export default function HouseholdView({
             onReload();
           }}
           onGone={onGone}
+        />
+      )}
+      {sheet?.kind === 'import' && (
+        <ImportSheet
+          household={household}
+          members={members}
+          me={me}
+          money={money}
+          onClose={() => setSheet(null)}
+          onDone={(n) => {
+            setSheet(null);
+            toast.showSuccess(`${n} gastos importados al hogar.`);
+            load();
+          }}
         />
       )}
       {sheet?.kind === 'settle' && (

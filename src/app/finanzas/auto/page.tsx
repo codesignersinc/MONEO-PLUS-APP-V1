@@ -32,6 +32,8 @@ import { formatCurrency, getCurrencyInfo } from '@/lib/currency';
 import { getErrorMessage } from '@/lib/dataError';
 import { notifyDataChanged, useAutoSuggestion, useDataChanged } from '@/lib/dataSync';
 import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
+import { looksLikeHouseholdExpense } from '@/lib/household';
+import { householdService, shareOwnMovement } from '@/lib/supabaseHousehold';
 
 const BANK_LABEL: Record<string, string> = {
   bcp: 'BCP',
@@ -487,6 +489,20 @@ function RegisterModal({
   const [accountAmount, setAccountAmount] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
+  // MONEO HOGAR: an expense in a household category is suggested as shared; the user
+  // decides (null = follow the suggestion).
+  const [householdName, setHouseholdName] = useState<string | null>(null);
+  const [toHome, setToHome] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (s.type !== 'gasto') return;
+    householdService
+      .getMine()
+      .then((h) => setHouseholdName(h?.household.name ?? null))
+      .catch(() => setHouseholdName(null));
+  }, [s.type]);
+  const suggestedHome = looksLikeHouseholdExpense(category);
+  const shareWithHome = !!householdName && s.type === 'gasto' && (toHome ?? suggestedHome);
 
   const account = accounts.find((a) => a.id === accountId);
   const foreign = !!account && (account.currency || 'PEN') !== s.currency;
@@ -504,7 +520,7 @@ function RegisterModal({
     setSaving(true);
     setError('');
     try {
-      await autoService.register(
+      const { transactionId } = await autoService.register(
         s,
         {
           accountId,
@@ -517,6 +533,24 @@ function RegisterModal({
         },
         accounts
       );
+      if (shareWithHome && transactionId) {
+        // The movement is already registered: a failure here only skips the household.
+        await shareOwnMovement({
+          transactionId,
+          name: name.trim() || s.merchant,
+          category,
+          amount: s.amount,
+          currency: s.currency,
+          date,
+          source: 'auto',
+        })
+          .then((ok) => ok && toast.showSuccess(`También se agregó a ${householdName}.`))
+          .catch((err) =>
+            toast.showError(
+              `Se registró, pero no se pudo agregar al hogar: ${getErrorMessage(err)}`
+            )
+          );
+      }
       onDone();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -664,6 +698,32 @@ function RegisterModal({
             />
           </div>
         </div>
+
+        {householdName && s.type === 'gasto' && (
+          <div
+            className={`rounded-xl border-2 p-3 ${suggestedHome ? 'border-black bg-[#FFF4CC]' : 'border-gray-200 bg-white'}`}
+          >
+            {suggestedHome && (
+              <p className="mb-1 text-xs font-black text-black">
+                🏠 Detectamos un posible gasto del hogar.
+              </p>
+            )}
+            <label className="flex items-start gap-2 text-sm font-bold text-black">
+              <input
+                type="checkbox"
+                checked={shareWithHome}
+                onChange={(e) => setToHome(e.target.checked)}
+                className="mt-0.5 h-5 w-5 accent-black"
+              />
+              <span>
+                Agregarlo a {householdName}
+                <span className="block text-[11px] font-semibold text-gray-500">
+                  Lo pagaste tú; se reparte según el hogar. Tu cuenta sigue siendo privada.
+                </span>
+              </span>
+            </label>
+          </div>
+        )}
 
         {error && (
           <p role="alert" className="text-sm font-semibold text-red-600">
