@@ -24,6 +24,7 @@ import {
   Users,
   ShoppingBag,
   Sparkles,
+  PictureInPicture2,
   Sofa,
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
@@ -162,6 +163,21 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           );
         })}
       </nav>
+
+      {/* MONEO Mini: a small window to keep next to your work */}
+      <div className={`shrink-0 pt-2 ${collapsed ? 'px-2' : 'px-3'}`}>
+        <button
+          type="button"
+          onClick={() =>
+            window.open('/mini', 'moneo-mini', 'popup,width=420,height=780,left=40,top=40')
+          }
+          title="Abrir MONEO Mini en una ventana pequeña"
+          className={`flex w-full items-center rounded-xl border-2 border-black bg-[#FFF9EC] text-sm font-black text-black hover:bg-[#FFD93D] ${collapsed ? 'justify-center px-2 py-2' : 'gap-2 px-3 py-2'}`}
+        >
+          <PictureInPicture2 className="h-4 w-4 shrink-0" strokeWidth={2.4} />
+          {!collapsed && 'MONEO Mini'}
+        </button>
+      </div>
 
       {/* MONEO PLUS (where the plans are live) or the brand note */}
       {!collapsed && (

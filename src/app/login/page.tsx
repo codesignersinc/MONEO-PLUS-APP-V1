@@ -31,7 +31,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      router.replace('/finanzas');
+      // Only the known in-app destination (never an arbitrary URL).
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.replace(next === '/mini' ? '/mini' : '/finanzas');
     } catch (err) {
       setError(authErrorMessage(err, 'No se pudo iniciar sesión.'));
       setLoading(false);
