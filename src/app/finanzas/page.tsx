@@ -499,7 +499,7 @@ export default function DashboardPage() {
               onNew={onNew}
               onSignOut={handleSignOut}
             />
-            <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(300px,350px)] gap-5">
+            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(300px,350px)]">
               <div className="min-w-0 space-y-5">
                 <div>
                   <h1 className="text-[34px] font-black leading-tight tracking-tight">
@@ -518,7 +518,10 @@ export default function DashboardPage() {
                   {advice}
                 </div>
               </div>
-              <aside aria-label="Resumen" className="min-w-0 space-y-5">
+              <aside
+                aria-label="Resumen"
+                className="grid min-w-0 content-start gap-5 lg:grid-cols-2 xl:grid-cols-1"
+              >
                 {payments}
                 {goal}
                 {summary}

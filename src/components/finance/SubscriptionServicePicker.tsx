@@ -19,6 +19,8 @@ function ServiceLogo({ service, size = 36 }: { service: ServiceOption; size?: nu
         className="flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0"
         style={{ width: size, height: size, background: '#f3f4f6' }}
       >
+        {/* Service logos come from arbitrary external domains; next/image would need each host configured. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={service.logoUrl}
           alt={service.name}

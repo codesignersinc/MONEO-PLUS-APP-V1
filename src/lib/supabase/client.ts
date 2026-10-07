@@ -68,8 +68,10 @@ const getToken = () =>
   (canUseCookies() ? fromCookies() : fromStorage()).find((c) => c.name.includes('auth-token'))
     ?.value ?? null;
 
-if (typeof window !== 'undefined' && !(window as any).__sb_patched__) {
-  (window as any).__sb_patched__ = true;
+type PatchedWindow = Window & { __sb_patched__?: boolean };
+
+if (typeof window !== 'undefined' && !(window as PatchedWindow).__sb_patched__) {
+  (window as PatchedWindow).__sb_patched__ = true;
   const orig = window.fetch.bind(window);
   window.fetch = (input, init) => {
     const token = getToken();

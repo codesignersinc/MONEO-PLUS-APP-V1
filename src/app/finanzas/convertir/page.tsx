@@ -27,7 +27,6 @@ export default function ConvertirDineroPage() {
   const [toAccountId, setToAccountId] = useState('');
   const [fromAmount, setFromAmount] = useState('');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
-  const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,7 +42,7 @@ export default function ConvertirDineroPage() {
       userSettingsService.get(),
       exchangeRatesService.getRatesMap(),
     ])
-      .then(([accs, settings, rates]) => {
+      .then(([accs, , rates]) => {
         const opts: AccountOption[] = accs.map((a) => ({
           id: a.id,
           name: a.name,
@@ -66,7 +65,6 @@ export default function ConvertirDineroPage() {
             )?.id ||
             ''
         );
-        setBaseCurrency(settings.baseCurrencyCode);
         setRatesMap(rates);
       })
       .catch(setLoadError)

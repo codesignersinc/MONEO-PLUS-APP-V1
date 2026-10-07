@@ -89,7 +89,7 @@ export const accountsService = {
   // and a manual correction goes through adjustBalance (audited).
   async update(id: string, account: Partial<Omit<Account, 'balance'>>): Promise<void> {
     const supabase = createClient();
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     if (account.name !== undefined) updates.name = account.name;
     if (account.type !== undefined) updates.account_type = account.type;
     if (account.institution !== undefined) updates.institution = account.institution;
@@ -136,7 +136,16 @@ export const accountsService = {
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
-function currencyFieldsFromRow(r: any): TransactionCurrencyFields {
+interface TransactionCurrencyRow {
+  currency_code: string;
+  original_amount: number | string;
+  base_currency_code: string;
+  base_amount: number | string;
+  exchange_rate: number | string;
+  exchange_rate_date: string;
+}
+
+function currencyFieldsFromRow(r: TransactionCurrencyRow): TransactionCurrencyFields {
   return {
     currencyCode: r.currency_code,
     originalAmount: Number(r.original_amount),
@@ -221,7 +230,7 @@ export const transactionsService = {
   // When `amount`, `type` or the account change, pass the recomputed currency fields too.
   async update(id: string, tx: Partial<Transaction>): Promise<void> {
     const supabase = createClient();
-    const updates: any = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (tx.name !== undefined) updates.name = tx.name;
     if (tx.category !== undefined) updates.category = tx.category;
     if (tx.categoryIcon !== undefined) updates.category_icon = tx.categoryIcon;
@@ -375,7 +384,7 @@ export const budgetService = {
 
   async update(id: string, cat: Partial<BudgetCategory>): Promise<void> {
     const supabase = createClient();
-    const updates: any = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (cat.name !== undefined) updates.name = cat.name;
     if (cat.icon !== undefined) updates.icon = cat.icon;
     if (cat.budget !== undefined) updates.budget = cat.budget;
@@ -453,7 +462,7 @@ export const savingsService = {
 
   async update(id: string, goal: Partial<SavingsGoal>): Promise<void> {
     const supabase = createClient();
-    const updates: any = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (goal.name !== undefined) updates.name = goal.name;
     if (goal.icon !== undefined) updates.icon = goal.icon;
     if (goal.current !== undefined) updates.current_amount = goal.current;
@@ -563,7 +572,7 @@ export const debtsService = {
 
   async update(id: string, debt: Partial<Debt>): Promise<void> {
     const supabase = createClient();
-    const updates: any = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (debt.name !== undefined) updates.name = debt.name;
     if (debt.institution !== undefined) updates.institution = debt.institution;
     if (debt.icon !== undefined) updates.icon = debt.icon;
@@ -644,7 +653,7 @@ export const investmentsService = {
 
   async update(id: string, inv: Partial<Investment>): Promise<void> {
     const supabase = createClient();
-    const updates: any = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (inv.name !== undefined) updates.name = inv.name;
     if (inv.ticker !== undefined) updates.ticker = inv.ticker;
     if (inv.type !== undefined) updates.investment_type = inv.type;
@@ -744,7 +753,7 @@ export const subscriptionsService = {
 
   async update(id: string, sub: Partial<Subscription>): Promise<void> {
     const supabase = createClient();
-    const updates: any = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (sub.name !== undefined) updates.name = sub.name;
     if (sub.category !== undefined) updates.category = sub.category;
     if (sub.amount !== undefined) updates.amount = sub.amount;

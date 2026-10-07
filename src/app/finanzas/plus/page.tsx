@@ -81,6 +81,8 @@ export default function PlusPage() {
   useEffect(() => {
     load();
     track('paywall_viewed', { from: 'app' });
+    // Mount-only: load once and track the paywall view a single time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Each tab selects its 1-year pass (the best value) by default.

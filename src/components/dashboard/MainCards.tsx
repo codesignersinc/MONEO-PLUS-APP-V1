@@ -62,6 +62,31 @@ export function useHiddenAmounts(): [boolean, () => void] {
   return [hidden, toggle];
 }
 
+// Row layout (icon on the left, label over the amount) where the tile is wide; stacked
+// (icon + label on one line, the amount below at full width) where it is narrow, so long
+// amounts are never cut: half-width tiles on phones (compact) and the 3 tiles on laptops,
+// where the right rail leaves the card narrow (lg to 2xl).
+const ROW = {
+  icon: 'row-span-2 h-10 w-10',
+  label: 'self-end',
+  value: 'col-span-1 col-start-2 self-start',
+};
+const LAYOUT = {
+  // phones: stacked · tablets: row · laptops: stacked · wide screens: row
+  compact: {
+    icon: 'h-7 w-7 sm:row-span-2 sm:h-10 sm:w-10 lg:row-span-1 lg:h-7 lg:w-7 2xl:row-span-2 2xl:h-10 2xl:w-10',
+    label: 'sm:self-end lg:self-auto 2xl:self-end',
+    value:
+      'col-span-2 sm:col-span-1 sm:col-start-2 sm:self-start lg:col-span-2 lg:col-start-1 2xl:col-span-1 2xl:col-start-2',
+  },
+  // phones and tablets: row · laptops: stacked · wide screens: row
+  normal: {
+    icon: `${ROW.icon} lg:row-span-1 lg:h-7 lg:w-7 2xl:row-span-2 2xl:h-10 2xl:w-10`,
+    label: `${ROW.label} lg:self-auto 2xl:self-end`,
+    value: `${ROW.value} lg:col-span-2 lg:col-start-1 2xl:col-span-1 2xl:col-start-2`,
+  },
+};
+
 function MiniStat({
   icon: Icon,
   tile,
@@ -79,37 +104,20 @@ function MiniStat({
   compact?: boolean;
   className?: string;
 }) {
-  const tileIcon = (
-    <span
-      className={`grid ${compact ? 'h-7 w-7 sm:row-span-2 sm:h-10 sm:w-10' : 'h-10 w-10'} shrink-0 place-items-center rounded-xl border-2 border-[#111]`}
-      style={{ background: tile }}
-    >
-      <Icon className={compact ? 'h-4 w-4 sm:h-5 sm:w-5' : 'h-5 w-5'} strokeWidth={2.4} />
-    </span>
-  );
-  const box = `${className} min-w-0 rounded-2xl bg-white/95 px-3 py-2.5 transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#111] motion-reduce:hover:translate-y-0`;
-  if (compact) {
-    // Half-width tile on phones: icon and label on one line, the amount below at full width.
-    return (
-      <Link
-        href={href}
-        className={`${box} grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 sm:gap-x-3 sm:gap-y-0`}
-      >
-        {tileIcon}
-        <span className="truncate text-xs font-semibold text-[#111]/80 sm:self-end">{label}</span>
-        <span className="col-span-2 truncate text-[17px] font-black tabular-nums sm:col-span-1 sm:col-start-2 sm:self-start">
-          {value}
-        </span>
-      </Link>
-    );
-  }
+  const l = compact ? LAYOUT.compact : LAYOUT.normal;
   return (
-    <Link href={href} className={`${box} flex items-center gap-3`}>
-      {tileIcon}
-      <span className="min-w-0">
-        <span className="block text-xs font-semibold text-[#111]/80">{label}</span>
-        <span className="block truncate text-[17px] font-black tabular-nums">{value}</span>
+    <Link
+      href={href}
+      className={`${className} grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 gap-y-1 rounded-2xl bg-white/95 px-3 py-2.5 transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#111] motion-reduce:hover:translate-y-0`}
+    >
+      <span
+        className={`grid shrink-0 place-items-center rounded-xl border-2 border-[#111] ${l.icon}`}
+        style={{ background: tile }}
+      >
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.4} />
       </span>
+      <span className={`truncate text-xs font-semibold text-[#111]/80 ${l.label}`}>{label}</span>
+      <span className={`truncate text-[17px] font-black tabular-nums ${l.value}`}>{value}</span>
     </Link>
   );
 }

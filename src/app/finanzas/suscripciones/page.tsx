@@ -26,7 +26,6 @@ import {
   AlertCircle,
   CalendarClock,
   PauseCircle,
-  Wallet,
 } from 'lucide-react';
 import SubscriptionServicePicker from '@/components/finance/SubscriptionServicePicker';
 import BrandLogo from '@/components/finance/BrandLogo';

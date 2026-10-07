@@ -1,9 +1,30 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import type { AuthResponse, AuthTokenResponsePassword, Session, User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
-const AuthContext = createContext<any>({});
+interface AuthContextValue {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signUp: (
+    email: string,
+    password: string,
+    metadata?: { fullName?: string; avatarUrl?: string }
+  ) => Promise<AuthResponse['data']>;
+  signIn: (email: string, password: string) => Promise<AuthTokenResponsePassword['data']>;
+  signInWithProvider: (provider: 'google' | 'apple', next?: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  getCurrentUser: () => Promise<User | null>;
+  isEmailVerified: () => boolean;
+  getUserProfile: () => Promise<Record<string, unknown> | null>;
+}
+
+// Empty default (as before): consumers are always rendered inside AuthProvider.
+const AuthContext = createContext<AuthContextValue>({} as AuthContextValue);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -14,10 +35,11 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  // Stable client instance for the provider's lifetime.
+  const [supabase] = useState(() => createClient());
 
   useEffect(() => {
     // Get initial session
@@ -46,7 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   // Email/Password Sign Up
   const signUp = async (
@@ -137,7 +159,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return data;
   };
 
-  const value = {
+  const value: AuthContextValue = {
     user,
     session,
     loading,

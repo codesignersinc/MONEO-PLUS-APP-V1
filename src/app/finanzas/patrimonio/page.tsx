@@ -16,12 +16,13 @@ import {
 } from '@/lib/currency';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { useDataChanged } from '@/lib/dataSync';
+import type { Account, SavingsGoal, Investment, Debt } from '@/lib/financeStore';
 
 export default function PatrimonioPage() {
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
-  const [investments, setInvestments] = useState<any[]>([]);
-  const [debts, setDebts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
   const [baseCurrency, setBaseCurrency] = useState('PEN');
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -82,7 +83,7 @@ export default function PatrimonioPage() {
   const baseCurrInfo = getCurrencyInfo(baseCurrency);
 
   // Convert account balance to base currency
-  const getAccBaseBalance = (acc: any) => {
+  const getAccBaseBalance = (acc: Account) => {
     const currency = acc.currency || 'PEN';
     const rate = getRateFromMap(ratesMap, currency, baseCurrency);
     return acc.balance * rate;

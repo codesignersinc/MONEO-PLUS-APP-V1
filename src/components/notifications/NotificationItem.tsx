@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { formatNotificationTime, getNotificationTypeConfig } from '@/lib/notifications';
 import type { Notification } from '@/types/notifications';
 

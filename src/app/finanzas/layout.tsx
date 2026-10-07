@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/finance/Sidebar';
 import MobileNav from '@/components/finance/MobileNav';
-import AddTransactionModal from '@/components/finance/AddTransactionModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import AutoLiveListener from '@/components/finance/AutoLiveListener';
@@ -13,7 +12,6 @@ import { PlusProvider } from '@/contexts/PlusContext';
 import PendingInvite from '@/components/household/PendingInvite';
 
 export default function FinanzasLayout({ children }: { children: React.ReactNode }) {
-  const [showModal, setShowModal] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -32,7 +30,7 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
             collapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
           />
-          <MobileNav onFabClick={() => setShowModal(true)} />
+          <MobileNav />
           <main
             className={`pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-0 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60'}`}
           >
@@ -51,7 +49,6 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
           {user && <TrialCountdown />}
           {user && <TrialEndedModal />}
           {user && <PendingInvite />}
-          <AddTransactionModal isOpen={showModal} onClose={() => setShowModal(false)} />
         </div>
       </PlusProvider>
     </ToastProvider>

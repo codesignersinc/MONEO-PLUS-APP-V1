@@ -52,6 +52,24 @@ interface CalendarEvent {
 
 type EventMap = Record<number, CalendarEvent[]>;
 
+interface PagoRow {
+  id: string;
+  name: string;
+  amount: number;
+  category_icon: string;
+  payment_date: string;
+  status: PagoEntry['status'];
+}
+
+interface SavingsGoalRow {
+  id: string;
+  name: string;
+  icon: string;
+  target_date: string;
+  target_amount: number;
+  current_amount: number;
+}
+
 const KIND_CONFIG: Record<
   string,
   { bg: string; text: string; border: string; badge: string; emoji: string }
@@ -117,7 +135,7 @@ export default function CalendarioPage() {
       if (pagosRes.error) throw toDataError(pagosRes.error);
       if (savingsRes.error) throw toDataError(savingsRes.error);
 
-      const pagos: PagoEntry[] = (pagosRes.data || []).map((r: any) => ({
+      const pagos: PagoEntry[] = (pagosRes.data || []).map((r: PagoRow) => ({
         id: r.id,
         name: r.name,
         amount: r.amount,
@@ -126,7 +144,7 @@ export default function CalendarioPage() {
         status: r.status,
       }));
 
-      const savings: SavingsGoal[] = (savingsRes.data || []).map((r: any) => ({
+      const savings: SavingsGoal[] = (savingsRes.data || []).map((r: SavingsGoalRow) => ({
         id: r.id,
         name: r.name,
         icon: r.icon,
@@ -150,7 +168,7 @@ export default function CalendarioPage() {
             label: tx.name,
             amount: tx.amount,
             icon: tx.categoryIcon || KIND_CONFIG[tx.type].emoji,
-            kind: tx.type as any,
+            kind: tx.type,
           });
         }
       });
