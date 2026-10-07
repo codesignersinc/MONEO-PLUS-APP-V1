@@ -74,6 +74,9 @@ export default function MiniPage() {
   useDataChanged(load);
   useEffect(() => {
     setHidden(readHidden());
+    // Widget shortcuts: /mini?nuevo=gasto|ingreso|transferencia opens that form.
+    const nuevo = new URLSearchParams(window.location.search).get('nuevo');
+    if (nuevo === 'gasto' || nuevo === 'ingreso' || nuevo === 'transferencia') setModal(nuevo);
     load();
     // Fresh numbers when the window comes back and every minute while visible.
     const onFocus = () => document.visibilityState === 'visible' && load();

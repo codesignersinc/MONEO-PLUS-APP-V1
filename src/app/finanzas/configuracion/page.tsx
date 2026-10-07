@@ -23,6 +23,7 @@ import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrenc
 import { getCurrencyInfo, CURRENCIES, getDefaultRate } from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
 import { adminService } from '@/lib/supabaseAdmin';
+import CompanionDevices from '@/components/companion/CompanionDevices';
 
 export default function ConfiguracionPage() {
   const { user, signOut } = useAuth();
@@ -528,6 +529,8 @@ export default function ConfiguracionPage() {
           ))}
         </div>
       </div>
+
+      <CompanionDevices />
 
       {/* Data */}
       <div className="bg-[#FEF9C3] border-[3px] border-black rounded-2xl p-5 shadow-[6px_6px_0px_#000] mb-5">
