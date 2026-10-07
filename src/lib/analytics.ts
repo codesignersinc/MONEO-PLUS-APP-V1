@@ -46,6 +46,20 @@ export type OnboardingEvent =
   | 'onboarding_completed'
   | 'dashboard_first_view';
 
+// MONEO HOGAR. Properties are methods and counts only, never amounts or names.
+export type HouseholdEvent =
+  | 'household_created'
+  | 'household_invitation_sent'
+  | 'household_invitation_accepted'
+  | 'household_expense_created'
+  | 'household_expense_split'
+  | 'household_goal_created'
+  | 'household_budget_created'
+  | 'household_settlement_created'
+  | 'household_excel_import_started'
+  | 'household_excel_import_completed'
+  | 'household_simulation_created';
+
 type Props = Record<string, string | number | boolean>;
 
 interface AnalyticsWindow extends Window {
@@ -53,7 +67,10 @@ interface AnalyticsWindow extends Window {
   plausible?: (name: string, options?: { props?: Props }) => void;
 }
 
-export function track(event: LandingEvent | OnboardingEvent, props: Props = {}): void {
+export function track(
+  event: LandingEvent | OnboardingEvent | HouseholdEvent,
+  props: Props = {}
+): void {
   if (typeof window === 'undefined') return;
   const w = window as AnalyticsWindow;
   try {

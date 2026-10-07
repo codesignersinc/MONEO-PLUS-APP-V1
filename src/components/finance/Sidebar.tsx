@@ -24,6 +24,7 @@ import {
   Users,
   ShoppingBag,
   Sparkles,
+  Sofa,
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -48,6 +49,7 @@ const navItems: NavItem[] = [
   { href: '/finanzas/suscripciones', label: 'Suscripciones', icon: Zap },
   { href: '/finanzas/presupuesto', label: 'Presupuesto', icon: Wallet },
   { href: '/finanzas/ahorros', label: 'Metas', icon: Target },
+  { href: '/finanzas/hogar', label: 'Hogar', icon: Sofa, special: true },
   { href: '/finanzas/juntas', label: 'Juntas', icon: Users, special: true },
   { href: '/finanzas/cuentas', label: 'Cuentas', icon: Landmark },
   { href: '/finanzas/deudas', label: 'Deudas', icon: CreditCard },

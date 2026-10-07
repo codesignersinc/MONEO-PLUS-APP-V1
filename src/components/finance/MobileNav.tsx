@@ -13,6 +13,7 @@ import {
   Zap,
   Wallet,
   Target,
+  Sofa,
   Landmark,
   CreditCard,
   TrendingUp,
@@ -83,6 +84,7 @@ const sideNavItems = [
   { href: '/finanzas/suscripciones', label: 'Suscripciones', icon: Zap },
   { href: '/finanzas/presupuesto', label: 'Presupuesto', icon: Wallet },
   { href: '/finanzas/ahorros', label: 'Metas', icon: Target },
+  { href: '/finanzas/hogar', label: 'Hogar', icon: Sofa },
   { href: '/finanzas/cuentas', label: 'Cuentas', icon: Landmark },
   { href: '/finanzas/convertir', label: 'Convertir', icon: RefreshCw },
   { href: '/finanzas/deudas', label: 'Deudas', icon: CreditCard },
@@ -1159,19 +1161,19 @@ export default function MobileNav({ onFabClick }: MobileNavProps) {
             </button>
           </div>
 
-          {/* Metas */}
+          {/* Hogar */}
           <Link
-            href="/finanzas/ahorros"
+            href="/finanzas/hogar"
             className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]"
           >
-            <Target
-              className={`w-6 h-6 ${isActive('/finanzas/ahorros') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+            <Sofa
+              className={`w-6 h-6 ${isActive('/finanzas/hogar') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
               strokeWidth={2}
             />
             <span
-              className={`text-[10px] font-bold ${isActive('/finanzas/ahorros') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              className={`text-[10px] font-bold ${isActive('/finanzas/hogar') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
             >
-              Metas
+              Hogar
             </span>
           </Link>
 

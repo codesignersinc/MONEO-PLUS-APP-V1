@@ -10,6 +10,7 @@ import AutoLiveListener from '@/components/finance/AutoLiveListener';
 import TrialCountdown from '@/components/billing/TrialCountdown';
 import TrialEndedModal from '@/components/billing/TrialEndedModal';
 import { PlusProvider } from '@/contexts/PlusContext';
+import PendingInvite from '@/components/household/PendingInvite';
 
 export default function FinanzasLayout({ children }: { children: React.ReactNode }) {
   const [showModal, setShowModal] = useState(false);
@@ -49,6 +50,7 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
           {user && <AutoLiveListener />}
           {user && <TrialCountdown />}
           {user && <TrialEndedModal />}
+          {user && <PendingInvite />}
           <AddTransactionModal isOpen={showModal} onClose={() => setShowModal(false)} />
         </div>
       </PlusProvider>
