@@ -68,24 +68,44 @@ function MiniStat({
   label,
   value,
   href,
+  compact,
+  className = '',
 }: {
   icon: LucideIcon;
   tile: string;
   label: string;
   value: string;
   href: string;
+  compact?: boolean;
+  className?: string;
 }) {
-  return (
-    <Link
-      href={href}
-      className="flex min-w-0 items-center gap-3 rounded-2xl bg-white/95 px-3 py-2.5 transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#111] motion-reduce:hover:translate-y-0"
+  const tileIcon = (
+    <span
+      className={`grid ${compact ? 'h-7 w-7 sm:row-span-2 sm:h-10 sm:w-10' : 'h-10 w-10'} shrink-0 place-items-center rounded-xl border-2 border-[#111]`}
+      style={{ background: tile }}
     >
-      <span
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-[#111]"
-        style={{ background: tile }}
+      <Icon className={compact ? 'h-4 w-4 sm:h-5 sm:w-5' : 'h-5 w-5'} strokeWidth={2.4} />
+    </span>
+  );
+  const box = `${className} min-w-0 rounded-2xl bg-white/95 px-3 py-2.5 transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#111] motion-reduce:hover:translate-y-0`;
+  if (compact) {
+    // Half-width tile on phones: icon and label on one line, the amount below at full width.
+    return (
+      <Link
+        href={href}
+        className={`${box} grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 sm:gap-x-3 sm:gap-y-0`}
       >
-        <Icon className="h-5 w-5" strokeWidth={2.4} />
-      </span>
+        {tileIcon}
+        <span className="truncate text-xs font-semibold text-[#111]/80 sm:self-end">{label}</span>
+        <span className="col-span-2 truncate text-[17px] font-black tabular-nums sm:col-span-1 sm:col-start-2 sm:self-start">
+          {value}
+        </span>
+      </Link>
+    );
+  }
+  return (
+    <Link href={href} className={`${box} flex items-center gap-3`}>
+      {tileIcon}
       <span className="min-w-0">
         <span className="block text-xs font-semibold text-[#111]/80">{label}</span>
         <span className="block truncate text-[17px] font-black tabular-nums">{value}</span>
@@ -168,13 +188,14 @@ export function NetWorthCard({
             </span>
           )}
         </div>
-        <div className="relative z-20 mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3 lg:mr-[40px] xl:mr-[120px]">
+        <div className="relative z-20 mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:mr-[40px] xl:mr-[120px]">
           <MiniStat
             icon={Wallet}
             tile="#DCEBFF"
             label="Disponible"
             value={show(available)}
             href="/finanzas/cuentas"
+            className="col-span-2 sm:col-span-1"
           />
           <MiniStat
             icon={CalendarDays}
@@ -182,6 +203,7 @@ export function NetWorthCard({
             label="Por pagar"
             value={show(toPay)}
             href="/finanzas/pagos"
+            compact
           />
           <MiniStat
             icon={Target}
@@ -189,6 +211,7 @@ export function NetWorthCard({
             label="En metas"
             value={show(inGoals)}
             href="/finanzas/ahorros"
+            compact
           />
         </div>
       </div>
