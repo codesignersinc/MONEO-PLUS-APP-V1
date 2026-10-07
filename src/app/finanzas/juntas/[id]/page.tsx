@@ -47,20 +47,6 @@ const MONTHS_ES = [
   'Nov',
   'Dic',
 ];
-const MONTHS_FULL = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
 
 function fmtAmount(n: number) {
   return 'S/ ' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');

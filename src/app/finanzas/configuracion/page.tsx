@@ -99,7 +99,11 @@ export default function ConfiguracionPage() {
         goals: goalRes.count || 0,
       });
       // Get unique currencies from accounts
-      const currencies = [...new Set((accsRes.data || []).map((a: any) => a.currency || 'PEN'))];
+      const currencies = [
+        ...new Set(
+          (accsRes.data || []).map((a: { currency: string | null }) => a.currency || 'PEN')
+        ),
+      ];
       setUsedCurrencies(currencies as string[]);
     } catch (e) {
       console.error(e);

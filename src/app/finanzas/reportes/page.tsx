@@ -30,20 +30,26 @@ interface IncomeEntry {
   status: 'pendiente' | 'cobrado';
 }
 
-const MONTHS = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+interface PagoRow {
+  id: string;
+  name: string;
+  amount: number;
+  category: string;
+  category_icon: string;
+  payment_date: string;
+  status: PagoEntry['status'];
+}
+
+interface IncomeRow {
+  id: string;
+  name: string;
+  amount: number;
+  category: string;
+  category_icon: string;
+  collection_date: string;
+  status: IncomeEntry['status'];
+}
+
 const MONTHS_SHORT = [
   'Ene',
   'Feb',
@@ -89,7 +95,7 @@ export default function ReportesPage() {
         if (incomesRes.error) throw toDataError(incomesRes.error);
         setTransactions(txs);
         setPagos(
-          (pagosRes.data || []).map((r: any) => ({
+          (pagosRes.data || []).map((r: PagoRow) => ({
             id: r.id,
             name: r.name,
             amount: r.amount,
@@ -101,7 +107,7 @@ export default function ReportesPage() {
         );
         setSubscriptions(subs);
         setIncomeEntries(
-          (incomesRes.data || []).map((r: any) => ({
+          (incomesRes.data || []).map((r: IncomeRow) => ({
             id: r.id,
             name: r.name,
             amount: r.amount,

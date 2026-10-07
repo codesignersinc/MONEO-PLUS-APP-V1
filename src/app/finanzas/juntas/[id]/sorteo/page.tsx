@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Shield } from 'lucide-react';
 import { getErrorMessage } from '@/lib/dataError';
 import {
@@ -284,9 +284,7 @@ function LiveCountdown({ targetDateStr, onZero }: { targetDateStr: string; onZer
 export default function SorteoPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const juntaId = params.id as string;
-  const isAuto = searchParams.get('auto') === '1';
 
   const [junta, setJunta] = useState<Junta | null>(null);
   const [members, setMembers] = useState<JuntaMember[]>([]);
@@ -350,57 +348,6 @@ export default function SorteoPage() {
     load();
   }, [juntaId]);
 
-  const handleSpin = useCallback(
-    (membersArr: JuntaMember[], cycle: JuntaCycle) => {
-      if (spinning || showResult || membersArr.length === 0) return;
-      setSpinning(true);
-      setShowCountdown(false);
-      setError('');
-
-      const seed = `${juntaId}-${cycle.id}-${cycle.cycleNumber}`;
-      const winIdx = pickWinnerFromSeed(seed, membersArr.length);
-
-      const n = membersArr.length;
-      const sliceAngle = (2 * Math.PI) / n;
-      const targetAngle = -(winIdx * sliceAngle + sliceAngle / 2) + Math.PI * 1.5;
-      const totalRotation = Math.PI * 2 * 8 + targetAngle;
-
-      const duration = 4500;
-      const startTime = performance.now();
-      const startRotation = 0;
-
-      function easeOut(t: number) {
-        return 1 - Math.pow(1 - t, 4);
-      }
-
-      function animate(now: number) {
-        const elapsed = now - startTime;
-        const t = Math.min(elapsed / duration, 1);
-        const eased = easeOut(t);
-        const current = startRotation + totalRotation * eased;
-        setRotation(current);
-
-        if (t < 1) {
-          animFrameRef.current = requestAnimationFrame(animate);
-        } else {
-          setRotation(startRotation + totalRotation);
-          setWinnerIndex(winIdx);
-          setSpinning(false);
-          setTimeout(() => {
-            setShowResult(true);
-            setShowConfetti(true);
-            setTimeout(() => setShowConfetti(false), 3500);
-            // Auto-save after spin
-            autoSaveResult(winIdx, membersArr, cycle);
-          }, 600);
-        }
-      }
-
-      animFrameRef.current = requestAnimationFrame(animate);
-    },
-    [spinning, showResult, juntaId]
-  );
-
   const autoSaveResult = useCallback(
     async (winIdx: number, membersArr: JuntaMember[], cycle: JuntaCycle) => {
       if (!junta) return;
@@ -452,6 +399,57 @@ export default function SorteoPage() {
       }
     },
     [junta, juntaId, existingTurns]
+  );
+
+  const handleSpin = useCallback(
+    (membersArr: JuntaMember[], cycle: JuntaCycle) => {
+      if (spinning || showResult || membersArr.length === 0) return;
+      setSpinning(true);
+      setShowCountdown(false);
+      setError('');
+
+      const seed = `${juntaId}-${cycle.id}-${cycle.cycleNumber}`;
+      const winIdx = pickWinnerFromSeed(seed, membersArr.length);
+
+      const n = membersArr.length;
+      const sliceAngle = (2 * Math.PI) / n;
+      const targetAngle = -(winIdx * sliceAngle + sliceAngle / 2) + Math.PI * 1.5;
+      const totalRotation = Math.PI * 2 * 8 + targetAngle;
+
+      const duration = 4500;
+      const startTime = performance.now();
+      const startRotation = 0;
+
+      function easeOut(t: number) {
+        return 1 - Math.pow(1 - t, 4);
+      }
+
+      function animate(now: number) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const eased = easeOut(t);
+        const current = startRotation + totalRotation * eased;
+        setRotation(current);
+
+        if (t < 1) {
+          animFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          setRotation(startRotation + totalRotation);
+          setWinnerIndex(winIdx);
+          setSpinning(false);
+          setTimeout(() => {
+            setShowResult(true);
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 3500);
+            // Auto-save after spin
+            autoSaveResult(winIdx, membersArr, cycle);
+          }, 600);
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(animate);
+    },
+    [spinning, showResult, juntaId, autoSaveResult]
   );
 
   const handleCountdownZero = useCallback(() => {

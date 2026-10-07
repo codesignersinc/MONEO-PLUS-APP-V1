@@ -3,7 +3,12 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 
-interface AppImageProps {
+type ExtraImgProps = Omit<
+  React.ImgHTMLAttributes<HTMLImageElement>,
+  'src' | 'alt' | 'width' | 'height' | 'className' | 'placeholder' | 'sizes' | 'onClick'
+>;
+
+interface AppImageProps extends ExtraImgProps {
   src: string;
   alt: string;
   width?: number;
@@ -17,7 +22,6 @@ interface AppImageProps {
   sizes?: string;
   onClick?: () => void;
   fallbackSrc?: string;
-  [key: string]: any;
 }
 
 function AppImage({
@@ -73,6 +77,8 @@ function AppImage({
           className={`relative ${className}`}
           style={{ width: width || '100%', height: height || '100%' }}
         >
+          {/* External URLs from unknown domains: next/image would need each host configured. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageSrc}
             alt={alt}
@@ -88,6 +94,8 @@ function AppImage({
     }
 
     return (
+      // External URLs from unknown domains: next/image would need each host configured.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={imageSrc}
         alt={alt}
@@ -120,12 +128,18 @@ function AppImage({
   if (fill) {
     return (
       <div className={`relative ${className}`}>
-        <Image {...imageProps} fill sizes={sizes || '100vw'} style={{ objectFit: 'cover' }} />
+        <Image
+          {...imageProps}
+          alt={alt}
+          fill
+          sizes={sizes || '100vw'}
+          style={{ objectFit: 'cover' }}
+        />
       </div>
     );
   }
 
-  return <Image {...imageProps} width={width || 400} height={height || 300} />;
+  return <Image {...imageProps} alt={alt} width={width || 400} height={height || 300} />;
 }
 
 export default AppImage;

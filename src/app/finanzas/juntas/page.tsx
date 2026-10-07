@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { Plus, Users, ChevronRight } from 'lucide-react';
 import {
   juntasService,
@@ -63,7 +62,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 };
 
 export default function JuntasPage() {
-  const router = useRouter();
   const [juntas, setJuntas] = useState<JuntaWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

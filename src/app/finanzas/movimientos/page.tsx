@@ -186,16 +186,16 @@ export default function MovimientosPage() {
   }, [load]);
 
   // Get unique currencies from transactions
-  const usedCurrencies = [
-    ...new Set(transactions.map((tx) => (tx as any).currencyCode || 'PEN')),
-  ].filter(Boolean);
+  const usedCurrencies = [...new Set(transactions.map((tx) => tx.currencyCode || 'PEN'))].filter(
+    Boolean
+  );
 
   const filtered = transactions.filter((tx) => {
     const matchesFilter =
       filter === 'todos' ||
       (filter === 'pagos' && tx.type === 'gasto') ||
       (filter === 'ingresos' && tx.type === 'ingreso');
-    const txCurrency = (tx as any).currencyCode || 'PEN';
+    const txCurrency = tx.currencyCode || 'PEN';
     const matchesCurrency = currencyFilter === 'todas' || txCurrency === currencyFilter;
     const matchesSearch =
       !search ||
@@ -235,7 +235,7 @@ export default function MovimientosPage() {
   const totalIncome = filtered
     .filter((t) => t.type === 'ingreso')
     .reduce((s, t) => {
-      const txCurrency = (t as any).currencyCode || 'PEN';
+      const txCurrency = t.currencyCode || 'PEN';
       const rate = getRateFromMap(ratesMap, txCurrency, baseCurrency);
       return s + Math.abs(t.amount) * rate;
     }, 0);
@@ -243,7 +243,7 @@ export default function MovimientosPage() {
   const totalExpense = filtered
     .filter((t) => t.type === 'gasto')
     .reduce((s, t) => {
-      const txCurrency = (t as any).currencyCode || 'PEN';
+      const txCurrency = t.currencyCode || 'PEN';
       const rate = getRateFromMap(ratesMap, txCurrency, baseCurrency);
       return s + Math.abs(t.amount) * rate;
     }, 0);
@@ -462,8 +462,6 @@ export default function MovimientosPage() {
       );
     }).catch((err) => toast.showError(err));
   };
-
-  const baseCurrInfo = getCurrencyInfo(baseCurrency);
 
   if (loadError) {
     return (

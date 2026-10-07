@@ -12,7 +12,6 @@ import {
   type Junta,
   type JuntaMember,
   type JuntaCycle,
-  type JuntaTurn,
 } from '@/lib/supabaseJuntas';
 import { accountsService } from '@/lib/supabaseFinance';
 import type { Account } from '@/lib/financeStore';
@@ -253,7 +252,6 @@ export default function AportePage() {
   const [amount, setAmount] = useState('');
   const [activeTab, setActiveTab] = useState<PaymentTab>('yape');
   const [notes, setNotes] = useState('');
-  const [copiedField, setCopiedField] = useState('');
 
   useEffect(() => {
     async function load() {
