@@ -259,10 +259,12 @@ Los pasos 1–4 suman unas **2 semanas** y dejan corriendo la validación intern
 
 ---
 
-## 5. Decisiones pendientes
+## 5. Decisiones
 
-1. ¿Aprobado este orden, empezando por el paso 1 (arreglos inmediatos)?
-2. **Libro de Reclamaciones**: ¿lo armo? Necesito nombre o razón social, RUC si existe, dirección y correo de respuesta.
-3. **Español base**: ¿neutro con ajustes peruanos (recomendado) o peruano como base?
-4. **Rutas de landings**: ¿`moneo.plus/es`, `/us`… (recomendado) o subdominios?
-5. **Empresa**: ¿se mantiene como persona natural mientras solo se cobra en Perú? (A revisar con contador antes de cobrar fuera.)
+| # | Tema | Decisión (7 oct 2026) |
+|---|---|---|
+| 1 | Orden del plan | **Aprobado**, empezando por el paso 1 |
+| 2 | Libro de Reclamaciones | **Más adelante**: el titular enviará los datos (razón social, RUC, dirección, correo) |
+| 3 | Español base | **Neutro**, con ajustes por país (es-PE, es-ES, es-US) |
+| 4 | Landings | **Rutas**: `moneo.plus/es`, `/us`, `/au`, `/ae`, `/sg` |
+| 5 | Empresa | Pendiente: persona natural mientras solo se cobre en Perú; revisar con contador antes de cobrar fuera |

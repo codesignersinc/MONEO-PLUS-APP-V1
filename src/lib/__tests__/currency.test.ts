@@ -120,3 +120,23 @@ describe('buildTransferAmounts', () => {
     ).toEqual({ fromAmount: 10, toAmount: 37.5, baseAmount: 37.5 });
   });
 });
+
+describe('findRate (cross rates)', () => {
+  it('crosses through PEN when there is no direct rate', async () => {
+    const { findRate, getRateFromMap } = await import('@/lib/currency');
+    // COP → MXN = COP→PEN × PEN→MXN = 0.00093 / 0.22
+    expect(findRate({}, 'COP', 'MXN')).toBeCloseTo(0.00093 / 0.22, 8);
+    expect(getRateFromMap({}, 'CLP', 'BRL')).toBeCloseTo(0.0041 / 0.74, 8);
+  });
+  it('prefers the user own rates, also when crossing', async () => {
+    const { findRate } = await import('@/lib/currency');
+    const map = { USD_PEN: 3.8, COP_PEN: 0.001 };
+    expect(findRate(map, 'USD', 'PEN')).toBe(3.8);
+    expect(findRate(map, 'COP', 'USD')).toBeCloseTo(0.001 / 3.8, 10);
+  });
+  it('returns null only for unknown currencies', async () => {
+    const { findRate, getRateFromMap } = await import('@/lib/currency');
+    expect(findRate({}, 'XYZ', 'PEN')).toBeNull();
+    expect(getRateFromMap({}, 'XYZ', 'PEN')).toBe(1);
+  });
+});

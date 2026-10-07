@@ -47,13 +47,7 @@ export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
 };
 
 export function getDefaultRate(from: string, to: string): number {
-  if (from === to) return 1;
-  const key = `${from}_${to}`;
-  if (DEFAULT_EXCHANGE_RATES[key]) return DEFAULT_EXCHANGE_RATES[key];
-  // Try reverse
-  const reverseKey = `${to}_${from}`;
-  if (DEFAULT_EXCHANGE_RATES[reverseKey]) return 1 / DEFAULT_EXCHANGE_RATES[reverseKey];
-  return 1;
+  return findRate({}, from, to) ?? 1;
 }
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
@@ -180,13 +174,43 @@ export function buildTransferAmounts(params: {
   return { fromAmount, toAmount, baseAmount };
 }
 
-export function getRateFromMap(ratesMap: Record<string, number>, from: string, to: string): number {
+// Rate for a pair: the user's own rate (direct or reverse), else the app default.
+function pairRate(ratesMap: Record<string, number>, from: string, to: string): number | null {
   if (from === to) return 1;
-  const key = buildRateKey(from, to);
-  if (ratesMap[key]) return ratesMap[key];
-  const reverseKey = buildRateKey(to, from);
-  if (ratesMap[reverseKey]) return 1 / ratesMap[reverseKey];
-  return getDefaultRate(from, to);
+  const own = ratesMap[buildRateKey(from, to)];
+  if (own) return own;
+  const reverse = ratesMap[buildRateKey(to, from)];
+  if (reverse) return 1 / reverse;
+  const def = DEFAULT_EXCHANGE_RATES[`${from}_${to}`];
+  if (def) return def;
+  const defReverse = DEFAULT_EXCHANGE_RATES[`${to}_${from}`];
+  if (defReverse) return 1 / defReverse;
+  return null;
+}
+
+// Currencies used to bridge two currencies without a direct rate (e.g. COP → MXN via PEN).
+const PIVOT_CURRENCIES = ['PEN', 'USD'];
+
+/** Rate from → to, crossing through PEN or USD when needed; null when it cannot be known. */
+export function findRate(
+  ratesMap: Record<string, number>,
+  from: string,
+  to: string
+): number | null {
+  const direct = pairRate(ratesMap, from, to);
+  if (direct !== null) return direct;
+  for (const pivot of PIVOT_CURRENCIES) {
+    if (pivot === from || pivot === to) continue;
+    const a = pairRate(ratesMap, from, pivot);
+    const b = pairRate(ratesMap, pivot, to);
+    if (a !== null && b !== null) return a * b;
+  }
+  return null;
+}
+
+export function getRateFromMap(ratesMap: Record<string, number>, from: string, to: string): number {
+  // 1 only for a currency the app does not know at all (never for the listed currencies).
+  return findRate(ratesMap, from, to) ?? 1;
 }
 
 // ─── Multi-currency account summary ──────────────────────────────────────────

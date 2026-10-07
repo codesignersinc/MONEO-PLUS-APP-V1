@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight, Calculator, CalendarDays, ChevronDown, FileText, X } from 'lucide-react';
+import { normalizeAmountExpression } from '@/lib/amount';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { formatCurrency } from '@/lib/currency';
 import type { Account } from '@/lib/financeStore';
@@ -189,7 +190,7 @@ export function TextField({
 
 // "12+8.50" → 20.5. Only digits, spaces, + - * / ( ) and the decimal point; null otherwise.
 export function evalAmount(expr: string): number | null {
-  const s = expr.replace(/,/g, '.').replace(/\s+/g, '');
+  const s = normalizeAmountExpression(expr);
   if (!s || !/^[\d.+\-*/()]+$/.test(s)) return null;
   let i = 0;
   const num = (): number => {

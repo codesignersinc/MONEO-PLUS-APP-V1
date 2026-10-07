@@ -28,7 +28,8 @@ import {
 } from '@/lib/onboardingFlow';
 import { accountsService } from '@/lib/supabaseFinance';
 import { userSettingsService } from '@/lib/supabaseCurrency';
-import { PERUVIAN_BANKS } from '@/lib/brands';
+import { PERU_INSTITUTIONS } from '@/lib/brands';
+import { parseAmountInput } from '@/lib/amount';
 import { authErrorMessage } from '@/lib/authErrors';
 import { getErrorMessage } from '@/lib/dataError';
 import { markWelcomeSeen } from '@/lib/onboarding';
@@ -123,12 +124,13 @@ interface BankChoice {
   wallet?: boolean;
 }
 
-const BANKS: BankChoice[] = [
-  ...PERUVIAN_BANKS.map((b) => ({ id: b.id, name: b.name, color: b.color, bg: b.bg })),
-  { id: 'pichincha', name: 'Banco Pichincha', color: '#B38F00', bg: '#FFF7CC' },
-  { id: 'yape', name: 'Yape', color: '#742284', bg: '#F1E6F5', wallet: true },
-  { id: 'plin', name: 'Plin', color: '#0089B0', bg: '#E0F7FD', wallet: true },
-];
+const BANKS: BankChoice[] = PERU_INSTITUTIONS.map((b) => ({
+  id: b.id,
+  name: b.name,
+  color: b.color,
+  bg: b.bg,
+  wallet: b.wallet,
+}));
 
 // Where MONEO AUTO reads bank emails today (captures and voice work with any bank).
 const AUTO_BANKS = ['bcp', 'bbva', 'interbank', 'yape'];
@@ -1247,7 +1249,7 @@ function MoneySteps({
     const save = async (e: React.FormEvent) => {
       e.preventDefault();
       setError('');
-      const balance = Math.round((parseFloat(form.balance.replace(',', '.')) || 0) * 100) / 100;
+      const balance = Math.round((parseAmountInput(form.balance) || 0) * 100) / 100;
       setBusy(true);
       try {
         const bank = draft.kind === 'efectivo' ? null : draft.bank;

@@ -1,7 +1,17 @@
 // Catálogo de marcas (bancos peruanos y servicios de suscripción) y búsqueda de su logo
 // a partir del texto guardado (institución de la cuenta/deuda o nombre del servicio).
 
-export const PERUVIAN_BANKS = [
+export interface Institution {
+  id: string;
+  name: string;
+  image?: string;
+  color: string;
+  bg: string;
+  /** Digital wallet (Yape, Plin…) rather than a bank. */
+  wallet?: boolean;
+}
+
+export const PERUVIAN_BANKS: Institution[] = [
   {
     id: 'bcp',
     name: 'BCP',
@@ -58,6 +68,14 @@ export const PERUVIAN_BANKS = [
     color: '#1D4ED8',
     bg: '#DBEAFE',
   },
+];
+
+// Every institution offered when creating an account (onboarding and Cuentas use the same list).
+export const PERU_INSTITUTIONS: Institution[] = [
+  ...PERUVIAN_BANKS,
+  { id: 'pichincha', name: 'Banco Pichincha', color: '#B38F00', bg: '#FFF7CC' },
+  { id: 'yape', name: 'Yape', color: '#742284', bg: '#F1E6F5', wallet: true },
+  { id: 'plin', name: 'Plin', color: '#0089B0', bg: '#E0F7FD', wallet: true },
 ];
 
 export interface ServiceOption {
@@ -176,6 +194,9 @@ const BANK_ALIASES: Record<string, string[]> = {
   nacion: ['banco de la nacion', 'nacion'],
   ripley: ['ripley'],
   falabella: ['falabella'],
+  pichincha: ['pichincha'],
+  yape: ['yape'],
+  plin: ['plin'],
 };
 
 // Bank matching any of the texts (e.g. institution, then account name).
@@ -183,7 +204,7 @@ export function findBank(...texts: (string | undefined | null)[]) {
   for (const text of texts) {
     if (!text) continue;
     const t = normalize(text);
-    const bank = PERUVIAN_BANKS.find((b) =>
+    const bank = PERU_INSTITUTIONS.find((b) =>
       (BANK_ALIASES[b.id] ?? [b.id]).some((a) => t.includes(a))
     );
     if (bank) return bank;

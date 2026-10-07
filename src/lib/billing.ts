@@ -73,6 +73,21 @@ export const PLUS_BENEFITS = [
   'Funciones premium futuras',
 ];
 
+// "Desde S/ 8.13 al mes": the lowest monthly cost among the individual plans that renew or
+// last a period (subscriptions and passes; lifetime is not monthly). Null when none is active.
+export function cheapestMonthly(
+  plans: Pick<BillingPlan, 'kind' | 'price' | 'currency' | 'intervalMonths' | 'seats'>[]
+): { amount: number; currency: string } | null {
+  let best: { amount: number; currency: string } | null = null;
+  for (const p of plans) {
+    if ((p.seats ?? 1) > 1 || p.price <= 0 || !p.intervalMonths) continue;
+    if (p.kind !== 'subscription' && p.kind !== 'pass') continue;
+    const amount = Math.round((p.price / p.intervalMonths) * 100) / 100;
+    if (!best || amount < best.amount) best = { amount, currency: p.currency };
+  }
+  return best;
+}
+
 // Monthly price × 12 vs. the annual price, rounded down ("Ahorra 17%").
 export function annualSavingsPercent(monthly: number, yearly: number): number {
   return Math.floor((1 - yearly / (monthly * 12)) * 100);

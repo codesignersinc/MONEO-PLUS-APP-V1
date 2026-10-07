@@ -36,3 +36,22 @@ describe('MONEO PLUS', () => {
     ).toBe(false);
   });
 });
+
+describe('cheapestMonthly', () => {
+  it('takes the lowest monthly cost among individual subscriptions and passes', async () => {
+    const { cheapestMonthly } = await import('@/lib/billing');
+    const plans = [
+      { kind: 'subscription', price: 9.9, currency: 'PEN', intervalMonths: 1, seats: 1 },
+      { kind: 'subscription', price: 97.5, currency: 'PEN', intervalMonths: 12, seats: 1 },
+      { kind: 'pass', price: 25.9, currency: 'PEN', intervalMonths: 3, seats: 1 },
+      { kind: 'one_time', price: 127, currency: 'PEN', intervalMonths: null, seats: 1 },
+      { kind: 'subscription', price: 13.9, currency: 'PEN', intervalMonths: 1, seats: 2 },
+      { kind: 'trial', price: 0, currency: 'PEN', intervalMonths: null, seats: 1 },
+    ] as Parameters<typeof cheapestMonthly>[0];
+    expect(cheapestMonthly(plans)).toEqual({ amount: 8.13, currency: 'PEN' });
+  });
+  it('is null without active priced plans', async () => {
+    const { cheapestMonthly } = await import('@/lib/billing');
+    expect(cheapestMonthly([])).toBeNull();
+  });
+});
