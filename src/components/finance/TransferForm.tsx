@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import LoadError from '@/components/ui/LoadError';
 import { accountsService, transfersService } from '@/lib/supabaseFinance';
 import { getFxContext, type FxContext } from '@/lib/supabaseCurrency';
-import { buildTransferAmounts, formatCurrency, getCurrencyInfo } from '@/lib/currency';
+import { buildTransferAmounts, formatCurrency } from '@/lib/currency';
 import { localDateTimeToISO, nowTimeLocal, todayLocal } from '@/lib/dates';
 import { getErrorMessage } from '@/lib/dataError';
 import type { Account } from '@/lib/financeStore';
@@ -116,8 +116,7 @@ export default function TransferForm({
 
   const accountOption = (a: Account) => (
     <option key={a.id} value={a.id}>
-      {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency} ·{' '}
-      {formatCurrency(a.balance, a.currency)})
+      {a.name} ({a.currency} · {formatCurrency(a.balance, a.currency)})
     </option>
   );
 

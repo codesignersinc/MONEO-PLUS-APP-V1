@@ -81,7 +81,7 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
         setOpen(false);
         // If user typed something not in list, keep as custom
         if (query && !selected) {
-          onChange({ name: query, category: 'Otro', icon: '🔄', color: '#7C3AED' });
+          onChange({ name: query, category: 'Otro', icon: 'repeat', color: '#7C3AED' });
         }
       }
     }
@@ -118,7 +118,7 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
     setSelected(null);
     setOpen(true);
     if (!e.target.value) {
-      onChange({ name: '', category: 'Entretenimiento', icon: '🎬', color: '#7C3AED' });
+      onChange({ name: '', category: 'Entretenimiento', icon: 'film', color: '#7C3AED' });
     }
   };
 
@@ -126,7 +126,7 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
     setQuery('');
     setSelected(null);
     setOpen(false);
-    onChange({ name: '', category: 'Entretenimiento', icon: '🎬', color: '#7C3AED' });
+    onChange({ name: '', category: 'Entretenimiento', icon: 'film', color: '#7C3AED' });
     inputRef.current?.focus();
   };
 
@@ -134,9 +134,9 @@ export default function SubscriptionServicePicker({ value, onChange }: Props) {
     if (!query.trim()) return;
     const colors = ['#7C3AED', '#DC2626', '#059669', '#D97706', '#2563EB', '#DB2777', '#0891B2'];
     const colorIndex = query.charCodeAt(0) % colors.length;
-    setSelected({ name: query, category: 'Otro', icon: '🔄', color: colors[colorIndex] });
+    setSelected({ name: query, category: 'Otro', icon: 'repeat', color: colors[colorIndex] });
     setOpen(false);
-    onChange({ name: query, category: 'Otro', icon: '🔄', color: colors[colorIndex] });
+    onChange({ name: query, category: 'Otro', icon: 'repeat', color: colors[colorIndex] });
   };
 
   const showCreateOption = query.trim().length > 0 && filtered.length === 0;

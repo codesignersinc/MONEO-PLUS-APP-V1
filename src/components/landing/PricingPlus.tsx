@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { Check } from 'lucide-react';
 import { PLUS_BENEFITS, cheapestMonthly, plansService } from '@/lib/billing';
 import { moneyFormatter } from '@/components/dashboard/ui';
 import { TrackLink } from './client';
@@ -43,8 +44,8 @@ export default function PricingPlus() {
           ...PLUS_BENEFITS.filter((b) => b !== 'Funciones premium futuras'),
         ].map((t) => (
           <li key={t} className="flex items-start gap-2.5">
-            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#111] text-[11px] font-bold text-[#FFD83D]">
-              ✓
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#111] text-[#FFD83D]">
+              <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
             </span>
             {t}
           </li>

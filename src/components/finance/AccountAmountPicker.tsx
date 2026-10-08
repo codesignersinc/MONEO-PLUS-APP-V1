@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import LoadError from '@/components/ui/LoadError';
 import { accountsService } from '@/lib/supabaseFinance';
 import { getFxContext } from '@/lib/supabaseCurrency';
-import { formatCurrency, getCurrencyInfo, getRateFromMap } from '@/lib/currency';
+import { formatCurrency, getRateFromMap } from '@/lib/currency';
 import { getErrorMessage } from '@/lib/dataError';
 import type { Account } from '@/lib/financeStore';
 import { TAGGED, Tag } from '@/components/finance/formKit';
@@ -131,8 +131,7 @@ export function AccountAmountFields({
           <option value="">{accounts ? label : 'Cargando cuentas…'}</option>
           {accounts?.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency} ·{' '}
-              {formatCurrency(a.balance, a.currency)})
+              {a.name} ({a.currency} · {formatCurrency(a.balance, a.currency)})
             </option>
           ))}
         </select>

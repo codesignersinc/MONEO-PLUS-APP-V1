@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import LoadError from '@/components/ui/LoadError';
+import { CodeBadge } from '@/components/ui/Glyph';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminService, type AdminCountryRow, type AdminUserRow } from '@/lib/supabaseAdmin';
 import { APP_LOCALE } from '@/lib/locale';
@@ -384,7 +385,7 @@ function CountryStats({ rows }: { rows: AdminCountryRow[] }) {
             className="min-w-[150px] rounded-2xl border-[2.5px] border-black bg-white p-3"
           >
             <p className="truncate text-sm font-black">
-              {r.flag} {r.name}
+              {r.code && <CodeBadge code={r.code} />} {r.name}
             </p>
             <p className="mt-1 text-2xl font-black">{r.users}</p>
             <p className="font-sans text-[11px] text-gray-600">

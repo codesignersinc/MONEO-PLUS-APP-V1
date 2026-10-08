@@ -17,16 +17,17 @@ import { accountsService } from '@/lib/supabaseFinance';
 import type { Account } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
+import Glyph from '@/components/ui/Glyph';
 import { getErrorMessage } from '@/lib/dataError';
 import { currencySymbol, formatMoney } from '@/lib/format';
 
 type PaymentTab = 'yape' | 'plin' | 'transferencia' | 'efectivo';
 
-const PAYMENT_TABS: { key: PaymentTab; label: string; emoji: string }[] = [
-  { key: 'yape', label: 'Yape', emoji: '💜' },
-  { key: 'plin', label: 'Plin', emoji: '💚' },
-  { key: 'transferencia', label: 'Transferencia', emoji: '🏦' },
-  { key: 'efectivo', label: 'Efectivo', emoji: '💵' },
+const PAYMENT_TABS: { key: PaymentTab; label: string; icon: string }[] = [
+  { key: 'yape', label: 'Yape', icon: 'phone' },
+  { key: 'plin', label: 'Plin', icon: 'phone' },
+  { key: 'transferencia', label: 'Transferencia', icon: 'bank' },
+  { key: 'efectivo', label: 'Efectivo', icon: 'cash' },
 ];
 
 // Simple QR placeholder using CSS
@@ -96,7 +97,7 @@ function YapePanel({ accounts, recipientName }: { accounts: Account[]; recipient
       </div>
       <QRPlaceholder value={qrValue} size={160} />
       <div className="flex items-center gap-3 bg-purple-50 border-2 border-purple-200 rounded-2xl px-5 py-3">
-        <span className="text-2xl">💜</span>
+        <Glyph name="phone" className="h-6 w-6 shrink-0 text-purple-600" />
         <div>
           <p className="text-xs font-black text-purple-600 uppercase tracking-wide">Número Yape</p>
           <p className="text-lg font-black text-black">{phone}</p>
@@ -131,7 +132,7 @@ function PlinPanel({ accounts, recipientName }: { accounts: Account[]; recipient
       </div>
       <QRPlaceholder value={qrValue} size={160} />
       <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-5 py-3">
-        <span className="text-2xl">💚</span>
+        <Glyph name="phone" className="h-6 w-6 shrink-0 text-green-600" />
         <div>
           <p className="text-xs font-black text-green-600 uppercase tracking-wide">Número Plin</p>
           <p className="text-lg font-black text-black">{phone}</p>
@@ -154,7 +155,7 @@ function TransferenciaPanel({ accounts }: { accounts: Account[] }) {
     return (
       <div className="py-6 text-center">
         <div className="w-14 h-14 bg-gray-100 border-2 border-black rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
-          🏦
+          <Glyph name="bank" className="h-6 w-6 text-[#111]" />
         </div>
         <p className="font-black text-black mb-1">Sin cuentas bancarias</p>
         <p className="text-sm text-gray-500">El receptor no tiene cuentas bancarias registradas.</p>
@@ -171,7 +172,7 @@ function TransferenciaPanel({ accounts }: { accounts: Account[] }) {
               className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
               style={{ background: acc.bgColor || '#DBEAFE' }}
             >
-              {acc.icon || '🏦'}
+              <Glyph name={acc.icon} fallback="bank" className="h-5 w-5 text-[#111]" />
             </div>
             <div>
               <p className="font-black text-black text-sm">{acc.name}</p>
@@ -210,7 +211,7 @@ function EfectivoPanel() {
       <div className="bg-amber-50 border-[3px] border-amber-400 rounded-2xl p-5">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 bg-amber-400 border-2 border-black rounded-xl flex items-center justify-center text-xl shrink-0">
-            ⚠️
+            <Glyph name="alert" className="h-5 w-5 text-[#111]" />
           </div>
           <div>
             <p className="font-black text-black text-sm mb-2">Pago en efectivo</p>
@@ -528,7 +529,7 @@ export default function AportePage() {
                     : 'text-gray-500 hover:text-black'
                 }`}
               >
-                <span className="text-base">{tab.emoji}</span>
+                <Glyph name={tab.icon} className="h-4 w-4" />
                 <span>{tab.label}</span>
               </button>
             ))}

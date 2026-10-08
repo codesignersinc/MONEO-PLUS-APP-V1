@@ -17,13 +17,14 @@ import { Plus, X, Pencil, Trash2, ChevronRight } from 'lucide-react';
 import { PERU_INSTITUTIONS, type Institution } from '@/lib/brands';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { useDataChanged } from '@/lib/dataSync';
+import Glyph, { CodeBadge } from '@/components/ui/Glyph';
 
 const ACCOUNT_TYPES = [
-  { value: 'banco', label: 'Cuenta bancaria', icon: '🏦' },
-  { value: 'efectivo', label: 'Efectivo', icon: '💵' },
-  { value: 'digital', label: 'Billetera digital', icon: '📱' },
-  { value: 'credito', label: 'Tarjeta de crédito', icon: '💳' },
-  { value: 'inversion', label: 'Cuenta de inversión', icon: '📈' },
+  { value: 'banco', label: 'Cuenta bancaria', icon: 'bank' },
+  { value: 'efectivo', label: 'Efectivo', icon: 'cash' },
+  { value: 'digital', label: 'Billetera digital', icon: 'phone' },
+  { value: 'credito', label: 'Tarjeta de crédito', icon: 'card' },
+  { value: 'inversion', label: 'Cuenta de inversión', icon: 'trending' },
 ];
 
 const COLOR_OPTIONS = [
@@ -71,7 +72,7 @@ export default function CuentasPage() {
     institution: '',
     balance: '0',
     currency: 'PEN',
-    icon: '🏦',
+    icon: 'bank',
     color: '#16A34A',
     bgColor: '#DCFCE7',
   });
@@ -125,7 +126,7 @@ export default function CuentasPage() {
       institution: '',
       balance: '0',
       currency: 'PEN',
-      icon: '🏦',
+      icon: 'bank',
       color: '#16A34A',
       bgColor: '#DCFCE7',
     });
@@ -206,7 +207,7 @@ export default function CuentasPage() {
 
   const handleTypeChange = (type: Account['type']) => {
     const preset = ACCOUNT_TYPES.find((t) => t.value === type);
-    setForm((f) => ({ ...f, type, icon: preset?.icon || '🏦' }));
+    setForm((f) => ({ ...f, type, icon: preset?.icon || 'bank' }));
     if (!editingAcc) {
       // Banks and digital wallets start from the institution list.
       if (type === 'banco' || type === 'digital') {
@@ -228,8 +229,6 @@ export default function CuentasPage() {
     }));
     setFormStep('cuenta');
   };
-
-  const baseCurrencyInfo = getCurrencyInfo(baseCurrency);
 
   // Steps for new account: tipo → banco (if banco) → cuenta → moneda → saldo
   const allSteps: FormStep[] =
@@ -284,9 +283,7 @@ export default function CuentasPage() {
           <div className="bg-white rounded-3xl border-[3px] border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs text-gray-500">Saldo total</p>
-              <span className="text-xs font-semibold text-gray-500">
-                {baseCurrencyInfo.flag} {baseCurrency}
-              </span>
+              <span className="text-xs font-semibold text-gray-500">{baseCurrency}</span>
             </div>
             <p className="text-3xl font-black text-black leading-tight">
               {formatCurrency(totalInBase, baseCurrency)}
@@ -303,7 +300,7 @@ export default function CuentasPage() {
                   const info = getCurrencyInfo(g.currencyCode);
                   return (
                     <div key={g.currencyCode} className="flex items-center gap-3">
-                      <span className="text-base">{info.flag}</span>
+                      <CodeBadge code={g.currencyCode} className="text-base" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-semibold text-black">{info.name}</span>
@@ -338,7 +335,7 @@ export default function CuentasPage() {
       {accounts.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-3xl mb-4">
-            🏦
+            <Glyph name="bank" className="h-8 w-8 text-[#111]" />
           </div>
           <h2 className="text-lg font-black text-black mb-2">Sin cuentas</h2>
           <p className="text-sm text-gray-500 max-w-xs mb-6">
@@ -356,7 +353,6 @@ export default function CuentasPage() {
       {accounts.length > 0 && (
         <div className="space-y-3">
           {accounts.map((acc) => {
-            const currInfo = getCurrencyInfo(acc.currency || 'PEN');
             const rate = getRateFromMap(ratesMap, acc.currency || 'PEN', baseCurrency);
             const baseEquiv = acc.balance * rate;
             const showEquiv = acc.currency !== baseCurrency && acc.currency;
@@ -375,7 +371,6 @@ export default function CuentasPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-black text-black">{acc.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs">{currInfo.flag}</span>
                       <span className="text-xs text-gray-500 font-semibold">
                         {acc.currency || 'PEN'}
                       </span>
@@ -490,7 +485,7 @@ export default function CuentasPage() {
                         onClick={() => handleTypeChange(t.value as Account['type'])}
                         className={`flex items-center gap-2 p-3 rounded-xl border-2 text-sm font-semibold transition-all ${form.type === t.value ? 'border-black bg-[#FFD43B] text-black' : 'border-gray-200 bg-white text-black hover:border-gray-300'}`}
                       >
-                        <span className="text-xl">{t.icon}</span>
+                        <Glyph name={t.icon} className="h-5 w-5 shrink-0" />
                         <span className="text-xs">{t.label}</span>
                       </button>
                     ))}
@@ -612,7 +607,7 @@ export default function CuentasPage() {
                         }}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${form.currency === c.code ? 'border-black bg-[#FFD43B] text-black' : 'border-gray-200 bg-white text-black hover:border-gray-300'}`}
                       >
-                        <span className="text-2xl">{c.flag}</span>
+                        <CodeBadge code={c.code} className="text-xl" />
                         <div className="flex-1 text-left">
                           <p className="text-sm font-semibold text-black">{c.name}</p>
                           <p className="text-xs text-gray-500">
@@ -635,7 +630,7 @@ export default function CuentasPage() {
                       >
                         {CURRENCIES.map((c) => (
                           <option key={c.code} value={c.code}>
-                            {c.flag} {c.name} ({c.code})
+                            {c.name} ({c.code})
                           </option>
                         ))}
                       </select>

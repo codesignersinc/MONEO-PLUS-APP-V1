@@ -17,6 +17,8 @@ import {
   Target,
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
+import Glyph from '@/components/ui/Glyph';
+import { isGlyph } from '@/lib/glyphs';
 import LoadError from '@/components/ui/LoadError';
 import AddTransactionModal from '@/components/finance/AddTransactionModal';
 import { moneyFormatter } from '@/components/dashboard/ui';
@@ -236,7 +238,7 @@ export default function MiniPage() {
                     </p>
                   </>
                 ) : (
-                  <p className="mt-1 text-xs font-semibold text-gray-600">Nada pendiente 🎉</p>
+                  <p className="mt-1 text-xs font-semibold text-gray-600">Nada pendiente</p>
                 )}
               </button>
               <button
@@ -249,9 +251,15 @@ export default function MiniPage() {
                 </p>
                 {data.mainGoal ? (
                   <>
-                    <p className="mt-1 truncate text-sm font-bold">
-                      {data.mainGoal.icon ? `${data.mainGoal.icon} ` : ''}
-                      {data.mainGoal.name}
+                    <p className="mt-1 flex min-w-0 items-center gap-1 text-sm font-bold">
+                      {data.mainGoal.icon && (
+                        <Glyph
+                          name={data.mainGoal.icon}
+                          fallback="target"
+                          className="h-4 w-4 shrink-0"
+                        />
+                      )}
+                      <span className="truncate">{data.mainGoal.name}</span>
                     </p>
                     <div className="mt-2 h-2.5 overflow-hidden rounded-full border border-black bg-[#F1ECE0]">
                       <div
@@ -288,12 +296,13 @@ export default function MiniPage() {
                   {data.recent.map((r) => (
                     <li key={r.id} className="flex items-center gap-2.5 py-2">
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#F4F1EA] text-base">
-                        {r.icon ||
-                          (r.type === 'ingreso' ? (
-                            <ArrowDownLeft className="h-4 w-4" />
-                          ) : (
-                            <ArrowUpRight className="h-4 w-4" />
-                          ))}
+                        {isGlyph(r.icon) ? (
+                          <Glyph name={r.icon} className="h-4 w-4" />
+                        ) : r.type === 'ingreso' ? (
+                          <ArrowDownLeft className="h-4 w-4" />
+                        ) : (
+                          <ArrowUpRight className="h-4 w-4" />
+                        )}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-bold">{r.name}</span>

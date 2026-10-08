@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Shield } from 'lucide-react';
+import { ArrowLeft, Check, PartyPopper, Shield } from 'lucide-react';
 import { getErrorMessage } from '@/lib/dataError';
 import {
   juntasService,
@@ -449,7 +449,7 @@ export default function SorteoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="paper-opaque min-h-screen bg-black flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#FFD43B] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -458,7 +458,7 @@ export default function SorteoPage() {
   const winner = winnerIndex !== null ? members[winnerIndex] : null;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="paper-opaque min-h-screen bg-black text-white">
       <Confetti active={showConfetti} />
 
       {/* Header */}
@@ -494,7 +494,7 @@ export default function SorteoPage() {
           <div className="flex flex-col items-center w-full">
             {!showCountdown && (
               <p className="text-gray-400 text-sm font-medium mb-8 text-center">
-                {spinning ? '🎰 El sistema está girando la ruleta...' : '¿Quién recibe este mes?'}
+                {spinning ? 'El sistema está girando la ruleta...' : '¿Quién recibe este mes?'}
               </p>
             )}
 
@@ -523,7 +523,7 @@ export default function SorteoPage() {
           <>
             {/* Result screen */}
             <div className="w-full text-center mb-6">
-              <div className="text-5xl mb-3">🎉</div>
+              <PartyPopper className="mx-auto mb-3 h-12 w-12 text-[#FFD43B]" strokeWidth={2.5} />
               <h2 className="text-2xl font-black text-white mb-1">¡Tenemos ganador!</h2>
               <p className="text-gray-400 text-sm font-medium mb-2">Orden de turnos para recibir</p>
 
@@ -614,8 +614,8 @@ export default function SorteoPage() {
 
             {saved && (
               <div className="w-full mb-3 px-4 py-3 bg-green-900/50 border-2 border-green-500 rounded-2xl text-center">
-                <p className="text-sm font-black text-green-400">
-                  ✓ Turnos guardados correctamente
+                <p className="flex items-center justify-center gap-1.5 text-sm font-black text-green-400">
+                  <Check className="h-4 w-4" strokeWidth={2.5} /> Turnos guardados correctamente
                 </p>
               </div>
             )}

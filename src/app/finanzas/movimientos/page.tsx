@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import LoadError from '@/components/ui/LoadError';
+import Glyph from '@/components/ui/Glyph';
 import { useToast } from '@/components/ui/Toast';
 import { authRequired, getErrorMessage, toDataError } from '@/lib/dataError';
 import {
@@ -131,7 +132,7 @@ export default function MovimientosPage() {
     type: 'gasto',
     amount: '',
     category: 'Comida',
-    categoryIcon: '🍽️',
+    categoryIcon: 'food',
     accountId: '',
     account: '',
     notes: '',
@@ -266,7 +267,7 @@ export default function MovimientosPage() {
       type: 'gasto',
       amount: '',
       category: 'Comida',
-      categoryIcon: '🍽️',
+      categoryIcon: 'food',
       // First registered account preselected; the user can change it.
       accountId: accounts[0]?.id ?? '',
       account: accounts[0]?.name ?? '',
@@ -526,14 +527,12 @@ export default function MovimientosPage() {
               Todas
             </button>
             {usedCurrencies.map((code) => {
-              const ci = getCurrencyInfo(code);
               return (
                 <button
                   key={code}
                   onClick={() => setCurrencyFilter(code)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${currencyFilter === code ? 'bg-black text-white border-black' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                 >
-                  <span>{ci.flag}</span>
                   <span>{code}</span>
                 </button>
               );
@@ -605,9 +604,13 @@ export default function MovimientosPage() {
         ))}
         {currencyFilter !== 'todas' && (
           <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold">
-            {getCurrencyInfo(currencyFilter).flag} {currencyFilter}
-            <button onClick={() => setCurrencyFilter('todas')} className="ml-1 hover:text-blue-900">
-              ×
+            {currencyFilter}
+            <button
+              onClick={() => setCurrencyFilter('todas')}
+              aria-label="Quitar filtro de moneda"
+              className="ml-1 hover:text-blue-900"
+            >
+              <X className="h-3 w-3" strokeWidth={2.5} aria-hidden />
             </button>
           </span>
         )}
@@ -627,7 +630,7 @@ export default function MovimientosPage() {
                 className={`flex items-center gap-3 px-4 py-3.5 ${i < filteredPending.length - 1 ? 'border-b border-amber-100' : ''}`}
               >
                 <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-lg flex-shrink-0">
-                  {p.categoryIcon}
+                  <Glyph name={p.categoryIcon} fallback="coins" className="h-5 w-5 text-[#111]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -668,7 +671,7 @@ export default function MovimientosPage() {
         </div>
       ) : Object.keys(grouped).length === 0 && filteredPending.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-4xl mb-3">📋</p>
+          <Glyph name="clipboard" className="h-10 w-10 mb-3 text-[#111]" />
           <p className="text-gray-500 font-medium mb-1">Sin movimientos</p>
           <p className="text-xs text-gray-500 mb-4">Registra tu primer ingreso o pago</p>
           <button
@@ -688,7 +691,6 @@ export default function MovimientosPage() {
               <div className="bg-white rounded-3xl border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] overflow-hidden">
                 {txs.map((tx, i) => {
                   const txCurrency = tx.currencyCode || 'PEN';
-                  const txCurrInfo = getCurrencyInfo(txCurrency);
                   const shownAmount = Math.abs(tx.originalAmount || tx.amount);
                   const baseEquiv =
                     tx.baseCurrencyCode === baseCurrency && tx.baseAmount
@@ -703,7 +705,11 @@ export default function MovimientosPage() {
                       className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors group ${i < txs.length - 1 ? 'border-b border-gray-50' : ''}`}
                     >
                       <div className="w-10 h-10 rounded-xl bg-white border-[2px] border-black flex items-center justify-center text-lg flex-shrink-0">
-                        {tx.categoryIcon}
+                        <Glyph
+                          name={tx.categoryIcon}
+                          fallback="tag"
+                          className="h-5 w-5 text-[#111]"
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-black truncate">{tx.name}</p>
@@ -714,7 +720,7 @@ export default function MovimientosPage() {
                           <span className="text-xs text-gray-500">{tx.account}</span>
                           {txCurrency !== 'PEN' && (
                             <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-full font-semibold flex items-center gap-0.5">
-                              {txCurrInfo.flag} {txCurrency}
+                              {txCurrency}
                             </span>
                           )}
                         </div>
@@ -833,14 +839,11 @@ export default function MovimientosPage() {
                         <option value="">
                           {editingTx && !editingTx.accountId ? 'Sin cuenta' : 'Elige la cuenta'}
                         </option>
-                        {accounts.map((a) => {
-                          const ci = getCurrencyInfo(a.currency);
-                          return (
-                            <option key={a.id} value={a.id}>
-                              {a.name} ({ci.flag} {a.currency})
-                            </option>
-                          );
-                        })}
+                        {accounts.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name} ({a.currency})
+                          </option>
+                        ))}
                       </select>
                       {(() => {
                         const acc = accounts.find((a) => a.id === form.accountId);
@@ -848,7 +851,7 @@ export default function MovimientosPage() {
                         const ci = getCurrencyInfo(acc.currency);
                         return (
                           <p className="text-xs text-blue-600 mt-1 font-medium">
-                            {ci.flag} Esta cuenta está en {ci.name} ({acc.currency})
+                            Esta cuenta está en {ci.name} ({acc.currency})
                           </p>
                         );
                       })()}
@@ -912,14 +915,14 @@ export default function MovimientosPage() {
                       setForm((f) => ({
                         ...f,
                         category: e.target.value,
-                        categoryIcon: cat?.icon || '📦',
+                        categoryIcon: cat?.icon || 'package',
                       }));
                     }}
                     className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   >
                     {CATEGORY_PRESETS.map((c) => (
                       <option key={c.id} value={c.label}>
-                        {c.icon} {c.label}
+                        {c.label}
                       </option>
                     ))}
                   </select>

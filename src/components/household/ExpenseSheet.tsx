@@ -35,6 +35,7 @@ import {
 } from '@/lib/supabaseHousehold';
 import { Choice, ErrorNote, SectionLabel, Sheet } from '@/components/household/ui';
 import { formatMoney } from '@/lib/format';
+import Glyph from '@/components/ui/Glyph';
 
 const CATEGORIES = CATEGORY_PRESETS.filter((c) => c.id !== 'ingreso').map((c) => ({
   label: c.label,
@@ -179,7 +180,7 @@ export default function ExpenseSheet({
     let txId: string | null = expense?.transactionId ?? null;
     let created: string | null = null;
     try {
-      const icon = CATEGORY_PRESETS.find((c) => c.label === category)?.icon ?? '🏠';
+      const icon = CATEGORY_PRESETS.find((c) => c.label === category)?.icon ?? 'home';
       if (myPayment && inAccount && account) {
         created = await recordOwnMovement({
           account,
@@ -307,8 +308,22 @@ export default function ExpenseSheet({
           value={forWhom}
           onChange={setForWhom}
           options={[
-            ...active.map((m) => ({ value: m.id, label: `👤 ${m.displayName}` })),
-            { value: 'shared', label: two ? '🏠 Ambos' : '🏠 Todos' },
+            ...active.map((m) => ({
+              value: m.id,
+              label: (
+                <span className="inline-flex items-center gap-1.5">
+                  <Glyph name="user" className="h-4 w-4 shrink-0" /> {m.displayName}
+                </span>
+              ),
+            })),
+            {
+              value: 'shared',
+              label: (
+                <span className="inline-flex items-center gap-1.5">
+                  <Glyph name="home" className="h-4 w-4 shrink-0" /> {two ? 'Ambos' : 'Todos'}
+                </span>
+              ),
+            },
           ]}
         />
       </div>

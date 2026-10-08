@@ -115,7 +115,7 @@ export default function SuscripcionesPage() {
     amount: '',
     nextPaymentDate: '',
     active: true,
-    icon: '🎬',
+    icon: 'film',
     color: '#DC2626',
   });
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -243,7 +243,7 @@ export default function SuscripcionesPage() {
       amount: '',
       nextPaymentDate: '',
       active: true,
-      icon: '🎬',
+      icon: 'film',
       color: '#DC2626',
     });
     setFormError('');

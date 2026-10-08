@@ -16,6 +16,7 @@ import LoadError from '@/components/ui/LoadError';
 import AutoGmailCard from '@/components/finance/AutoGmailCard';
 import PlusGate from '@/components/billing/PlusGate';
 import BrandLogo from '@/components/finance/BrandLogo';
+import Glyph from '@/components/ui/Glyph';
 import VoiceButton from '@/components/finance/VoiceButton';
 import { useToast } from '@/components/ui/Toast';
 import { parseBankMessage } from '@/lib/auto';
@@ -28,7 +29,7 @@ import {
   type AutoSuggestion,
 } from '@/lib/supabaseAuto';
 import { accountsService } from '@/lib/supabaseFinance';
-import { formatCurrency, getCurrencyInfo } from '@/lib/currency';
+import { formatCurrency } from '@/lib/currency';
 import { getErrorMessage } from '@/lib/dataError';
 import { notifyDataChanged, useAutoSuggestion, useDataChanged } from '@/lib/dataSync';
 import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
@@ -564,7 +565,7 @@ function RegisterModal({
       .filter((a) => a.id !== exclude)
       .map((a) => (
         <option key={a.id} value={a.id}>
-          {a.name} ({getCurrencyInfo(a.currency).flag} {a.currency})
+          {a.name} ({a.currency})
         </option>
       ));
 
@@ -672,7 +673,7 @@ function RegisterModal({
             >
               {categories.map((c) => (
                 <option key={c.id} value={c.label}>
-                  {c.icon} {c.label}
+                  {c.label}
                 </option>
               ))}
             </select>
@@ -705,8 +706,9 @@ function RegisterModal({
             className={`rounded-xl border-2 p-3 ${suggestedHome ? 'border-black bg-[#FFF4CC]' : 'border-gray-200 bg-white'}`}
           >
             {suggestedHome && (
-              <p className="mb-1 text-xs font-black text-black">
-                🏠 Detectamos un posible gasto del hogar.
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-black text-black">
+                <Glyph name="home" className="h-3.5 w-3.5 shrink-0" />
+                Detectamos un posible gasto del hogar.
               </p>
             )}
             <label className="flex items-start gap-2 text-sm font-bold text-black">

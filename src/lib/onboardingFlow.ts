@@ -9,24 +9,24 @@ import type { PlanCode } from '@/lib/billing';
 export const ONBOARDING_V2 = process.env.NEXT_PUBLIC_ONBOARDING_V2 === 'true';
 
 export const GOALS = [
-  { id: 'entender', label: 'Entender mejor mi dinero', emoji: '🔍' },
-  { id: 'gastar_menos', label: 'Gastar menos', emoji: '✂️' },
-  { id: 'ahorrar', label: 'Ahorrar para algo', emoji: '🐷' },
-  { id: 'deudas', label: 'Ordenar mis deudas', emoji: '🧾' },
-  { id: 'crecer', label: 'Hacer crecer mi dinero', emoji: '📈' },
-  { id: 'menos_estres', label: 'Vivir con menos estrés financiero', emoji: '😌' },
+  { id: 'entender', label: 'Entender mejor mi dinero', icon: 'search' },
+  { id: 'gastar_menos', label: 'Gastar menos', icon: 'scissors' },
+  { id: 'ahorrar', label: 'Ahorrar para algo', icon: 'piggy' },
+  { id: 'deudas', label: 'Ordenar mis deudas', icon: 'receipt' },
+  { id: 'crecer', label: 'Hacer crecer mi dinero', icon: 'trending' },
+  { id: 'menos_estres', label: 'Vivir con menos estrés financiero', icon: 'smile' },
 ] as const;
 
 export const LEAKS = [
-  { id: 'comida', label: 'Comida y delivery', emoji: '🍔' },
-  { id: 'cafes', label: 'Cafés y gustos', emoji: '☕' },
-  { id: 'compras', label: 'Compras', emoji: '🛍️' },
-  { id: 'suscripciones', label: 'Suscripciones', emoji: '📺' },
-  { id: 'salidas', label: 'Salidas y entretenimiento', emoji: '🎉' },
-  { id: 'transporte', label: 'Transporte', emoji: '🚕' },
-  { id: 'casa', label: 'Casa y servicios', emoji: '🏠' },
-  { id: 'deudas', label: 'Deudas y cuotas', emoji: '💳' },
-  { id: 'online', label: 'Compras online', emoji: '📦' },
+  { id: 'comida', label: 'Comida y delivery', icon: 'sandwich' },
+  { id: 'cafes', label: 'Cafés y gustos', icon: 'coffee' },
+  { id: 'compras', label: 'Compras', icon: 'bag' },
+  { id: 'suscripciones', label: 'Suscripciones', icon: 'tv' },
+  { id: 'salidas', label: 'Salidas y entretenimiento', icon: 'party' },
+  { id: 'transporte', label: 'Transporte', icon: 'taxi' },
+  { id: 'casa', label: 'Casa y servicios', icon: 'home' },
+  { id: 'deudas', label: 'Deudas y cuotas', icon: 'card' },
+  { id: 'online', label: 'Compras online', icon: 'package' },
 ] as const;
 
 export const METHODS = [
@@ -34,35 +34,35 @@ export const METHODS = [
     id: 'voz',
     label: 'Háblale a MONEO',
     hint: '«Gasté S/35 en un taxi.»',
-    emoji: '🎙️',
+    icon: 'mic',
     plus: true,
   },
   {
     id: 'auto',
     label: 'Automáticamente',
     hint: 'MONEO detecta tus movimientos.',
-    emoji: '⚡',
+    icon: 'zap',
     plus: true,
   },
-  { id: 'texto', label: 'Escribiéndolo', hint: 'Tú registras el gasto.', emoji: '✍️', plus: false },
+  { id: 'texto', label: 'Escribiéndolo', hint: 'Tú registras el gasto.', icon: 'pen', plus: false },
   {
     id: 'scan',
     label: 'Escaneándolo',
     hint: 'MONEO SCAN lee tus comprobantes.',
-    emoji: '📸',
+    icon: 'camera',
     plus: true,
   },
 ] as const;
 
 export const FIRST_GOALS = [
-  { id: 'ahorrar_1000', label: 'Ahorrar S/1,000', emoji: '💰' },
-  { id: 'viajar', label: 'Viajar', emoji: '✈️' },
-  { id: 'casa', label: 'Comprar una casa', emoji: '🏡' },
-  { id: 'auto', label: 'Comprar un auto', emoji: '🚗' },
-  { id: 'emergencia', label: 'Crear un fondo de emergencia', emoji: '🛟' },
-  { id: 'deuda', label: 'Pagar una deuda', emoji: '⛓️' },
-  { id: 'invertir', label: 'Empezar a invertir', emoji: '🌱' },
-  { id: 'otra', label: 'Otra meta', emoji: '⭐' },
+  { id: 'ahorrar_1000', label: 'Ahorrar S/1,000', icon: 'coins' },
+  { id: 'viajar', label: 'Viajar', icon: 'plane' },
+  { id: 'casa', label: 'Comprar una casa', icon: 'home' },
+  { id: 'auto', label: 'Comprar un auto', icon: 'car' },
+  { id: 'emergencia', label: 'Crear un fondo de emergencia', icon: 'lifebuoy' },
+  { id: 'deuda', label: 'Pagar una deuda', icon: 'chain' },
+  { id: 'invertir', label: 'Empezar a invertir', icon: 'sprout' },
+  { id: 'otra', label: 'Otra meta', icon: 'star' },
 ] as const;
 
 export const NOTIFY_OPTIONS = [

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Crown, Loader2 } from 'lucide-react';
 import VoiceButton from '@/components/finance/VoiceButton';
+import Glyph from '@/components/ui/Glyph';
 import { parseBankMessage, type ParsedMovement } from '@/lib/auto';
 import { readImageText } from '@/lib/ocr';
 
@@ -116,7 +117,7 @@ export function EntryMethodPicker({
         <div className="relative h-[120px] w-[120px] shrink-0">
           <span className="absolute inset-2 rounded-full bg-[#FFD83D]" />
           <span className="absolute left-7 top-3 grid h-[84px] w-16 rotate-6 place-items-center rounded-xl border-[3px] border-[#111] bg-white text-4xl shadow-[3px_3px_0_#111]">
-            🧾
+            <Glyph name="receipt" className="h-9 w-9 text-[#111]" />
           </span>
           <Image
             src="/assets/images/home/monedas-patrimonio.webp"
@@ -130,7 +131,7 @@ export function EntryMethodPicker({
       <div className="grid grid-cols-2 gap-3">
         <MethodCard
           tone="#DDF7E9"
-          art="📸"
+          art={<Glyph name="camera" className="h-14 w-14 text-[#111]" />}
           title="Escanear recibo"
           desc="Toma una foto del recibo y completamos los datos."
           onClick={() => pick('scan')}
@@ -138,7 +139,7 @@ export function EntryMethodPicker({
         />
         <MethodCard
           tone="#E0EDFF"
-          art="🖼️"
+          art={<Glyph name="image" className="h-14 w-14 text-[#111]" />}
           title="Desde una imagen o captura"
           desc="Elige una imagen de tu galería y detectamos el gasto."
           onClick={() => pick('image')}
@@ -146,7 +147,7 @@ export function EntryMethodPicker({
         />
         <MethodCard
           tone="#EDE7FF"
-          art="🎙️"
+          art={<Glyph name="mic" className="h-14 w-14 text-[#111]" />}
           title="Por voz"
           desc="Dile a MONEO qué gastaste y lo registramos."
           onClick={() => pick('voice')}
@@ -158,7 +159,7 @@ export function EntryMethodPicker({
         </MethodCard>
         <MethodCard
           tone="#FFF1C9"
-          art="✍️"
+          art={<Glyph name="pen" className="h-14 w-14 text-[#111]" />}
           title="Ingresar manualmente"
           desc="Completa la información del gasto."
           onClick={() => pick('manual')}
@@ -219,7 +220,8 @@ export function ImageReader({
             onClick={() => input.current?.click()}
             className="mx-auto flex h-14 items-center justify-center gap-2 rounded-2xl border-[3px] border-[#111] bg-[#FFD83D] px-6 text-[17px] font-black text-[#111] shadow-[0_4px_0_#111]"
           >
-            {camera ? '📸 Abrir cámara' : '🖼️ Abrir galería'}
+            <Glyph name={camera ? 'camera' : 'image'} className="h-5 w-5" />
+            {camera ? 'Abrir cámara' : 'Abrir galería'}
           </button>
           <button
             type="button"

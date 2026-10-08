@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { investmentsService, Investment } from '@/lib/supabaseFinance';
 import { Plus, X, Pencil, Trash2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
+import Glyph from '@/components/ui/Glyph';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
@@ -26,7 +27,7 @@ export default function InversionesPage() {
     shares: '',
     price: '',
     cost: '',
-    icon: '📈',
+    icon: 'trending',
     color: '#16A34A',
   });
 
@@ -61,7 +62,7 @@ export default function InversionesPage() {
       shares: '',
       price: '',
       cost: '',
-      icon: '📈',
+      icon: 'trending',
       color: '#16A34A',
     });
     setFormError('');
@@ -90,12 +91,12 @@ export default function InversionesPage() {
     setFormError('');
     try {
       const typeIcons: Record<string, string> = {
-        Acciones: '📈',
-        ETF: '📊',
-        'Fondo mutuo': '🏛️',
-        Cripto: '₿',
-        Bonos: '📋',
-        Otro: '💼',
+        Acciones: 'trending',
+        ETF: 'chart',
+        'Fondo mutuo': 'bank',
+        Cripto: 'coins',
+        Bonos: 'clipboard',
+        Otro: 'briefcase',
       };
       const invData: Omit<Investment, 'id'> = {
         name: form.name,
@@ -104,7 +105,7 @@ export default function InversionesPage() {
         shares: parseFloat(form.shares) || 0,
         price: parseFloat(form.price) || 0,
         cost: parseFloat(form.cost) || 0,
-        icon: typeIcons[form.type] || '📈',
+        icon: typeIcons[form.type] || 'trending',
         color: '#16A34A',
       };
       if (editingInv) {
@@ -248,7 +249,7 @@ export default function InversionesPage() {
                       className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
                       style={{ background: '#DCFCE7' }}
                     >
-                      {inv.icon}
+                      <Glyph name={inv.icon} fallback="trending" className="h-6 w-6 text-[#111]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

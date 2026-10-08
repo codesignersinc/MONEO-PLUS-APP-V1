@@ -20,6 +20,7 @@ import {
 } from '@/lib/supabaseJuntas';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
+import Glyph from '@/components/ui/Glyph';
 import { getErrorMessage } from '@/lib/dataError';
 import { currencySymbol, formatMoney, monthNames } from '@/lib/format';
 
@@ -328,7 +329,7 @@ export default function NuevaJuntaPage() {
               <input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ej. Para nuestro viaje a Europa ✈️"
+                placeholder="Ej. Para nuestro viaje a Europa"
                 className="mt-1.5 w-full px-4 py-3 border-[3px] border-black rounded-2xl text-sm font-medium text-black outline-none focus:border-[#FFD43B] bg-white transition-colors"
               />
             </div>
@@ -453,7 +454,8 @@ export default function NuevaJuntaPage() {
                 </div>
               </div>
               <p className="mt-1.5 text-xs text-gray-500 font-medium flex items-center gap-1">
-                <span>⏰</span> El sorteo automático se realizará en esta fecha y hora exacta
+                <Glyph name="alarm" className="h-3.5 w-3.5" /> El sorteo automático se realizará en
+                esta fecha y hora exacta
               </p>
             </div>
 
@@ -475,9 +477,9 @@ export default function NuevaJuntaPage() {
               </label>
               <div className="mt-1.5 space-y-2">
                 {[
-                  { value: 'comprobante', label: 'Comprobante + confirmación', icon: '📸' },
-                  { value: 'honor', label: 'Sistema de honor', icon: '🤝' },
-                  { value: 'admin', label: 'El admin confirma', icon: '👤' },
+                  { value: 'comprobante', label: 'Comprobante + confirmación', icon: 'camera' },
+                  { value: 'honor', label: 'Sistema de honor', icon: 'handshake' },
+                  { value: 'admin', label: 'El admin confirma', icon: 'user' },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -488,7 +490,7 @@ export default function NuevaJuntaPage() {
                         : 'border-gray-200 text-gray-600 bg-white hover:border-black'
                     }`}
                   >
-                    <span className="text-lg">{opt.icon}</span>
+                    <Glyph name={opt.icon} className="h-5 w-5 shrink-0" />
                     {opt.label}
                   </button>
                 ))}
@@ -521,10 +523,10 @@ export default function NuevaJuntaPage() {
                   {
                     value: 'aviso_automatico',
                     label: 'Aviso automático + 2 días de tolerancia',
-                    icon: '⏰',
+                    icon: 'alarm',
                   },
-                  { value: 'suspension', label: 'Suspensión temporal', icon: '⛔' },
-                  { value: 'flexible', label: 'Flexible, el admin decide', icon: '💬' },
+                  { value: 'suspension', label: 'Suspensión temporal', icon: 'ban' },
+                  { value: 'flexible', label: 'Flexible, el admin decide', icon: 'chat' },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -535,7 +537,7 @@ export default function NuevaJuntaPage() {
                         : 'border-gray-200 text-gray-600 bg-white hover:border-black'
                     }`}
                   >
-                    <span className="text-lg">{opt.icon}</span>
+                    <Glyph name={opt.icon} className="h-5 w-5 shrink-0" />
                     {opt.label}
                   </button>
                 ))}
@@ -549,7 +551,7 @@ export default function NuevaJuntaPage() {
               <textarea
                 value={additionalNotes}
                 onChange={(e) => setAdditionalNotes(e.target.value)}
-                placeholder="Solo amigos. Compromiso serio para el viaje 🙌"
+                placeholder="Solo amigos. Compromiso serio para el viaje"
                 rows={3}
                 className="mt-1.5 w-full px-4 py-3 border-[3px] border-black rounded-2xl text-sm font-medium text-black outline-none focus:border-[#FFD43B] bg-white transition-colors resize-none"
               />

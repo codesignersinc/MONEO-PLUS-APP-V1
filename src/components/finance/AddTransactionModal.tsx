@@ -127,7 +127,7 @@ export default function AddTransactionModal({
         type: activeTab,
         amount: finalAmt,
         category: selectedCat?.label || 'Otros',
-        categoryIcon: selectedCat?.icon || '📦',
+        categoryIcon: selectedCat?.icon || 'package',
         accountId: selectedAccount.id,
         account: selectedAccount.name,
         notes: note,
@@ -232,7 +232,7 @@ export default function AddTransactionModal({
                     ? 'Registra un gasto y mantén el control de tu dinero.'
                     : 'Anota lo que recibes y mira crecer tu dinero.'
                 }
-                emoji={isGasto ? '🧾' : '💰'}
+                icon={isGasto ? 'receipt' : 'coins'}
                 tone={isGasto ? '#FFD83D' : '#C9F2DA'}
               />
               <AccountSelect accounts={accounts} value={accountId} onChange={setAccountId} />

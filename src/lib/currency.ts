@@ -7,20 +7,19 @@ export interface CurrencyInfo {
   code: string;
   name: string;
   symbol: string;
-  flag: string;
   locale: string;
 }
 
 export const CURRENCIES: CurrencyInfo[] = [
-  { code: 'PEN', name: 'Sol peruano', symbol: 'S/', flag: '🇵🇪', locale: 'es-PE' },
-  { code: 'USD', name: 'Dólar estadounidense', symbol: '$', flag: '🇺🇸', locale: 'en-US' },
-  { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺', locale: 'de-DE' },
-  { code: 'GBP', name: 'Libra esterlina', symbol: '£', flag: '🇬🇧', locale: 'en-GB' },
-  { code: 'BRL', name: 'Real brasileño', symbol: 'R$', flag: '🇧🇷', locale: 'pt-BR' },
-  { code: 'CLP', name: 'Peso chileno', symbol: '$', flag: '🇨🇱', locale: 'es-CL' },
-  { code: 'COP', name: 'Peso colombiano', symbol: '$', flag: '🇨🇴', locale: 'es-CO' },
-  { code: 'MXN', name: 'Peso mexicano', symbol: '$', flag: '🇲🇽', locale: 'es-MX' },
-  { code: 'ARS', name: 'Peso argentino', symbol: '$', flag: '🇦🇷', locale: 'es-AR' },
+  { code: 'PEN', name: 'Sol peruano', symbol: 'S/', locale: 'es-PE' },
+  { code: 'USD', name: 'Dólar estadounidense', symbol: '$', locale: 'en-US' },
+  { code: 'EUR', name: 'Euro', symbol: '€', locale: 'de-DE' },
+  { code: 'GBP', name: 'Libra esterlina', symbol: '£', locale: 'en-GB' },
+  { code: 'BRL', name: 'Real brasileño', symbol: 'R$', locale: 'pt-BR' },
+  { code: 'CLP', name: 'Peso chileno', symbol: '$', locale: 'es-CL' },
+  { code: 'COP', name: 'Peso colombiano', symbol: '$', locale: 'es-CO' },
+  { code: 'MXN', name: 'Peso mexicano', symbol: '$', locale: 'es-MX' },
+  { code: 'ARS', name: 'Peso argentino', symbol: '$', locale: 'es-AR' },
 ];
 
 export const DEFAULT_CURRENCY = 'PEN';

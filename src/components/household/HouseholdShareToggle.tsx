@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { looksLikeHouseholdExpense } from '@/lib/household';
 import { householdService } from '@/lib/supabaseHousehold';
+import Glyph from '@/components/ui/Glyph';
 
 // "Agregarlo a mi hogar" for a new expense: only for people in a household; preselected
 // when the category usually belongs to the household. The movement stays private.
@@ -51,7 +52,9 @@ export default function HouseholdShareToggle({
         className="mt-0.5 h-5 w-5 accent-[#111]"
       />
       <span>
-        🏠 Agregarlo a {householdName}
+        <span className="inline-flex items-center gap-1.5">
+          <Glyph name="home" className="h-4 w-4 shrink-0" /> Agregarlo a {householdName}
+        </span>
         <span className="block text-xs font-semibold text-gray-600">
           Lo pagaste tú y se reparte según el hogar. Tu cuenta sigue siendo privada.
         </span>

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { Heart } from 'lucide-react';
 import { SITE, SIGNUP_HREF } from '@/lib/site';
 import { Wordmark } from './LandingNav';
 
@@ -105,7 +106,15 @@ export default function LandingFooter() {
         </div>
         <div className="mt-12 flex flex-col gap-2 border-t-2 border-[#111] pt-6 font-sans text-[13px] text-[#444] sm:flex-row sm:justify-between">
           <p>© 2026 MONEO. Todos los derechos reservados.</p>
-          <p>Hecho con ❤️ en Perú.</p>
+          <p className="flex items-center gap-1">
+            Hecho con
+            <Heart
+              className="h-4 w-4 fill-[#FF806E] text-[#111]"
+              strokeWidth={2.5}
+              aria-label="amor"
+            />
+            en Perú.
+          </p>
         </div>
       </div>
     </footer>

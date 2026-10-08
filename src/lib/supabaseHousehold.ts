@@ -738,7 +738,7 @@ export const householdGoalsService = {
         id: g.id,
         name: g.name,
         kind: g.kind,
-        emoji: g.emoji ?? '🎯',
+        emoji: g.emoji ?? 'target',
         targetAmount: Number(g.target_amount),
         targetDate: g.target_date,
         createdBy: g.created_by,

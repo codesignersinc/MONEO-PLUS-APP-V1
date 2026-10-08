@@ -2,6 +2,7 @@
 import React from 'react';
 import { ArrowLeft, Check } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
+import Glyph from '@/components/ui/Glyph';
 
 // Building blocks of the onboarding (MONEO 3D retro pop): cream background, thick black
 // outlines, hard shadows, big touch targets. Animations respect prefers-reduced-motion.
@@ -161,7 +162,7 @@ export function TextButton({
 export function OptionCard({
   selected,
   onClick,
-  emoji,
+  icon,
   label,
   hint,
   badge,
@@ -169,7 +170,8 @@ export function OptionCard({
 }: {
   selected: boolean;
   onClick: () => void;
-  emoji?: string;
+  /** Glyph key (or legacy emoji) for the tile. */
+  icon?: string;
   label: string;
   hint?: string;
   badge?: string;
@@ -187,12 +189,12 @@ export function OptionCard({
           : 'bg-white shadow-[2px_2px_0_#111] hover:bg-[#FFFDF5]'
       }`}
     >
-      {emoji && (
+      {icon && (
         <span
           aria-hidden
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-black bg-[#FFF9EC] text-2xl"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-black bg-[#FFF9EC] text-[#111]"
         >
-          {emoji}
+          <Glyph name={icon} className="h-6 w-6" />
         </span>
       )}
       <span className="min-w-0 flex-1">

@@ -796,7 +796,7 @@ export const subscriptionsService = {
       type: 'gasto',
       amount: -amount,
       category: 'Suscripciones',
-      categoryIcon: sub.icon || '📱',
+      categoryIcon: sub.icon || 'phone',
       accountId: account.id,
       account: account.name,
       notes: `Pago de suscripción${sub.nextPaymentDate ? ` (vencimiento ${sub.nextPaymentDate})` : ''}`,

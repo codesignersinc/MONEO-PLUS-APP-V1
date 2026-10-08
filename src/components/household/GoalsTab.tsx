@@ -10,6 +10,7 @@ import {
 } from '@/components/finance/formKit';
 import { card, EmptyNote, type Money } from '@/components/dashboard/ui';
 import { useToast } from '@/components/ui/Toast';
+import Glyph from '@/components/ui/Glyph';
 import { accountsService } from '@/lib/supabaseFinance';
 import { getFxContext } from '@/lib/supabaseCurrency';
 import { getRateFromMap } from '@/lib/currency';
@@ -29,13 +30,13 @@ import {
 import { Avatar, Choice, ErrorNote, Sheet, memberColor } from '@/components/household/ui';
 import { APP_LOCALE } from '@/lib/locale';
 
-const KINDS: { value: GoalKind; label: string; emoji: string }[] = [
-  { value: 'emergency', label: 'Fondo de emergencia', emoji: '🛟' },
-  { value: 'travel', label: 'Viaje', emoji: '✈️' },
-  { value: 'home', label: 'Casa', emoji: '🏡' },
-  { value: 'car', label: 'Auto', emoji: '🚗' },
-  { value: 'education', label: 'Educación', emoji: '🎓' },
-  { value: 'other', label: 'Otra', emoji: '🎯' },
+const KINDS: { value: GoalKind; label: string; icon: string }[] = [
+  { value: 'emergency', label: 'Fondo de emergencia', icon: 'lifebuoy' },
+  { value: 'travel', label: 'Viaje', icon: 'plane' },
+  { value: 'home', label: 'Casa', icon: 'home' },
+  { value: 'car', label: 'Auto', icon: 'car' },
+  { value: 'education', label: 'Educación', icon: 'graduation' },
+  { value: 'other', label: 'Otra', icon: 'target' },
 ];
 
 export interface GoalDraft {
@@ -105,7 +106,7 @@ export default function GoalsTab({
     const target = parseFloat(form.target);
     if (!form.name.trim()) return setError('Ponle un nombre a la meta.');
     if (!(target > 0)) return setError('Ingresa el objetivo.');
-    const emoji = KINDS.find((k) => k.value === form.kind)?.emoji ?? '🎯';
+    const emoji = KINDS.find((k) => k.value === form.kind)?.icon ?? 'target';
     setSaving(true);
     setError('');
     try {
@@ -173,9 +174,9 @@ export default function GoalsTab({
                     key={k.value}
                     type="button"
                     onClick={() => openNew(k.value)}
-                    className="rounded-xl border-2 border-[#111] bg-white px-3 py-1.5 text-[13px] font-black text-[#111]"
+                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-[#111] bg-white px-3 py-1.5 text-[13px] font-black text-[#111]"
                   >
-                    {k.emoji} {k.label}
+                    <Glyph name={k.icon} className="h-4 w-4" /> {k.label}
                   </button>
                 ))}
               </div>
@@ -194,7 +195,7 @@ export default function GoalsTab({
                 <li key={g.id} className="rounded-2xl border-2 border-[#111] bg-[#FFF9EC] p-4">
                   <div className="flex items-start gap-3">
                     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-[#111] bg-white text-2xl">
-                      {g.emoji}
+                      <Glyph name={g.emoji} fallback="target" className="h-6 w-6 text-[#111]" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[16px] font-black">{g.name}</p>
@@ -295,7 +296,14 @@ export default function GoalsTab({
                     : f
                 );
               }}
-              options={KINDS.map((k) => ({ value: k.value, label: `${k.emoji} ${k.label}` }))}
+              options={KINDS.map((k) => ({
+                value: k.value,
+                label: (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Glyph name={k.icon} className="h-4 w-4 shrink-0" /> {k.label}
+                  </span>
+                ),
+              }))}
             />
           )}
           <TextField
@@ -402,7 +410,7 @@ function ContributeSheet({
           amount: accAmount,
           name: `Aporte meta hogar: ${goal.name}`,
           category: 'Hogar',
-          categoryIcon: '🛋️',
+          categoryIcon: 'sofa',
           date,
           fx,
         });

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { debtsService, Debt } from '@/lib/supabaseFinance';
 import { Plus, X, Pencil, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import BrandLogo from '@/components/finance/BrandLogo';
+import Glyph from '@/components/ui/Glyph';
 import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
@@ -33,7 +34,7 @@ export default function DeudasPage() {
   const [form, setForm] = useState({
     name: '',
     institution: '',
-    icon: '💳',
+    icon: 'card',
     balance: '',
     limit: '',
     monthlyPayment: '',
@@ -70,7 +71,7 @@ export default function DeudasPage() {
     setForm({
       name: '',
       institution: '',
-      icon: '💳',
+      icon: 'card',
       balance: '',
       limit: '',
       monthlyPayment: '',
@@ -109,7 +110,7 @@ export default function DeudasPage() {
       const debtData: Omit<Debt, 'id'> = {
         name: form.name,
         institution: form.institution,
-        icon: form.type === 'Tarjeta de crédito' ? '💳' : '🏦',
+        icon: form.type === 'Tarjeta de crédito' ? 'card' : 'bank',
         balance: parseFloat(form.balance) || 0,
         limit: parseFloat(form.limit) || 0,
         monthlyPayment: parseFloat(form.monthlyPayment) || 0,
@@ -217,7 +218,7 @@ export default function DeudasPage() {
       {debts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-3xl mb-4">
-            💳
+            <Glyph name="card" className="h-8 w-8 text-[#111]" />
           </div>
           <h2 className="text-lg font-black text-black mb-2">Sin deudas registradas</h2>
           <p className="text-sm text-gray-500 max-w-xs mb-6">

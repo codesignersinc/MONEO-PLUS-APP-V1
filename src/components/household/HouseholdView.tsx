@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarClock,
+  Check,
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
+import Glyph from '@/components/ui/Glyph';
 import {
   card,
   categoryIcon,
@@ -374,9 +376,14 @@ export default function HouseholdView({
       </div>
       {pendingTransfers.length === 0 ? (
         <p className="text-[15px] font-bold text-[#111]">
-          {monthSettlements.some((s) => s.status === 'proposed')
-            ? 'La compensación está registrada: falta que cada persona la confirme.'
-            : `✅ Están al día con lo acordado en ${monthLabel(month)}.`}
+          {monthSettlements.some((s) => s.status === 'proposed') ? (
+            'La compensación está registrada: falta que cada persona la confirme.'
+          ) : (
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+              Están al día con lo acordado en {monthLabel(month)}.
+            </span>
+          )}
         </p>
       ) : (
         <div className="space-y-4">
@@ -638,8 +645,9 @@ export default function HouseholdView({
       aria-label="Meta del hogar"
     >
       <p className="text-[13px] font-black text-gray-600">Meta del hogar</p>
-      <p className="mt-1 truncate text-[16px] font-black">
-        {mainGoal.emoji} {mainGoal.name}
+      <p className="mt-1 flex items-center gap-1.5 text-[16px] font-black">
+        <Glyph name={mainGoal.emoji} fallback="target" className="h-5 w-5 shrink-0" />
+        <span className="truncate">{mainGoal.name}</span>
       </p>
       <div className="mt-2 h-3 overflow-hidden rounded-full border-2 border-[#111] bg-[#F1EDE3]">
         <div

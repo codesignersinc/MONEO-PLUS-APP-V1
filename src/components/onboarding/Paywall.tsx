@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
-import { Check, Crown, Infinity as InfinityIcon, Sprout } from 'lucide-react';
+import { Check, Crown, Gem, Infinity as InfinityIcon, Sprout, Star } from 'lucide-react';
 import {
   annualSavingsPercent,
   PLUS_BENEFITS,
@@ -152,7 +152,12 @@ export default function Paywall({
             tone="#FFD83D"
             ribbon={
               <>
-                ⭐ Más elegido
+                <Star
+                  className="-mt-0.5 mr-1 inline h-3 w-3 fill-current"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+                Más elegido
                 {monthly && ` · Ahorra ${annualSavingsPercent(monthly.price, yearly.price)}%`}
               </>
             }
@@ -192,8 +197,8 @@ export default function Paywall({
             selected={selected === 'founder'}
             onSelect={() => onSelect('founder')}
             tone="#FFE1DB"
-            ribbon="🐒 Precio fundador"
-            icon={<span className="text-2xl">🐒</span>}
+            ribbon="Precio fundador"
+            icon={<Gem className="h-6 w-6" strokeWidth={2.5} />}
             title="Fundador de por vida"
             price={money(founder.price)}
             lines={['Pago único · Oferta de lanzamiento por tiempo limitado']}

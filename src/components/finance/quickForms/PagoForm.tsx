@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
+import { Check, Hourglass } from 'lucide-react';
 import { todayLocal } from '@/lib/dates';
 import {
   AmountField,
@@ -29,7 +30,7 @@ export default function PagoForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Servicios');
-  const [categoryIcon, setCategoryIcon] = useState('💡');
+  const [categoryIcon, setCategoryIcon] = useState('bulb');
   const [paymentDate, setPaymentDate] = useState(todayLocal());
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<'pendiente' | 'pagado'>('pendiente');
@@ -41,7 +42,7 @@ export default function PagoForm({ onClose, onSuccess }: QuickFormProps) {
   const handleCat = (label: string) => {
     const c = PAGO_CATEGORIES.find((x) => x.label === label);
     setCategory(label);
-    setCategoryIcon(c?.icon || '📦');
+    setCategoryIcon(c?.icon || 'package');
   };
 
   const handleSave = async () => {
@@ -87,7 +88,7 @@ export default function PagoForm({ onClose, onSuccess }: QuickFormProps) {
   };
 
   return (
-    <FormWrapper title="Nuevo Pago" emoji="📅" accentBg="bg-[#ffd5cc]" onClose={onClose}>
+    <FormWrapper title="Nuevo Pago" icon="calendar" accentBg="bg-[#ffd5cc]" onClose={onClose}>
       <div className="space-y-5">
         <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Alquiler" />
         <AmountField label={`Monto (${currencySymbol()})`} value={amount} onChange={setAmount} />
@@ -98,9 +99,14 @@ export default function PagoForm({ onClose, onSuccess }: QuickFormProps) {
               <button
                 key={s}
                 onClick={() => setStatus(s)}
-                className={`flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}
+                className={`flex flex-1 items-center justify-center gap-1.5 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}
               >
-                {s === 'pagado' ? '✅ Pagado' : '⏳ Pendiente'}
+                {s === 'pagado' ? (
+                  <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                ) : (
+                  <Hourglass className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                )}
+                {s === 'pagado' ? 'Pagado' : 'Pendiente'}
               </button>
             ))}
           </div>

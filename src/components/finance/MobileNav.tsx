@@ -25,6 +25,7 @@ import {
   Users,
   RefreshCw,
   Sparkles,
+  Check,
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -64,7 +65,7 @@ const registerOptions = [
     desc: 'Una nueva compra o pago de tu día a día.',
     bg: 'bg-[#fde899]',
     iconBg: 'bg-[#F5C518]',
-    emoji: '🧾',
+    icon: 'receipt',
     image: '/assets/images/Gasto-1790881903847.jpg',
   },
   {
@@ -73,7 +74,7 @@ const registerOptions = [
     desc: 'Tu sueldo u otro ingreso de dinero.',
     bg: 'bg-[#e1c2fd]',
     iconBg: 'bg-[#C084FC]',
-    emoji: '➕',
+    icon: 'plus',
     image: '/assets/images/Ingreso-1790881903846.jpg',
   },
   {
@@ -82,7 +83,7 @@ const registerOptions = [
     desc: 'Facturas, servicios, alquiler o cualquier obligación.',
     bg: 'bg-[#ffd5cc]',
     iconBg: 'bg-[#F87171]',
-    emoji: '📅',
+    icon: 'calendar',
     image: '/assets/images/pagos-1790881903843.jpg',
   },
   {
@@ -91,7 +92,7 @@ const registerOptions = [
     desc: 'Netflix, Spotify, apps y servicios recurrentes.',
     bg: 'bg-[#bfdbfe]',
     iconBg: 'bg-[#3B82F6]',
-    emoji: '📺',
+    icon: 'tv',
     image: '/assets/images/suscripcion-1790881904159.jpg',
   },
   {
@@ -100,7 +101,7 @@ const registerOptions = [
     desc: 'Entre tus cuentas o a otra persona.',
     bg: 'bg-[#fe9a82]',
     iconBg: 'bg-[#F97316]',
-    emoji: '⇄',
+    icon: 'exchange',
     image: '/assets/images/transferencia-1790882160086.jpg',
   },
   {
@@ -109,7 +110,7 @@ const registerOptions = [
     desc: 'Para una meta o fondo de emergencia.',
     bg: 'bg-[#BBF7D0]',
     iconBg: 'bg-[#22C55E]',
-    emoji: '🏠',
+    icon: 'home',
     image: '/assets/images/ahorros-1790881903843.jpg',
   },
 ];
@@ -168,7 +169,7 @@ export default function MobileNav() {
   function handleFormSuccess() {
     notifyDataChanged();
     setActiveForm(null);
-    setSuccessMsg('¡Registrado con éxito! ✅');
+    setSuccessMsg('¡Registrado con éxito!');
     setTimeout(() => {
       setSheetOpen(false);
       setSuccessMsg('');
@@ -300,7 +301,10 @@ export default function MobileNav() {
             {/* success message */}
             {successMsg && (
               <div className="mx-4 mt-4 px-4 py-3 bg-green-100 border-2 border-green-500 rounded-2xl text-center">
-                <p className="text-sm font-black text-green-700">{successMsg}</p>
+                <p className="flex items-center justify-center gap-1.5 text-sm font-black text-green-700">
+                  {successMsg}
+                  <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                </p>
               </div>
             )}
 

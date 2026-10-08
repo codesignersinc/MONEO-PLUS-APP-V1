@@ -164,21 +164,21 @@ export function formatNotificationTime(dateStr: string): string {
 // ── Notification type config ─────────────────────────────────────────────────
 export function getNotificationTypeConfig(type: string): { icon: string; color: string } {
   const configs: Record<string, { icon: string; color: string }> = {
-    expense: { icon: '🧾', color: '#FEE2E2' },
-    income: { icon: '💰', color: '#DCFCE7' },
-    transfer: { icon: '⇄', color: '#DBEAFE' },
-    budget: { icon: '📊', color: '#FEF9C3' },
-    savings: { icon: '🐷', color: '#DCFCE7' },
-    goal: { icon: '🎯', color: '#F3E8FF' },
-    debt: { icon: '💳', color: '#FEE2E2' },
-    investment: { icon: '📈', color: '#DBEAFE' },
-    subscription: { icon: '📺', color: '#EDE9FE' },
-    account: { icon: '🏦', color: '#DBEAFE' },
-    junta: { icon: '👥', color: '#FEF9C3' },
-    reminder: { icon: '⏰', color: '#FEF3C7' },
-    achievement: { icon: '🏆', color: '#FEF9C3' },
-    system: { icon: '🔔', color: '#F1F5F9' },
-    security: { icon: '🔒', color: '#FEE2E2' },
+    expense: { icon: 'receipt', color: '#FEE2E2' },
+    income: { icon: 'coins', color: '#DCFCE7' },
+    transfer: { icon: 'exchange', color: '#DBEAFE' },
+    budget: { icon: 'chart', color: '#FEF9C3' },
+    savings: { icon: 'piggy', color: '#DCFCE7' },
+    goal: { icon: 'target', color: '#F3E8FF' },
+    debt: { icon: 'card', color: '#FEE2E2' },
+    investment: { icon: 'trending', color: '#DBEAFE' },
+    subscription: { icon: 'tv', color: '#EDE9FE' },
+    account: { icon: 'bank', color: '#DBEAFE' },
+    junta: { icon: 'users', color: '#FEF9C3' },
+    reminder: { icon: 'alarm', color: '#FEF3C7' },
+    achievement: { icon: 'trophy', color: '#FEF9C3' },
+    system: { icon: 'bell', color: '#F1F5F9' },
+    security: { icon: 'lock', color: '#FEE2E2' },
   };
-  return configs[type] ?? { icon: '🔔', color: '#F1F5F9' };
+  return configs[type] ?? { icon: 'bell', color: '#F1F5F9' };
 }

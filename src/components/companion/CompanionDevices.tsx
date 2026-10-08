@@ -99,7 +99,8 @@ export default function CompanionDevices() {
         href="/finanzas/widget"
         className="mt-3 flex items-center gap-2 rounded-xl border-[3px] border-black bg-white px-3 py-3 text-sm font-black text-black shadow-[3px_3px_0px_#000]"
       >
-        <span className="text-xl">📲</span> Agregar el widget a tu celular
+        <Smartphone className="h-5 w-5" strokeWidth={2.5} aria-hidden /> Agregar el widget a tu
+        celular
         <ChevronRight className="ml-auto h-4 w-4" strokeWidth={2.5} />
       </Link>
     </div>

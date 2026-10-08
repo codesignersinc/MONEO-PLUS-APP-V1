@@ -2,7 +2,7 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Bell, Loader2, Lock, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Bell, Check, Loader2, Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   billingService,
@@ -36,6 +36,7 @@ import { markWelcomeSeen } from '@/lib/onboarding';
 import { track } from '@/lib/analytics';
 import { notifyDataChanged } from '@/lib/dataSync';
 import BrandLogo from '@/components/finance/BrandLogo';
+import Glyph from '@/components/ui/Glyph';
 import CheckoutPanel from '@/components/billing/CheckoutPanel';
 import Paywall, { money } from '@/components/onboarding/Paywall';
 import {
@@ -111,11 +112,11 @@ const NEEDS_USER: Step[] = [
 
 type AccountKind = 'banco' | 'credito' | 'digital' | 'efectivo';
 
-const KINDS: { id: AccountKind; label: string; hint: string; emoji: string }[] = [
-  { id: 'banco', label: 'Cuenta bancaria', hint: 'Ahorros o sueldo', emoji: '🏦' },
-  { id: 'credito', label: 'Tarjeta', hint: 'Crédito o débito', emoji: '💳' },
-  { id: 'digital', label: 'Billetera digital', hint: 'PayPal…', emoji: '📱' },
-  { id: 'efectivo', label: 'Efectivo', hint: 'Lo que tienes a la mano', emoji: '💵' },
+const KINDS: { id: AccountKind; label: string; hint: string; icon: string }[] = [
+  { id: 'banco', label: 'Cuenta bancaria', hint: 'Ahorros o sueldo', icon: 'bank' },
+  { id: 'credito', label: 'Tarjeta', hint: 'Crédito o débito', icon: 'card' },
+  { id: 'digital', label: 'Billetera digital', hint: 'PayPal…', icon: 'phone' },
+  { id: 'efectivo', label: 'Efectivo', hint: 'Lo que tienes a la mano', icon: 'cash' },
 ];
 
 interface BankChoice {
@@ -146,10 +147,10 @@ const CURRENCIES = [
 ];
 
 const KIND_ICON: Record<AccountKind, string> = {
-  banco: '🏦',
-  credito: '💳',
-  digital: '📱',
-  efectivo: '💵',
+  banco: 'bank',
+  credito: 'card',
+  digital: 'phone',
+  efectivo: 'cash',
 };
 
 function fmtDate(d: Date): string {
@@ -359,7 +360,7 @@ function Onboarding() {
             {GOALS.map((g) => (
               <OptionCard
                 key={g.id}
-                emoji={g.emoji}
+                icon={g.icon}
                 label={g.label}
                 selected={state.goals.includes(g.id)}
                 disabled={state.goals.length >= 3}
@@ -392,7 +393,7 @@ function Onboarding() {
             {LEAKS.map((l) => (
               <OptionCard
                 key={l.id}
-                emoji={l.emoji}
+                icon={l.icon}
                 label={l.label}
                 selected={state.leaks.includes(l.id)}
                 disabled={state.leaks.length >= 3}
@@ -425,7 +426,7 @@ function Onboarding() {
             {METHODS.map((m) => (
               <OptionCard
                 key={m.id}
-                emoji={m.emoji}
+                icon={m.icon}
                 label={m.label}
                 hint={m.hint}
                 badge={m.plus ? 'Plus' : undefined}
@@ -459,7 +460,7 @@ function Onboarding() {
             {FIRST_GOALS.map((g) => (
               <OptionCard
                 key={g.id}
-                emoji={g.emoji}
+                icon={g.icon}
                 label={g.label}
                 selected={state.firstGoal === g.id}
                 onClick={() => {
@@ -506,10 +507,10 @@ function Onboarding() {
                     style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'backwards' }}
                   >
                     <span
-                      className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 border-black text-2xl"
+                      className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 border-black text-[#111]"
                       style={{ background: r.color }}
                     >
-                      {r.v.emoji}
+                      <Glyph name={r.v.icon} className="h-6 w-6" />
                     </span>
                     <span>
                       <span className="block text-xs font-black uppercase tracking-wide text-gray-500">
@@ -683,8 +684,8 @@ function Onboarding() {
           }
         >
           <div className="flex flex-col items-center pt-2 text-center">
-            <div className="grid h-20 w-20 place-items-center rounded-full border-[3px] border-black bg-[#45D98B] text-4xl shadow-[4px_4px_0_#111] motion-safe:animate-tick-up">
-              ✓
+            <div className="grid h-20 w-20 place-items-center rounded-full border-[3px] border-black bg-[#45D98B] text-[#111] shadow-[4px_4px_0_#111] motion-safe:animate-tick-up">
+              <Check className="h-10 w-10" strokeWidth={3} aria-hidden />
             </div>
             <h1 className="mt-5 text-[32px] font-black leading-tight">
               {ent?.kind === 'trial' ? (
@@ -1165,7 +1166,7 @@ function MoneySteps({
                   : 'bg-white shadow-[2px_2px_0_#111]'
               }`}
             >
-              <span className="text-3xl">{k.emoji}</span>
+              <Glyph name={k.icon} className="h-8 w-8 text-[#111]" />
               <span>
                 <span className="block text-[15px] font-black leading-tight">{k.label}</span>
                 <span className="block text-xs font-semibold text-gray-600">{k.hint}</span>
@@ -1379,8 +1380,8 @@ function MoneySteps({
       }
     >
       <div className="flex flex-col items-center pt-2 text-center">
-        <div className="grid h-16 w-16 place-items-center rounded-full border-[3px] border-black bg-[#45D98B] text-3xl motion-safe:animate-tick-up">
-          ✓
+        <div className="grid h-16 w-16 place-items-center rounded-full border-[3px] border-black bg-[#45D98B] text-[#111] motion-safe:animate-tick-up">
+          <Check className="h-8 w-8" strokeWidth={3} aria-hidden />
         </div>
         <h1 className="mt-4 text-[28px] font-black leading-tight">
           {accounts && accounts.length > 1

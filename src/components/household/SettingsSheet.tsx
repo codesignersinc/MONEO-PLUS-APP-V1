@@ -7,7 +7,7 @@ import type { Household, HouseholdMember } from '@/lib/household';
 import { householdService } from '@/lib/supabaseHousehold';
 import { Avatar, ErrorNote, SectionLabel, Sheet, memberColor } from '@/components/household/ui';
 
-// ⚙ Household settings: names, members and roles, leave or delete.
+// Household settings: names, members and roles, leave or delete.
 export default function SettingsSheet({
   household,
   members,

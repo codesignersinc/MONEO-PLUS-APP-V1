@@ -5,6 +5,7 @@ import {
   Camera,
   Home,
   KeyRound,
+  Check,
   Landmark,
   Laptop,
   Lock,
@@ -448,8 +449,8 @@ export function Pricing() {
             <ul className="mt-6 grid gap-2.5 font-sans text-[15px] text-[#111]">
               {included.map((t) => (
                 <li key={t} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#111] text-[11px] font-bold text-white">
-                    ✓
+                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#111] text-white">
+                    <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
                   </span>
                   {t}
                 </li>
