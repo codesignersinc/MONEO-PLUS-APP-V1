@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import Glyph from '@/components/ui/Glyph';
+import { isGlyph } from '@/lib/glyphs';
 import LoadError from '@/components/ui/LoadError';
 import AddTransactionModal from '@/components/finance/AddTransactionModal';
 import { moneyFormatter } from '@/components/dashboard/ui';
@@ -295,12 +296,13 @@ export default function MiniPage() {
                   {data.recent.map((r) => (
                     <li key={r.id} className="flex items-center gap-2.5 py-2">
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#F4F1EA] text-base">
-                        {r.icon ||
-                          (r.type === 'ingreso' ? (
-                            <ArrowDownLeft className="h-4 w-4" />
-                          ) : (
-                            <ArrowUpRight className="h-4 w-4" />
-                          ))}
+                        {isGlyph(r.icon) ? (
+                          <Glyph name={r.icon} className="h-4 w-4" />
+                        ) : r.type === 'ingreso' ? (
+                          <ArrowDownLeft className="h-4 w-4" />
+                        ) : (
+                          <ArrowUpRight className="h-4 w-4" />
+                        )}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-bold">{r.name}</span>

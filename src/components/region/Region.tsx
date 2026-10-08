@@ -235,7 +235,7 @@ export function RegionConfirm() {
   };
 
   return (
-    <div className="rounded-[22px] border-2 border-[#111] bg-white p-4 text-[#111] shadow-[0_3px_0_#111]">
+    <div className="relative z-30 rounded-[22px] border-2 border-[#111] bg-white p-4 text-[#111] shadow-[0_3px_0_#111]">
       <p className="flex items-center gap-2 text-sm font-black">
         <MapPin className="h-4 w-4" /> ¿Dónde usas MONEO?
       </p>
