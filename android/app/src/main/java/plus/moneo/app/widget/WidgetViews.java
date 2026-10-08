@@ -107,16 +107,32 @@ final class WidgetViews {
         }
     }
 
+    // Same symbols and decimals as the web (src/lib/currency.ts, src/lib/locale.ts):
+    // "S/ 1,234.50", "€ 120.00", "$ 15,000" (CLP has no decimals); unknown codes show the code.
     static String money(double n, String currency, boolean hidden) {
         if (hidden) return MASK;
         String symbol;
         switch (currency) {
-            case "USD": symbol = "US$ "; break;
-            case "EUR": symbol = "€ "; break;
-            case "PEN": symbol = "S/ "; break;
-            default: symbol = currency + " ";
+            case "PEN": symbol = "S/"; break;
+            case "EUR": symbol = "€"; break;
+            case "GBP": symbol = "£"; break;
+            case "BRL": symbol = "R$"; break;
+            case "USD":
+            case "CLP":
+            case "COP":
+            case "MXN":
+            case "ARS": symbol = "$"; break;
+            default: symbol = currency;
         }
-        return (n < 0 ? "- " : "") + symbol + String.format(Locale.US, "%,.2f", Math.abs(n));
+        int decimals = 2;
+        try {
+            int d = java.util.Currency.getInstance(currency).getDefaultFractionDigits();
+            if (d >= 0) decimals = d;
+        } catch (Exception ignored) {
+            // Unknown code: two decimals.
+        }
+        return (n < 0 ? "- " : "") + symbol + " "
+                + String.format(Locale.US, "%,." + decimals + "f", Math.abs(n));
     }
 
     private static String hint(JSONObject safe) {
