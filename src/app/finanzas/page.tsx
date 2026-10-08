@@ -15,6 +15,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useDataChanged } from '@/lib/dataSync';
 import WelcomeModal from '@/components/finance/WelcomeModal';
 import AddTransactionModal from '@/components/finance/AddTransactionModal';
+import { RegionConfirm } from '@/components/region/Region';
 import { hasSeenWelcome, markWelcomeSeen } from '@/lib/onboarding';
 import { ONBOARDING_V2 } from '@/lib/onboardingFlow';
 import { usePlus } from '@/contexts/PlusContext';
@@ -507,6 +508,7 @@ export default function DashboardPage() {
                   </h1>
                   <p className="text-[17px] font-medium text-[#111]/80">Tu dinero, más simple.</p>
                 </div>
+                <RegionConfirm />
                 {hero}
                 {quick}
                 <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -556,6 +558,7 @@ export default function DashboardPage() {
               <PeriodFilter value={periodState} onChange={setPeriodState} now={now} />
             </div>
             <div className="space-y-4">
+              <RegionConfirm />
               {hero}
               {quick}
               {spending}
