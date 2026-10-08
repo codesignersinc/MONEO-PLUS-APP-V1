@@ -206,7 +206,12 @@ export default function ObligationsView({
               <li key={c.party.id} className={`${card} flex items-center gap-3 p-4`}>
                 <Initials name={c.party.name} color={COLORS[i % COLORS.length]} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-black">{c.party.name}</p>
+                  <Link
+                    href={`/finanzas/negocio/${businessId}/contactos/${c.party.id}`}
+                    className="block truncate font-black hover:underline"
+                  >
+                    {c.party.name}
+                  </Link>
                   <p className="text-xs font-semibold text-[#111]/60">
                     {T.month}: {money(c.month)}
                     {c.last ? ` · último ${shortDate(c.last)}` : ''}

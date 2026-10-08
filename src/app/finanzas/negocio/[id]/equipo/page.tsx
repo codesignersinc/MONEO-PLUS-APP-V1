@@ -179,7 +179,12 @@ export default function BusinessTeamPage() {
               <li key={p.id} className={`${card} flex items-center gap-3 p-4`}>
                 <Initials name={p.name} color={COLORS[i % COLORS.length]} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-black">{p.name}</p>
+                  <Link
+                    href={`/finanzas/negocio/${id}/contactos/${p.id}`}
+                    className="block truncate font-black hover:underline"
+                  >
+                    {p.name}
+                  </Link>
                   <p className="text-xs font-semibold text-[#111]/60">
                     Mensual{next ? ` · próximo ${shortDate(next.due)}` : ''}
                   </p>
