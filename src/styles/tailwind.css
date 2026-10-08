@@ -111,6 +111,39 @@ body {
   display: none;
 }
 
+/* ─── Paper: white crumpled paper behind the whole platform ─── */
+/* A fixed layer (not background-attachment: fixed, which iOS ignores). */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: #f7f6f1 url('/textures/paper.webp') center / cover no-repeat;
+  pointer-events: none;
+}
+
+/* Everything on the paper is a little transparent so the texture shows through.
+   Tailwind colour utilities read --tw-bg-opacity; colours written with a slash
+   (bg-black/50) set their own alpha and are left alone. */
+html [class*='bg-'] {
+  --tw-bg-opacity: 0.86;
+}
+/* Bars and sheets that float over scrolling content stay readable. */
+html .fixed[class*='bg-'],
+html .sticky[class*='bg-'] {
+  --tw-bg-opacity: 0.94;
+}
+/* Page wrappers do not paint: the paper is the page. */
+html .min-h-screen[class*='bg-'],
+html .min-h-dvh[class*='bg-'],
+html [class*='min-h-[100dvh]'][class*='bg-'] {
+  --tw-bg-opacity: 0;
+}
+/* Opt-out for full-screen dark scenes (the juntas draw). */
+html .paper-opaque[class*='bg-'] {
+  --tw-bg-opacity: 1;
+}
+
 /* Finance app body override */
 body.fin-app {
   background-color: var(--fin-bg);
