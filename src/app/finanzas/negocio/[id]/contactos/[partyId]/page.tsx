@@ -73,7 +73,7 @@ export default function BusinessContactPage() {
     Promise.all([
       partiesService.list(id),
       bizObligationsService.list(id),
-      bizMovementsService.list(id, undefined, partyId),
+      bizMovementsService.list(id, { partyId }),
       userSettingsService.get(),
     ])
       .then(([p, o, m, s]) => {

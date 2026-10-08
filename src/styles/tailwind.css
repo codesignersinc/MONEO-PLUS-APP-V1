@@ -698,3 +698,35 @@ body::before {
     scroll-behavior: smooth;
   }
 }
+
+/* Printing (MONEO NEGOCIO reports → "Guardar como PDF"): white page, solid colours, and a page
+   that marks .print-area prints only that area — menus, bars and prompts stay off the paper. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    background: #fff;
+  }
+  body::after {
+    display: none;
+  }
+  html [class*='bg-'] {
+    --tw-bg-opacity: 1;
+  }
+  body:has(.print-area) * {
+    visibility: hidden;
+  }
+  body:has(.print-area) .print-area,
+  body:has(.print-area) .print-area * {
+    visibility: visible;
+  }
+  body:has(.print-area) main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

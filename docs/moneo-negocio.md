@@ -117,3 +117,26 @@ moneda principal. Cada supuesto se muestra al usuario para que el número sea ve
 - Ficha `/contactos/[partyId]`: teléfono (llamar), WhatsApp (celular peruano de 9 dígitos → +51),
   correo, notas; te debe / le debes, este mes, total, último movimiento; pendientes con
   Cobrar/Pagar; historial; editar, marcar inactivo y eliminar (el historial se conserva).
+
+## 10. Fase 5 (hecha)
+
+- Reporte `/finanzas/negocio/[id]/reportes` (menú del negocio y atajos del dashboard), con el mismo
+  filtro de periodo del dashboard: ingresos, gastos, resultado y margen contra el periodo anterior
+  (totales de `business_summary`); flujo de 6 meses con tabla; ingresos y gastos por categoría;
+  clientes que más pagaron y proveedores a los que más se pagó; equipo, ingresos sin cliente,
+  retiros y aportes, gasto más grande, caja, por cobrar y por pagar.
+- Desglose y frases en `src/lib/businessReport.ts` (puro, con pruebas). Las frases solo aparecen
+  si los datos las sostienen (máx. 5): resultado y margen, cambio de ingresos, dependencia de un
+  cliente (≥ 30%), retiros (y si superan lo ganado), categoría principal de gasto, equipo.
+- Retiro / aporte = pata de transferencia cuya otra pata está en Personal; si ambas patas son de
+  cuentas del mismo negocio, es un movimiento interno y no cuenta.
+- **CSV**: cada movimiento del periodo (fecha y hora local, tipo, categoría, descripción,
+  contacto, cuenta, monto con signo, moneda de la cuenta, monto en la moneda principal, notas).
+  UTF-8 con BOM para Excel; las celdas de texto que empiezan con `= + - @` llevan `'` delante
+  (evita fórmulas inyectadas). Se genera en el dispositivo, sin servidor.
+- **PDF**: «Guardar como PDF» del navegador (`window.print()`), sin librerías. En impresión, una
+  página con `.print-area` imprime solo esa zona, en blanco y con colores sólidos; el título de la
+  página sugiere el nombre del archivo. El pie aclara que es un reporte de gestión, no un estado
+  financiero ni un servicio contable.
+- `bizMovementsService.list(id, { from, to, partyId })`: los límites del periodo se envían como
+  días locales (antes `from` se comparaba en UTC).

@@ -145,6 +145,7 @@ export default function BusinessDashboard() {
           ['pagos', 'Pagos'],
           ['equipo', 'Equipo'],
           ['contactos', 'Contactos'],
+          ['reportes', 'Reportes'],
           ['cuentas', 'Cuentas'],
         ].map(([path, text]) => (
           <Link

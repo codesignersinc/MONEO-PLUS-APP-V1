@@ -3,6 +3,13 @@ import { createClient } from '@/lib/supabase/client';
 import { DataError, toDataError } from '@/lib/dataError';
 import type { Account, Transaction, TransactionCurrencyFields } from '@/lib/financeStore';
 import type { Business, BusinessSummary } from '@/lib/business';
+import { localDateTimeToISO } from '@/lib/dates';
+
+const nextDay = (d: string) => {
+  const x = new Date(`${d}T00:00:00`);
+  x.setDate(x.getDate() + 1);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+};
 
 // MONEO NEGOCIO data (docs/moneo-negocio.md). Personal services read business_id IS NULL;
 // everything of a business goes through here. Context rules live in the database.
@@ -169,6 +176,9 @@ export interface BizMovement {
   date: string;
   partyId: string | null;
   accountId: string | null;
+  notes: string;
+  /** Set on a transfer leg (owner withdrawal/contribution, or between business accounts). */
+  transferId: string | null;
 }
 
 function toParty(r: Record<string, unknown>): Party {
@@ -363,16 +373,21 @@ export const bizObligationsService = {
 };
 
 export const bizMovementsService = {
-  async list(businessId: string, from?: string, partyId?: string): Promise<BizMovement[]> {
+  /** Movements of a business, newest first; `from`/`to` are local days (inclusive). */
+  async list(
+    businessId: string,
+    opts: { from?: string; to?: string; partyId?: string } = {}
+  ): Promise<BizMovement[]> {
     let q = createClient()
       .from('transactions')
       .select(
-        'id, name, amount, base_amount, base_currency_code, transaction_type, category, transaction_date, party_id, account_id'
+        'id, name, amount, base_amount, base_currency_code, transaction_type, category, transaction_date, party_id, account_id, notes, transfer_id'
       )
       .eq('business_id', businessId)
       .order('transaction_date', { ascending: false });
-    if (from) q = q.gte('transaction_date', `${from}T00:00:00`);
-    if (partyId) q = q.eq('party_id', partyId);
+    if (opts.from) q = q.gte('transaction_date', localDateTimeToISO(opts.from, '00:00'));
+    if (opts.to) q = q.lt('transaction_date', localDateTimeToISO(nextDay(opts.to), '00:00'));
+    if (opts.partyId) q = q.eq('party_id', opts.partyId);
     const { data, error } = await q;
     if (error) throw toDataError(error);
     return (data ?? []).map((r) => ({
@@ -385,6 +400,8 @@ export const bizMovementsService = {
       date: r.transaction_date,
       partyId: r.party_id ?? null,
       accountId: r.account_id ?? null,
+      notes: r.notes ?? '',
+      transferId: r.transfer_id ?? null,
     }));
   },
 
