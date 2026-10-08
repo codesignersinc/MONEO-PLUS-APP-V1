@@ -26,12 +26,15 @@ import {
   Sparkles,
   PictureInPicture2,
   Sofa,
+  ArrowLeft,
 } from 'lucide-react';
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useToast } from '@/components/ui/Toast';
 import { PlusCard } from '@/components/dashboard/RailCards';
 import { usePlus } from '@/contexts/PlusContext';
+import ContextSwitch from '@/components/business/ContextSwitch';
+import { businessIdFromPath } from '@/lib/business';
 
 interface NavItem {
   href: string;
@@ -71,9 +74,19 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const router = useRouter();
   const toast = useToast();
 
+  // Inside a business (MONEO NEGOCIO) the menu shows that business's sections.
+  const businessId = businessIdFromPath(pathname);
+  const items: NavItem[] = businessId
+    ? [
+        { href: `/finanzas/negocio/${businessId}`, label: 'Dashboard', icon: LayoutDashboard },
+        { href: `/finanzas/negocio/${businessId}/cuentas`, label: 'Cuentas', icon: Landmark },
+        { href: '/finanzas', label: 'Volver a Personal', icon: ArrowLeft },
+      ]
+    : navItems;
   const isActive = (href: string) => {
     if (href.includes('?')) return false; // filter links (Gastos) never mark the section
     if (href === '/finanzas') return pathname === '/finanzas';
+    if (businessId && href === `/finanzas/negocio/${businessId}`) return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -126,12 +139,15 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
         </button>
       </div>
 
+      {/* Personal | Negocio (MONEO NEGOCIO beta; renders nothing when off) */}
+      {!collapsed && <ContextSwitch className="mx-3 mb-1 mt-1" />}
+
       {/* Nav items */}
       <nav
         aria-label="Secciones"
         className={`flex-1 py-2 space-y-1 overflow-y-auto ${collapsed ? 'px-2' : 'px-3'}`}
       >
-        {navItems.map((item) => {
+        {items.map((item) => {
           const active = isActive(item.href);
           const ItemIcon = item.icon;
 

@@ -16,6 +16,7 @@ import { useDataChanged } from '@/lib/dataSync';
 import WelcomeModal from '@/components/finance/WelcomeModal';
 import AddTransactionModal from '@/components/finance/AddTransactionModal';
 import { RegionConfirm } from '@/components/region/Region';
+import ContextSwitch from '@/components/business/ContextSwitch';
 import { hasSeenWelcome, markWelcomeSeen } from '@/lib/onboarding';
 import { ONBOARDING_V2 } from '@/lib/onboardingFlow';
 import { usePlus } from '@/contexts/PlusContext';
@@ -554,6 +555,7 @@ export default function DashboardPage() {
               </Link>
               <NotificationBell />
             </header>
+            <ContextSwitch className="mb-3" />
             <div className="mb-4">
               <PeriodFilter value={periodState} onChange={setPeriodState} now={now} />
             </div>

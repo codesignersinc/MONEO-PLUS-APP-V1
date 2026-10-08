@@ -1,6 +1,6 @@
 # MONEO NEGOCIO — diagnóstico, decisiones y plan
 
-> Estado: **aprobado; fase 1 en curso**. Fecha: 8 de octubre de 2026.
+> Estado: **aprobado. Fase 1 en producción; fase 2 lista (beta: admins y quien ya tenga un negocio; para todos con `NEXT_PUBLIC_NEGOCIO=true`).** Fecha: 8 de octubre de 2026.
 > Territorio: «Entender las finanzas de tu negocio sin complicarte». No es contabilidad, ERP,
 > POS, CRM, planilla ni facturación electrónica.
 
