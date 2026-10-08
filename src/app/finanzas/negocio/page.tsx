@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Briefcase, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import ContextSwitch from '@/components/business/ContextSwitch';
+import NegocioBanner from '@/components/business/NegocioBanner';
 import { negocioChanged, useNegocio } from '@/components/business/useNegocio';
 import { BUSINESS_KINDS, lastBusinessId } from '@/lib/business';
 import { businessService } from '@/lib/supabaseBusiness';
@@ -59,6 +60,7 @@ function NegocioIndex() {
   return (
     <div className="mx-auto max-w-xl px-4 py-6 text-[#111]">
       <ContextSwitch className="mb-6 lg:hidden" />
+      <NegocioBanner className="mb-6" />
       <div className="rounded-3xl border-[3px] border-[#111] bg-[#FFD83D] p-6 shadow-[5px_5px_0_#111]">
         <span className="grid h-12 w-12 place-items-center rounded-2xl border-[3px] border-[#111] bg-white shadow-[3px_3px_0_#111]">
           <Briefcase className="h-6 w-6" strokeWidth={2.5} />

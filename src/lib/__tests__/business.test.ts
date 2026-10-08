@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   businessIdFromPath,
   businessInsight,
+  monthlyPay,
   nextPayDate,
+  nextWeekday,
   whatsappLink,
   pctChange,
   type BusinessSummary,
@@ -134,5 +136,23 @@ describe('whatsappLink', () => {
     expect(whatsappLink('')).toBeNull();
     expect(whatsappLink(null)).toBeNull();
     expect(whatsappLink('123')).toBeNull();
+  });
+});
+
+describe('nextWeekday', () => {
+  it('returns today or the next date on that weekday', () => {
+    // 2026-10-08 is a Thursday.
+    expect(nextWeekday(4, '2026-10-08')).toBe('2026-10-08');
+    expect(nextWeekday(6, '2026-10-08')).toBe('2026-10-10');
+    expect(nextWeekday(1, '2026-10-08')).toBe('2026-10-12');
+    expect(nextWeekday(3, '2026-12-31')).toBe('2027-01-06');
+  });
+});
+
+describe('monthlyPay', () => {
+  it('converts weekly pay to a month and keeps monthly pay', () => {
+    expect(monthlyPay(300, 'semanal')).toBe(1300);
+    expect(monthlyPay(1501, 'quincenal')).toBe(1501);
+    expect(monthlyPay(1200, null)).toBe(1200);
   });
 });

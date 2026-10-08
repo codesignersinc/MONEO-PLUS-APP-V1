@@ -152,7 +152,29 @@ moneda principal. Cada supuesto se muestra al usuario para que el número sea ve
 - **Retiro / aporte en Personal**: al editar se avisa que la descripción, fecha y nota cambian en
   ambos lados; al eliminar se pide confirmación (también desaparece del negocio).
 - **Equipo quincenal**: dos pagos mensuales recurrentes (mitad el 15 y mitad el último día). El
-  pago semanal llega con la migración de la fase 6.
+  pago semanal llegó con la fase 6 (§12).
 - **Legal**: Términos §6 «MONEO NEGOCIO» (no es servicio contable, tributario ni laboral; datos de
   terceros) y §4 (solo con plan pagado); Privacidad: datos del negocio y de contactos, MONEO+
   como encargado, conservación al eliminar contactos y solicitudes de terceros.
+
+## 12. Fase 6 (hecha) — migración `20261021120000_moneo_negocio_fase6.sql`
+
+- **Crear un negocio exige PLUS pagado también en la base**: `businesses_guard` (ahora SECURITY
+  DEFINER) llama a `user_has_paid_plus(owner)` = `user_has_plus` sin la prueba gratis
+  (`billing_plans.kind = 'trial'`), con los lugares de Duo/Familiar. No se expone al cliente. Los
+  negocios existentes no se tocan.
+- **Pagos semanales**: `pagos.every_days` (7 o 14, solo recurrentes). `mark_pago_paid` no cambia:
+  el trigger `pagos_inherit_context` mueve la siguiente instancia a `payment_date + every_days` y
+  conserva negocio, contacto y frecuencia. Equipo: «Semanal» con día de la semana
+  (`nextWeekday`); el total mensual usa `monthlyPay` (× 52 / 12). La proyección del mes solo
+  cuenta la próxima instancia pendiente (como el resto de recurrentes).
+- **MONEO AUTO hacia el negocio** (sin cambios en la base): en «Registrar», las cuentas del negocio
+  aparecen agrupadas («Negocio · nombre») si hay acceso a NEGOCIO. Con una cuenta del negocio se
+  usan las categorías del negocio, se propone el comercio como proveedor/cliente
+  (`partiesService.ensure`) y se registra con `bizMovementsService.create` (el contexto lo pone la
+  cuenta). La regla de tarjeta recuerda la cuenta del negocio; la de categoría se guarda con la
+  clave `<negocio>:<comercio>` para no mezclarse con las personales. Sin opción de hogar.
+- Portada `BANNER-negocios.jpg` (`NegocioBanner`) en el dashboard, en «Crea tu negocio» y en el
+  candado; se recorta en móviles y no se imprime.
+- Pruebas: `supabase/tests/moneo_negocio_fase6.test.sql` (18) y la base de la fase 1 ahora crea
+  sus usuarios con PLUS pagado.

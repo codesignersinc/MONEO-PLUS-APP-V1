@@ -3,6 +3,7 @@ import { DataError, toDataError } from '@/lib/dataError';
 import { buildCurrencyFields, buildTransferAmounts, getRateFromMap } from '@/lib/currency';
 import { getFxContext } from '@/lib/supabaseCurrency';
 import { transactionsService, transfersService } from '@/lib/supabaseFinance';
+import { bizMovementsService } from '@/lib/supabaseBusiness';
 import { localDateTimeToISO } from '@/lib/dates';
 import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
 import { isLikelyDuplicate, operationKey } from '@/lib/auto';
@@ -83,6 +84,14 @@ export interface RegisterInput {
   name: string;
   date: string; // YYYY-MM-DD
   time: string | null;
+  // MONEO NEGOCIO: the account is of this business; the category is a business one and the
+  // movement can name a customer or supplier.
+  business?: { id: string; categoryIcon: string; partyId: string | null };
+}
+
+/** Rule key of a merchant's category inside a business (kept apart from personal ones). */
+export function bizMerchantKey(businessId: string, merchant: string): string {
+  return `${businessId}:${merchantKey(merchant)}`.slice(0, 80);
 }
 
 export const autoService = {
@@ -273,10 +282,11 @@ async function createMovement(
     : (input.accountAmount ?? s.amount * getRateFromMap(fx.ratesMap, s.currency, accCurrency));
   if (!(accountAmount > 0))
     throw new DataError('validation', undefined, 'Indica el monto en la moneda de la cuenta.');
-  const cat =
-    CATEGORY_PRESETS.find((c) => c.label === input.categoryLabel) ??
-    CATEGORY_PRESETS.find((c) => c.id === (s.type === 'ingreso' ? 'ingreso' : 'otros'))!;
-  const tx = await transactionsService.create({
+  const cat = input.business
+    ? { label: input.categoryLabel || 'Otros', icon: input.business.categoryIcon }
+    : (CATEGORY_PRESETS.find((c) => c.label === input.categoryLabel) ??
+      CATEGORY_PRESETS.find((c) => c.id === (s.type === 'ingreso' ? 'ingreso' : 'otros'))!);
+  const fields = {
     name: input.name || s.merchant || 'Movimiento',
     type: s.type,
     amount: sign * accountAmount,
@@ -299,7 +309,13 @@ async function createMovement(
       date: input.date,
       original: sameCurrency ? undefined : { amount: sign * s.amount, currency: s.currency },
     }),
-  });
+  };
+  if (input.business) {
+    // The database puts it in the business (its account) and checks the contact.
+    const id = await bizMovementsService.create({ ...fields, partyId: input.business.partyId });
+    return { transaction_id: id };
+  }
+  const tx = await transactionsService.create(fields);
   return { transaction_id: tx.id };
 }
 
@@ -328,7 +344,9 @@ export const rulesService = {
         category: null,
       });
     }
-    const key = merchantKey(s.merchant).slice(0, 80);
+    const key = input.business
+      ? bizMerchantKey(input.business.id, s.merchant)
+      : merchantKey(s.merchant).slice(0, 80);
     if (key && s.type !== 'transferencia' && input.categoryLabel) {
       rows.push({
         rule_type: 'merchant',
