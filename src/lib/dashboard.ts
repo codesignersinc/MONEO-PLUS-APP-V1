@@ -6,6 +6,7 @@
 import type { BudgetCategory, SavingsGoal, Subscription, Transaction } from '@/lib/financeStore';
 import type { PagoEntry } from '@/lib/supabaseObligations';
 import { getRateFromMap } from '@/lib/currency';
+import { monthNames } from '@/lib/format';
 
 export type PeriodKind = 'mes' | 'trimestre' | 'anio' | 'custom';
 
@@ -21,20 +22,7 @@ export interface Period {
   compareLabel: string;
 }
 
-export const MONTH_NAMES = [
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
-  'julio',
-  'agosto',
-  'septiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-];
+export const MONTH_NAMES = monthNames('long');
 export const MONTHS_SHORT = MONTH_NAMES.map((m) => m.slice(0, 3));
 
 const pad = (n: number) => String(n).padStart(2, '0');

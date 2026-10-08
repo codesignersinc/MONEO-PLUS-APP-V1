@@ -4,12 +4,13 @@ import { Check, Copy, Crown, Link2, Share2, Users } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { packService, type MyPack } from '@/lib/billing';
+import { APP_LOCALE } from '@/lib/locale';
 
 // Duo / Familiar: the payer invites people with a single-use link and manages the seats;
 // a member sees whose pack they are in and can leave. Nobody sees anybody's finances.
 
 const fmt = (iso: string) =>
-  new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  new Date(iso).toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'short' });
 
 export default function PackPanel({
   pack,

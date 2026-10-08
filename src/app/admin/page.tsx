@@ -17,6 +17,7 @@ import MoneoLogo from '@/components/ui/MoneoLogo';
 import LoadError from '@/components/ui/LoadError';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminService, type AdminUserRow } from '@/lib/supabaseAdmin';
+import { APP_LOCALE } from '@/lib/locale';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -55,7 +56,7 @@ function statusOf(u: AdminUserRow, now: number): Status {
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('es-PE', {
+  return new Date(iso).toLocaleDateString(APP_LOCALE, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

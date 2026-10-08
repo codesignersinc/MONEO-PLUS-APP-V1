@@ -14,21 +14,9 @@ import {
   type JuntaCycle,
   type JuntaTurn,
 } from '@/lib/supabaseJuntas';
+import { formatMoney, monthNames } from '@/lib/format';
 
-const MONTHS_FULL = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+const MONTHS_FULL = monthNames('long', { capitalize: true });
 
 const WHEEL_COLORS = [
   '#FFD43B',
@@ -46,7 +34,7 @@ const WHEEL_COLORS = [
 ];
 
 function fmtAmount(n: number) {
-  return 'S/ ' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return formatMoney(n);
 }
 
 function pickWinnerFromSeed(seed: string, count: number): number {

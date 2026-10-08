@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import type { Notification, CreateNotificationParams } from '@/types/notifications';
 import { authRequired, toDataError } from '@/lib/dataError';
+import { monthNames } from '@/lib/format';
 
 // ── Row → camelCase ──────────────────────────────────────────────────────────
 function rowToNotification(row: Record<string, unknown>): Notification {
@@ -155,20 +156,7 @@ export function formatNotificationTime(dateStr: string): string {
 
   // Older: show date
   const day = date.getDate();
-  const months = [
-    'ene',
-    'feb',
-    'mar',
-    'abr',
-    'may',
-    'jun',
-    'jul',
-    'ago',
-    'sep',
-    'oct',
-    'nov',
-    'dic',
-  ];
+  const months = monthNames('short');
   const month = months[date.getMonth()];
   return `${day} ${month}`;
 }

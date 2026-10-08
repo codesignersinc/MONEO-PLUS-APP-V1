@@ -24,6 +24,7 @@ import { getCurrencyInfo, CURRENCIES, getDefaultRate } from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
 import { adminService } from '@/lib/supabaseAdmin';
 import CompanionDevices from '@/components/companion/CompanionDevices';
+import { APP_LOCALE } from '@/lib/locale';
 
 export default function ConfiguracionPage() {
   const { user, signOut } = useAuth();
@@ -182,7 +183,7 @@ export default function ConfiguracionPage() {
 
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : 'U';
   const memberSince = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString('es-PE', {
+    ? new Date(user.created_at).toLocaleDateString(APP_LOCALE, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',

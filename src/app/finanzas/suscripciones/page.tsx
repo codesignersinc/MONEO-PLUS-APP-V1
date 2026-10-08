@@ -30,6 +30,8 @@ import {
 import SubscriptionServicePicker from '@/components/finance/SubscriptionServicePicker';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { useDataChanged } from '@/lib/dataSync';
+import { currencySymbol, formatMoney } from '@/lib/format';
+import { APP_LOCALE } from '@/lib/locale';
 
 const SUB_CATEGORIES = [
   'Entretenimiento',
@@ -56,12 +58,12 @@ function computeStatus(nextPaymentDate: string | null): 'pending' | 'overdue' {
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
   const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function monthLabel(yyyyMm: string): string {
   const d = new Date(yyyyMm + '-01T00:00:00');
-  const label = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+  const label = d.toLocaleDateString(APP_LOCALE, { month: 'long', year: 'numeric' });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -432,16 +434,16 @@ export default function SuscripcionesPage() {
             <RefreshCcw className="w-4 h-4 text-purple-500" strokeWidth={1.75} />
             <p className="text-sm text-gray-500">Gasto mensual en suscripciones</p>
           </div>
-          <p className="text-3xl font-black text-black">S/ {monthlyTotal.toFixed(2)}</p>
+          <p className="text-3xl font-black text-black">{formatMoney(monthlyTotal)}</p>
           <p className="text-sm text-gray-500 mt-1">
             Proyección anual:{' '}
-            <span className="font-semibold text-black">S/ {annualProjection.toFixed(2)}</span>
+            <span className="font-semibold text-black">{formatMoney(annualProjection)}</span>
           </p>
           {month.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
                 <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
-                Pagado S/ {paidTotal.toFixed(2)} de S/ {monthTotal.toFixed(2)}
+                Pagado {formatMoney(paidTotal)} de {formatMoney(monthTotal)}
               </span>
               {overdueCount > 0 && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">
@@ -511,7 +513,7 @@ export default function SuscripcionesPage() {
                         </p>
                       </div>
                       <span className="text-sm font-black text-green-700 flex-shrink-0">
-                        S/ {row.sub.amount.toFixed(2)}
+                        {formatMoney(row.sub.amount)}
                       </span>
                       <CheckCircle2
                         className="w-7 h-7 text-green-600 flex-shrink-0"
@@ -540,7 +542,7 @@ export default function SuscripcionesPage() {
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <span className="text-sm font-black text-black mr-1">
-                          S/ {row.sub.amount.toFixed(2)}
+                          {formatMoney(row.sub.amount)}
                         </span>
                         <button
                           onClick={() => openPay(row.sub)}
@@ -587,7 +589,7 @@ export default function SuscripcionesPage() {
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <span className="text-sm font-black text-gray-500 mr-1">
-                      S/ {sub.amount.toFixed(2)}
+                      {formatMoney(sub.amount)}
                     </span>
                     {manageButtons(sub)}
                   </div>
@@ -619,7 +621,7 @@ export default function SuscripcionesPage() {
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <span className="text-sm font-black text-gray-500 mr-1">
-                      S/ {sub.amount.toFixed(2)}
+                      {formatMoney(sub.amount)}
                     </span>
                     {manageButtons(sub)}
                   </div>
@@ -650,7 +652,7 @@ export default function SuscripcionesPage() {
                   Pagar {payingSub.name}
                 </h2>
                 <p className="text-xs font-semibold text-gray-600">
-                  S/ {payingSub.amount.toFixed(2)} · Cuota del{' '}
+                  {formatMoney(payingSub.amount)} · Cuota del{' '}
                   {formatDate(payingSub.nextPaymentDate)}
                 </p>
               </div>
@@ -744,7 +746,7 @@ export default function SuscripcionesPage() {
                 disabled={!payingAccount || paying || payLoading}
                 className="w-full py-3.5 bg-[#FFD43B] border-[3px] border-black rounded-2xl text-base shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:shadow-none active:translate-y-0 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0 text-black font-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)]"
               >
-                {paying ? 'Registrando pago...' : `Pagar S/ ${payingSub.amount.toFixed(2)}`}
+                {paying ? 'Registrando pago...' : `Pagar ${formatMoney(payingSub.amount)}`}
               </button>
             </div>
           </div>
@@ -813,7 +815,7 @@ export default function SuscripcionesPage() {
                   Monto mensual
                 </label>
                 <div className="flex items-center gap-2 px-4 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
-                  <span className="text-black font-black text-sm">S/</span>
+                  <span className="text-black font-black text-sm">{currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.amount}

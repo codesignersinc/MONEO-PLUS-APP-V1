@@ -12,24 +12,12 @@ import {
   type JuntaCycle,
 } from '@/lib/supabaseJuntas';
 import { getErrorMessage } from '@/lib/dataError';
+import { formatMoney, monthNames } from '@/lib/format';
 
-const MONTHS_ES = [
-  'Ene',
-  'Feb',
-  'Mar',
-  'Abr',
-  'May',
-  'Jun',
-  'Jul',
-  'Ago',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dic',
-];
+const MONTHS_ES = monthNames('short', { capitalize: true });
 
 function fmtAmount(n: number) {
-  return 'S/ ' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return formatMoney(n);
 }
 
 function fmtDate(dateStr: string) {

@@ -72,6 +72,8 @@ import ExpenseSheet from '@/components/household/ExpenseSheet';
 import InviteSheet from '@/components/household/InviteSheet';
 import SettingsSheet from '@/components/household/SettingsSheet';
 import SettleSheet from '@/components/household/SettleSheet';
+import { formatMoney } from '@/lib/format';
+import { APP_LOCALE } from '@/lib/locale';
 
 type Tab = 'resumen' | 'gastos' | 'presupuesto' | 'metas' | 'pagos' | 'simulador' | 'movimientos';
 
@@ -93,7 +95,7 @@ const STATUS_LABEL: Record<HouseholdSettlement['status'], string> = {
 };
 
 function fmtDay(ymd: string) {
-  return new Date(ymd + 'T00:00:00').toLocaleDateString('es-PE', {
+  return new Date(ymd + 'T00:00:00').toLocaleDateString(APP_LOCALE, {
     day: 'numeric',
     month: 'short',
   });
@@ -690,7 +692,7 @@ export default function HouseholdView({
           {money(e.baseAmount)}
           {e.currencyCode !== household.baseCurrency && (
             <span className="block text-[11px] font-semibold text-gray-500">
-              {e.currencyCode} {e.amount.toFixed(2)}
+              {formatMoney(e.amount, e.currencyCode)}
             </span>
           )}
         </span>

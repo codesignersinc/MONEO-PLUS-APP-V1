@@ -8,9 +8,10 @@ import {
   type BillingPlan,
   type PlanCode,
 } from '@/lib/billing';
+import { formatMoney } from '@/lib/format';
 
 export function money(n: number): string {
-  return `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatMoney(n);
 }
 
 function PlanCard({

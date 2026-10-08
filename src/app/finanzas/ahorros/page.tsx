@@ -6,13 +6,15 @@ import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
+import { currencySymbol, formatMoney } from '@/lib/format';
+import { APP_LOCALE } from '@/lib/locale';
 
 const GOAL_ICONS = ['🛡️', '✈️', '🚗', '💻', '🏠', '📱', '🎓', '💍', '🐷', '🌟'];
 
 function formatTargetDate(dateStr: string): string {
   if (!dateStr) return '';
   const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export default function AhorrosPage() {
@@ -172,7 +174,7 @@ export default function AhorrosPage() {
               <PiggyBank className="w-5 h-5 text-black" strokeWidth={2} />
               <p className="text-sm font-bold text-gray-500">Total ahorrado</p>
             </div>
-            <p className="text-3xl font-black text-black">S/ {totalSaved.toFixed(2)}</p>
+            <p className="text-3xl font-black text-black">{formatMoney(totalSaved)}</p>
           </div>
         )}
 
@@ -244,12 +246,8 @@ export default function AhorrosPage() {
                     {/* Progress */}
                     <div className="mb-3">
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="font-black text-black">
-                          S/ {goal.current.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                        </span>
-                        <span className="font-bold text-gray-500">
-                          S/ {goal.target.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                        </span>
+                        <span className="font-black text-black">{formatMoney(goal.current)}</span>
+                        <span className="font-bold text-gray-500">{formatMoney(goal.target)}</span>
                       </div>
                       <div className="h-3 bg-gray-100 border-[2px] border-black rounded-full overflow-hidden">
                         <div
@@ -262,10 +260,7 @@ export default function AhorrosPage() {
                     {/* Footer */}
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold text-gray-500">
-                        Faltan S/{' '}
-                        {Math.max(goal.target - goal.current, 0).toLocaleString('es-PE', {
-                          minimumFractionDigits: 2,
-                        })}
+                        Faltan {formatMoney(Math.max(goal.target - goal.current, 0))}
                       </p>
                       {addAmount?.id === goal.id ? (
                         <div className="flex items-center gap-2">
@@ -374,7 +369,7 @@ export default function AhorrosPage() {
                   Monto meta
                 </label>
                 <div className="flex items-center gap-2 px-4 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
-                  <span className="text-black font-black text-sm">S/</span>
+                  <span className="text-black font-black text-sm">{currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.target}
@@ -391,7 +386,7 @@ export default function AhorrosPage() {
                   Monto actual
                 </label>
                 <div className="flex items-center gap-2 px-4 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
-                  <span className="text-black font-black text-sm">S/</span>
+                  <span className="text-black font-black text-sm">{currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.current}

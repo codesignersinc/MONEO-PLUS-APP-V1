@@ -18,6 +18,7 @@ import type { Account } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
+import { currencySymbol, formatMoney } from '@/lib/format';
 
 type PaymentTab = 'yape' | 'plin' | 'transferencia' | 'efectivo';
 
@@ -362,7 +363,7 @@ export default function AportePage() {
           juntaId,
           actorMemberId: myMember.id,
           eventType: 'aporte_registrado',
-          description: `${myMember.displayName} registró un aporte de S/ ${parseFloat(amount).toFixed(2)} vía ${activeTab}${isEfectivo ? ' (pendiente de aprobación)' : ''}`,
+          description: `${myMember.displayName} registró un aporte de ${formatMoney(parseFloat(amount))} vía ${activeTab}${isEfectivo ? ' (pendiente de aprobación)' : ''}`,
           metadata: {
             amount: parseFloat(amount),
             method: activeTab,
@@ -410,8 +411,8 @@ export default function AportePage() {
           </h2>
           <p className="text-gray-500 text-sm font-medium mb-6">
             {isEfectivo
-              ? `Tu aporte de S/ ${parseFloat(amount).toFixed(2)} en efectivo está pendiente de aprobación por el receptor.`
-              : `Tu aporte de S/ ${parseFloat(amount).toFixed(2)} ha sido registrado correctamente.`}
+              ? `Tu aporte de ${formatMoney(parseFloat(amount))} en efectivo está pendiente de aprobación por el receptor.`
+              : `Tu aporte de ${formatMoney(parseFloat(amount))} ha sido registrado correctamente.`}
           </p>
           <button
             onClick={() => router.push(`/finanzas/juntas/${juntaId}`)}
@@ -477,7 +478,7 @@ export default function AportePage() {
                     Monto del aporte
                   </p>
                   <p className="text-2xl font-black text-[#FFD43B]">
-                    S/ {junta.contributionAmount.toFixed(2)}
+                    {formatMoney(junta.contributionAmount)}
                   </p>
                 </div>
                 <div className="text-right">
@@ -485,7 +486,7 @@ export default function AportePage() {
                     Recibirá
                   </p>
                   <p className="text-lg font-black text-white">
-                    S/ {(junta.contributionAmount * junta.maxParticipants).toFixed(2)}
+                    {formatMoney(junta.contributionAmount * junta.maxParticipants)}
                   </p>
                 </div>
               </div>
@@ -500,7 +501,7 @@ export default function AportePage() {
           </label>
           <div className="mt-1.5 relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400 text-sm">
-              S/
+              {currencySymbol()}
             </span>
             <input
               type="number"

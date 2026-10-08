@@ -23,6 +23,7 @@ import {
   FormWrapper,
   type QuickFormProps,
 } from '@/components/finance/quickForms/shared';
+import { currencySymbol } from '@/lib/format';
 
 export default function IngresoForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
@@ -86,7 +87,7 @@ export default function IngresoForm({ onClose, onSuccess }: QuickFormProps) {
     <FormWrapper title="Nuevo Ingreso" emoji="➕" accentBg="bg-[#e1c2fd]" onClose={onClose}>
       <div className="space-y-5">
         <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Sueldo enero" />
-        <AmountField label="Monto (S/)" value={amount} onChange={setAmount} />
+        <AmountField label={`Monto (${currencySymbol()})`} value={amount} onChange={setAmount} />
         <div>
           <span className="sr-only">Estado</span>
           <div className="flex gap-2">

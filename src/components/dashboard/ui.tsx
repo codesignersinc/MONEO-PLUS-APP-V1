@@ -19,7 +19,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { getCurrencyInfo } from '@/lib/currency';
+import { formatMoney } from '@/lib/format';
 
 // Home building blocks (MONEO 3D retro pop): cream page, white cards with a 2px black
 // border and a short hard shadow, big numbers.
@@ -39,17 +39,10 @@ export const card =
 export const interactive =
   'hover:-translate-y-px hover:shadow-[0_4px_0_#111] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#75B8FF] motion-reduce:hover:translate-y-0';
 
+// Money formatter bound to a currency (Inicio, Hogar, Mini…); see src/lib/format.ts.
 export function moneyFormatter(currency: string) {
-  const symbol = getCurrencyInfo(currency).symbol;
-  return (n: number, opts: { sign?: boolean; decimals?: boolean } = {}) => {
-    const decimals = opts.decimals ?? true;
-    const abs = Math.abs(n).toLocaleString('en-US', {
-      minimumFractionDigits: decimals ? 2 : 0,
-      maximumFractionDigits: decimals ? 2 : 0,
-    });
-    const sign = opts.sign ? (n < 0 ? '- ' : '+ ') : n < 0 ? '- ' : '';
-    return `${sign}${symbol} ${abs}`;
-  };
+  return (n: number, opts: { sign?: boolean; decimals?: boolean } = {}) =>
+    formatMoney(n, currency, opts);
 }
 export type Money = ReturnType<typeof moneyFormatter>;
 

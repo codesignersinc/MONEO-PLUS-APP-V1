@@ -1,3 +1,4 @@
+import { monthNames } from '@/lib/format';
 // MONEO HOGAR: pure calculations (no data access). Amounts are in the household currency
 // (`baseAmount` of each expense); percentages have up to 3 decimals and always add up to
 // exactly 100; money is rounded to cents and the last share takes the rounding.
@@ -156,20 +157,7 @@ export function shiftMonth(key: string, delta: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-const MONTHS = [
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
-  'julio',
-  'agosto',
-  'setiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-];
+const MONTHS = monthNames('long');
 
 export function monthLabel(key: string): string {
   const [y, m] = key.split('-').map(Number);

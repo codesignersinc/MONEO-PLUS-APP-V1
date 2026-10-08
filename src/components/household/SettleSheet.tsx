@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { AccountSelect, SubmitButton } from '@/components/finance/formKit';
 import { accountsService } from '@/lib/supabaseFinance';
 import { getFxContext, type FxContext } from '@/lib/supabaseCurrency';
-import { getCurrencyInfo, getRateFromMap } from '@/lib/currency';
+import { getRateFromMap } from '@/lib/currency';
 import { todayLocal } from '@/lib/dates';
 import { getErrorMessage } from '@/lib/dataError';
 import type { Account } from '@/lib/financeStore';
@@ -16,6 +16,7 @@ import {
 } from '@/lib/supabaseHousehold';
 import { ErrorNote, Sheet } from '@/components/household/ui';
 import { moneyFormatter } from '@/components/dashboard/ui';
+import { formatMoney } from '@/lib/format';
 
 // One side of a settlement confirms it: the payer with an expense in their own account,
 // the receiver with an income in theirs (or without a movement, if it happened outside
@@ -136,8 +137,7 @@ export default function SettleSheet({
           />
           {account && accCurrency !== household.baseCurrency && (
             <p className="-mt-2 text-xs font-bold text-gray-600">
-              Se registrará {getCurrencyInfo(accCurrency).symbol} {accAmount.toFixed(2)} en tu
-              cuenta en {accCurrency}.
+              Se registrará {formatMoney(accAmount, accCurrency)} en tu cuenta en {accCurrency}.
             </p>
           )}
         </>

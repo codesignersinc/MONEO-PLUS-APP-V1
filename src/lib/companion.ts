@@ -1,6 +1,7 @@
+import { monthNames } from '@/lib/format';
 // Pure texts for MONEO Mini / widgets built from the MONEO Core summary.
 
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MONTHS = monthNames('short');
 
 /** "20 oct" from YYYY-MM-DD. */
 export function shortDate(ymd: string): string {

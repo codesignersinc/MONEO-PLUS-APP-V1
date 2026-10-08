@@ -6,6 +6,7 @@ import { normalizeAmountExpression } from '@/lib/amount';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { formatCurrency } from '@/lib/currency';
 import type { Account } from '@/lib/financeStore';
+import { currencySymbol, monthNames } from '@/lib/format';
 
 // Building blocks of the quick-add forms (MONEO 3D retro pop): tall fields with thick black
 // borders, dark text, an icon slot, pastel category chips and a yellow call to action.
@@ -237,7 +238,7 @@ export function evalAmount(expr: string): number | null {
   }
 }
 
-// "Monto (S/)" → "Monto": the currency already shows inside the field.
+// "Monto ({currencySymbol()})" → "Monto": the currency already shows inside the field.
 export function plainTitle(label: string): string {
   return label.replace(/\s*\([^)]*\)\s*$/, '');
 }
@@ -247,7 +248,7 @@ export function AmountField({
   label,
   value,
   onChange,
-  currency = 'S/',
+  currency = currencySymbol(),
 }: {
   label: string;
   value: string;
@@ -315,7 +316,7 @@ export function AmountField({
   );
 }
 
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
+const MONTHS = monthNames('short');
 
 export function fmtShortDate(ymd: string): string {
   const [y, m, d] = ymd.split('-').map(Number);

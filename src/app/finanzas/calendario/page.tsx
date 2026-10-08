@@ -6,23 +6,11 @@ import type { Transaction, Subscription } from '@/lib/financeStore';
 import LoadError from '@/components/ui/LoadError';
 import { toDataError } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
+import { formatMoney, monthNames } from '@/lib/format';
 
 const DAYS_HEADER = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
-const MONTHS = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+const MONTHS = monthNames('long', { capitalize: true });
 
 interface PagoEntry {
   id: string;
@@ -101,7 +89,7 @@ const KIND_CONFIG: Record<
 };
 
 function formatAmount(amount: number): string {
-  return `S/ ${Math.abs(amount).toFixed(2)}`;
+  return `${formatMoney(Math.abs(amount))}`;
 }
 
 export default function CalendarioPage() {
