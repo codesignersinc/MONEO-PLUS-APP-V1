@@ -7,8 +7,10 @@ export interface Institution {
   image?: string;
   color: string;
   bg: string;
-  /** Digital wallet (Yape, Plin…) rather than a bank. */
+  /** Digital wallet with its own balance (PayPal…) rather than a bank. */
   wallet?: boolean;
+  /** Usual currency of its accounts (PayPal: USD); otherwise the user's. */
+  currency?: string;
 }
 
 export const PERUVIAN_BANKS: Institution[] = [
@@ -71,11 +73,19 @@ export const PERUVIAN_BANKS: Institution[] = [
 ];
 
 // Every institution offered when creating an account (onboarding and Cuentas use the same list).
+// Yape and Plin are not here: they pay from a bank account (Yape → BCP, Plin → Interbank, BBVA…),
+// so an account for them would count the same money twice. They remain payment methods.
 export const PERU_INSTITUTIONS: Institution[] = [
   ...PERUVIAN_BANKS,
   { id: 'pichincha', name: 'Banco Pichincha', color: '#B38F00', bg: '#FFF7CC' },
-  { id: 'yape', name: 'Yape', color: '#742284', bg: '#F1E6F5', wallet: true },
-  { id: 'plin', name: 'Plin', color: '#0089B0', bg: '#E0F7FD', wallet: true },
+  {
+    id: 'paypal',
+    name: 'PayPal',
+    color: '#003087',
+    bg: '#E8F0FE',
+    wallet: true,
+    currency: 'USD',
+  },
 ];
 
 export interface ServiceOption {
@@ -195,8 +205,7 @@ const BANK_ALIASES: Record<string, string[]> = {
   ripley: ['ripley'],
   falabella: ['falabella'],
   pichincha: ['pichincha'],
-  yape: ['yape'],
-  plin: ['plin'],
+  paypal: ['paypal'],
 };
 
 // Bank matching any of the texts (e.g. institution, then account name).

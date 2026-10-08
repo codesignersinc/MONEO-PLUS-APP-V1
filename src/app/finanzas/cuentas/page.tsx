@@ -222,6 +222,7 @@ export default function CuentasPage() {
       ...f,
       institution: bank.name,
       name: f.name || bank.name,
+      currency: bank.currency ?? f.currency,
       color: bank.color,
       bgColor: bank.bg,
     }));
@@ -570,7 +571,7 @@ export default function CuentasPage() {
                     type="text"
                     value={form.institution}
                     onChange={(e) => setForm((f) => ({ ...f, institution: e.target.value }))}
-                    placeholder="Institución (ej: BCP, Interbank, Yape)"
+                    placeholder="Institución (ej: BCP, Interbank, PayPal)"
                     className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                   {!editingAcc && (

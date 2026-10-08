@@ -112,7 +112,7 @@ type AccountKind = 'banco' | 'credito' | 'digital' | 'efectivo';
 const KINDS: { id: AccountKind; label: string; hint: string; emoji: string }[] = [
   { id: 'banco', label: 'Cuenta bancaria', hint: 'Ahorros o sueldo', emoji: '🏦' },
   { id: 'credito', label: 'Tarjeta', hint: 'Crédito o débito', emoji: '💳' },
-  { id: 'digital', label: 'Billetera digital', hint: 'Yape, Plin…', emoji: '📱' },
+  { id: 'digital', label: 'Billetera digital', hint: 'PayPal…', emoji: '📱' },
   { id: 'efectivo', label: 'Efectivo', hint: 'Lo que tienes a la mano', emoji: '💵' },
 ];
 
@@ -122,6 +122,7 @@ interface BankChoice {
   color: string;
   bg: string;
   wallet?: boolean;
+  currency?: string;
 }
 
 const BANKS: BankChoice[] = PERU_INSTITUTIONS.map((b) => ({
@@ -130,10 +131,11 @@ const BANKS: BankChoice[] = PERU_INSTITUTIONS.map((b) => ({
   color: b.color,
   bg: b.bg,
   wallet: b.wallet,
+  currency: b.currency,
 }));
 
 // Where MONEO AUTO reads bank emails today (captures and voice work with any bank).
-const AUTO_BANKS = ['bcp', 'bbva', 'interbank', 'yape'];
+const AUTO_BANKS = ['bcp', 'bbva', 'interbank'];
 
 const CURRENCIES = [
   { code: 'PEN', label: 'Soles', symbol: 'S/' },
@@ -1103,6 +1105,8 @@ function MoneySteps({
     const base = draft.kind === 'efectivo' ? 'Efectivo' : (draft.bank?.name ?? 'Mi cuenta');
     setForm((f) => ({
       ...f,
+      // PayPal and other wallets that usually hold dollars start in their currency.
+      currency: draft.bank?.currency ?? f.currency,
       name:
         f.name ||
         (draft.kind === 'efectivo'
