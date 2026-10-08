@@ -54,7 +54,7 @@ describe('parseSummary', () => {
         {
           id: 'x',
           name: 'Taxi',
-          icon: '🚕',
+          icon: 'taxi',
           type: 'gasto',
           amount: '-30',
           currency: 'PEN',

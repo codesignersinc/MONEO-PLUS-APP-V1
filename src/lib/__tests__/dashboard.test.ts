@@ -18,7 +18,7 @@ const tx = (p: Partial<Transaction>): Transaction => ({
   id: String(++n),
   name: 'x',
   category: 'Comida',
-  categoryIcon: '🍔',
+  categoryIcon: 'food',
   account: 'BCP',
   accountId: 'a',
   amount: -10,

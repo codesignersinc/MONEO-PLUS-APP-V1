@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { TriangleAlert } from 'lucide-react';
 import { getErrorMessage } from '@/lib/dataError';
 
 interface LoadErrorProps {
@@ -18,9 +19,7 @@ export default function LoadError({ what, error, onRetry, className = '' }: Load
       role="alert"
       className={`rounded-2xl border-[3px] border-black bg-[#FEE2E2] shadow-[4px_4px_0px_#000] p-5 text-center ${className}`}
     >
-      <div className="text-3xl mb-2" aria-hidden="true">
-        ⚠️
-      </div>
+      <TriangleAlert className="mx-auto mb-2 h-8 w-8 text-black" strokeWidth={2.5} aria-hidden />
       <p className="font-black text-black text-base mb-1">No pudimos cargar {what}</p>
       <p className="text-sm text-black/70 mb-4">{getErrorMessage(error)}</p>
       {onRetry && (

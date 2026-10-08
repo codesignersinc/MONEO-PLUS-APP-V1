@@ -12,6 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { PagoEntry } from '@/lib/supabaseObligations';
+import Glyph from '@/components/ui/Glyph';
 
 // A payment in the list. Its actions open BELOW the row: on hover with a mouse (desktop)
 // and with a tap on touch screens, so they are always reachable on the phone too.
@@ -97,8 +98,8 @@ export default function PagoRow({
         aria-label={`${entry.name}: ${open ? 'ocultar' : 'ver'} opciones`}
         className="flex w-full cursor-pointer items-center gap-2.5 rounded-[20px] px-3 py-3 text-left sm:gap-3 sm:px-4 sm:py-3.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#75B8FF]"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[2px] border-black bg-white text-lg sm:h-11 sm:w-11 sm:text-xl">
-          {entry.categoryIcon}
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[2px] border-black bg-white text-[#111] sm:h-11 sm:w-11">
+          <Glyph name={entry.categoryIcon} fallback="receipt" className="h-5 w-5" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-center gap-1.5">

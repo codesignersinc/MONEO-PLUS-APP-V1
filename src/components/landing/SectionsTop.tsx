@@ -6,6 +6,7 @@ import {
   BarChart3,
   Bell,
   CalendarDays,
+  Check,
   CircleDollarSign,
   Coins,
   CreditCard,
@@ -82,9 +83,12 @@ export function Hero() {
             </TrackLink>
           </div>
           <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 font-sans text-[14px] font-medium text-[#333]">
-            <li>✓ Gratis</li>
-            <li>✓ En soles y otras monedas</li>
-            <li>✓ Sin conectar tu banco</li>
+            {['Gratis', 'En soles y otras monedas', 'Sin conectar tu banco'].map((t) => (
+              <li key={t} className="flex items-center gap-1.5">
+                <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                {t}
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -260,7 +264,7 @@ export function Solution() {
           <div className="relative">
             <Phone>
               <div className="space-y-3 px-4 pb-6 pt-4">
-                <p className="font-poppins text-[15px] font-extrabold">Hola 👋</p>
+                <p className="font-poppins text-[15px] font-extrabold">Hola</p>
                 <div className="rounded-2xl border-2 border-[#111] bg-[#FFD83D] p-4">
                   <p className="text-[11px] font-medium">Disponible hoy</p>
                   <p className="font-poppins text-[26px] font-extrabold leading-tight">S/ 1,250</p>
@@ -317,8 +321,8 @@ export function Solution() {
               'Recordatorios de pagos y suscripciones',
             ].map((t) => (
               <li key={t} className="flex items-start gap-3">
-                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 border-[#111] bg-[#FFF9EC] text-[13px] font-extrabold">
-                  ✓
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 border-[#111] bg-[#FFF9EC]">
+                  <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
                 </span>
                 {t}
               </li>

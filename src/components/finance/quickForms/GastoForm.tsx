@@ -38,7 +38,7 @@ export default function GastoForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Comida');
-  const [categoryIcon, setCategoryIcon] = useState('🍽️');
+  const [categoryIcon, setCategoryIcon] = useState('food');
   const [date, setDate] = useState(todayLocal());
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -66,7 +66,7 @@ export default function GastoForm({ onClose, onSuccess }: QuickFormProps) {
   const handleCat = (label: string) => {
     const c = EXPENSE_CATEGORIES.find((x) => x.label === label);
     setCategory(label);
-    setCategoryIcon(c?.icon || '📦');
+    setCategoryIcon(c?.icon || 'package');
   };
 
   const handleSave = async () => {
@@ -170,7 +170,7 @@ export default function GastoForm({ onClose, onSuccess }: QuickFormProps) {
   return (
     <FormWrapper
       title="Nuevo Gasto"
-      emoji="🧾"
+      icon="receipt"
       accentBg="bg-[#fde899]"
       onClose={() => setMode('choose')}
     >

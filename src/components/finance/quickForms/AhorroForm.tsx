@@ -9,12 +9,14 @@ import {
   type QuickFormProps,
 } from '@/components/finance/quickForms/shared';
 import { currencySymbol } from '@/lib/format';
+import Glyph from '@/components/ui/Glyph';
+import { glyphKey } from '@/lib/glyphs';
 
 export default function AhorroForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
   const [current, setCurrent] = useState('0');
-  const [icon, setIcon] = useState('🐷');
+  const [icon, setIcon] = useState('piggy');
   const [targetDate, setTargetDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -45,7 +47,12 @@ export default function AhorroForm({ onClose, onSuccess }: QuickFormProps) {
   };
 
   return (
-    <FormWrapper title="Nueva Meta de Ahorro" emoji="🐷" accentBg="bg-[#BBF7D0]" onClose={onClose}>
+    <FormWrapper
+      title="Nueva Meta de Ahorro"
+      icon="piggy"
+      accentBg="bg-[#BBF7D0]"
+      onClose={onClose}
+    >
       <div className="space-y-5">
         <TextField
           label="Nombre de la meta"
@@ -73,9 +80,11 @@ export default function AhorroForm({ onClose, onSuccess }: QuickFormProps) {
               <button
                 key={ic}
                 onClick={() => setIcon(ic)}
-                className={`w-9 h-9 rounded-xl border-2 text-lg transition-all ${icon === ic ? 'border-black bg-black' : 'border-gray-200'}`}
+                aria-label={`Ícono ${ic}`}
+                aria-pressed={glyphKey(icon) === ic}
+                className={`grid w-9 h-9 place-items-center rounded-xl border-2 transition-all ${glyphKey(icon) === ic ? 'border-black bg-black text-white' : 'border-gray-200 text-[#111]'}`}
               >
-                {ic}
+                <Glyph name={ic} className="h-5 w-5" />
               </button>
             ))}
           </div>

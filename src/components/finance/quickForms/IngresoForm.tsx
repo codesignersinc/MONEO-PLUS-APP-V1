@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
+import { Check, Hourglass } from 'lucide-react';
 import { todayLocal } from '@/lib/dates';
 import {
   AmountField,
@@ -29,7 +30,7 @@ export default function IngresoForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Salario');
-  const [categoryIcon, setCategoryIcon] = useState('💼');
+  const [categoryIcon, setCategoryIcon] = useState('briefcase');
   const [collectionDate, setCollectionDate] = useState(todayLocal());
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<'pendiente' | 'cobrado'>('cobrado');
@@ -41,7 +42,7 @@ export default function IngresoForm({ onClose, onSuccess }: QuickFormProps) {
   const handleCat = (label: string) => {
     const c = INCOME_CATEGORIES.find((x) => x.label === label);
     setCategory(label);
-    setCategoryIcon(c?.icon || '💰');
+    setCategoryIcon(c?.icon || 'coins');
   };
 
   const handleSave = async () => {
@@ -84,7 +85,7 @@ export default function IngresoForm({ onClose, onSuccess }: QuickFormProps) {
   };
 
   return (
-    <FormWrapper title="Nuevo Ingreso" emoji="➕" accentBg="bg-[#e1c2fd]" onClose={onClose}>
+    <FormWrapper title="Nuevo Ingreso" icon="plus" accentBg="bg-[#e1c2fd]" onClose={onClose}>
       <div className="space-y-5">
         <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Sueldo enero" />
         <AmountField label={`Monto (${currencySymbol()})`} value={amount} onChange={setAmount} />
@@ -95,9 +96,14 @@ export default function IngresoForm({ onClose, onSuccess }: QuickFormProps) {
               <button
                 key={s}
                 onClick={() => setStatus(s)}
-                className={`flex-1 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}
+                className={`flex flex-1 items-center justify-center gap-1.5 py-2 rounded-xl border-2 text-xs font-bold transition-all ${status === s ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500'}`}
               >
-                {s === 'cobrado' ? '✅ Cobrado' : '⏳ Por cobrar'}
+                {s === 'cobrado' ? (
+                  <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                ) : (
+                  <Hourglass className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                )}
+                {s === 'cobrado' ? 'Cobrado' : 'Por cobrar'}
               </button>
             ))}
           </div>

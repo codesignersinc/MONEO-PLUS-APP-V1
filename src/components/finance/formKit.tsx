@@ -6,6 +6,7 @@ import { normalizeAmountExpression } from '@/lib/amount';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { formatCurrency } from '@/lib/currency';
 import type { Account } from '@/lib/financeStore';
+import Glyph from '@/components/ui/Glyph';
 import { currencySymbol, monthNames } from '@/lib/format';
 
 // Building blocks of the quick-add forms (MONEO 3D retro pop): tall fields with thick black
@@ -51,12 +52,13 @@ export function Field({ label, children }: { label: string; children: React.Reac
 export function FormHero({
   title,
   subtitle,
-  emoji,
+  icon,
   tone,
 }: {
   title: string;
   subtitle: string;
-  emoji: string;
+  /** Glyph key (or legacy emoji) drawn in the hero tile. */
+  icon: string;
   tone: string;
 }) {
   return (
@@ -65,7 +67,7 @@ export function FormHero({
       style={{ background: tone }}
     >
       <span className="grid h-16 w-14 shrink-0 -rotate-6 place-items-center rounded-2xl border-[3px] border-[#111] bg-white text-3xl shadow-[2px_2px_0_#111]">
-        {emoji}
+        <Glyph name={icon} className="h-7 w-7 text-[#111]" />
       </span>
       <div className="min-w-0">
         <h3 className="whitespace-nowrap text-[22px] font-black leading-tight text-[#111]">
@@ -162,8 +164,8 @@ export function TextField({
     <Field label={label}>
       <div className="relative">
         {icon && (
-          <span className="pointer-events-none absolute left-2.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl bg-[#FFE1DB] text-xl">
-            {icon}
+          <span className="pointer-events-none absolute left-2.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl bg-[#FFE1DB] text-[#111]">
+            <Glyph name={icon} className="h-5 w-5" />
           </span>
         )}
         {value && <Tag left={icon ? 56 : undefined}>{label}</Tag>}
@@ -411,7 +413,7 @@ export function CategoryChips({
               className={`flex min-h-[46px] shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-2xl border-2 px-3.5 text-[15px] font-black text-[#111] transition-transform active:scale-95 ${on ? 'border-[#111] bg-[#FFD83D] shadow-[0_3px_0_#111]' : 'border-transparent'}`}
               style={on ? undefined : { background: CHIP_TONES[i % CHIP_TONES.length] }}
             >
-              <span className="text-xl leading-none">{c.icon}</span>
+              <Glyph name={c.icon} className="h-5 w-5 shrink-0 text-[#111]" />
               {c.label}
             </button>
           );

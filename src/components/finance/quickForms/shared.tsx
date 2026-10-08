@@ -13,39 +13,50 @@ import {
 import { currencySymbol } from '@/lib/format';
 
 export const EXPENSE_CATEGORIES = [
-  { label: 'Comida', icon: '🍽️' },
-  { label: 'Transporte', icon: '🚗' },
-  { label: 'Salud', icon: '💊' },
-  { label: 'Entretenimiento', icon: '🎬' },
-  { label: 'Ropa', icon: '👕' },
-  { label: 'Hogar', icon: '🏠' },
-  { label: 'Educación', icon: '📚' },
-  { label: 'Otro', icon: '📦' },
+  { label: 'Comida', icon: 'food' },
+  { label: 'Transporte', icon: 'car' },
+  { label: 'Salud', icon: 'pill' },
+  { label: 'Entretenimiento', icon: 'film' },
+  { label: 'Ropa', icon: 'shirt' },
+  { label: 'Hogar', icon: 'home' },
+  { label: 'Educación', icon: 'book' },
+  { label: 'Otro', icon: 'package' },
 ];
 
 export const INCOME_CATEGORIES = [
-  { label: 'Salario', icon: '💼' },
-  { label: 'Freelance', icon: '💻' },
-  { label: 'Negocio', icon: '🏪' },
-  { label: 'Inversión', icon: '📈' },
-  { label: 'Alquiler', icon: '🏠' },
-  { label: 'Bono', icon: '🎁' },
-  { label: 'Comisión', icon: '🤝' },
-  { label: 'Otro', icon: '💰' },
+  { label: 'Salario', icon: 'briefcase' },
+  { label: 'Freelance', icon: 'laptop' },
+  { label: 'Negocio', icon: 'store' },
+  { label: 'Inversión', icon: 'trending' },
+  { label: 'Alquiler', icon: 'home' },
+  { label: 'Bono', icon: 'gift' },
+  { label: 'Comisión', icon: 'handshake' },
+  { label: 'Otro', icon: 'coins' },
 ];
 
 export const PAGO_CATEGORIES = [
-  { label: 'Servicios', icon: '💡' },
-  { label: 'Alquiler', icon: '🏠' },
-  { label: 'Alimentación', icon: '🛒' },
-  { label: 'Transporte', icon: '🚗' },
-  { label: 'Salud', icon: '💊' },
-  { label: 'Educación', icon: '📚' },
-  { label: 'Entretenimiento', icon: '🎬' },
-  { label: 'Otro', icon: '📦' },
+  { label: 'Servicios', icon: 'bulb' },
+  { label: 'Alquiler', icon: 'home' },
+  { label: 'Alimentación', icon: 'cart' },
+  { label: 'Transporte', icon: 'car' },
+  { label: 'Salud', icon: 'pill' },
+  { label: 'Educación', icon: 'book' },
+  { label: 'Entretenimiento', icon: 'film' },
+  { label: 'Otro', icon: 'package' },
 ];
 
-export const GOAL_ICONS = ['🐷', '🛡️', '✈️', '🚗', '💻', '🏠', '📱', '🎓', '💍', '🌟'];
+export const GOAL_ICONS = [
+  'piggy',
+  'shield',
+  'plane',
+  'car',
+  'laptop',
+  'home',
+  'phone',
+  'graduation',
+  'gem',
+  'star',
+];
 
 // Maps the interpreter's category (CATEGORY_PRESETS labels) to the quick-add expense ones.
 export const EXPENSE_CATEGORY_ALIASES: Record<string, string> = {
@@ -67,13 +78,14 @@ export const FORM_SUBTITLES: Record<string, string> = {
 
 export function FormWrapper({
   title,
-  emoji,
+  icon,
   accentBg,
   onClose,
   children,
 }: {
   title: string;
-  emoji: string;
+  /** Glyph key for the hero tile. */
+  icon: string;
   accentBg: string;
   onClose: () => void;
   children: React.ReactNode;
@@ -91,7 +103,7 @@ export function FormWrapper({
       <FormHero
         title={title.charAt(0) + title.slice(1).toLowerCase()}
         subtitle={FORM_SUBTITLES[title] ?? ''}
-        emoji={emoji}
+        icon={icon}
         tone={tone}
       />
       {children}

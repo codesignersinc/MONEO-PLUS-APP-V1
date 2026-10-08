@@ -163,20 +163,20 @@ export function generateId(): string {
 // ─── Category presets ─────────────────────────────────────────────────────────
 
 export const CATEGORY_PRESETS = [
-  { id: 'comida', label: 'Comida', icon: '🍽️', color: '#D97706' },
-  { id: 'transporte', label: 'Transporte', icon: '🚗', color: '#2563EB' },
-  { id: 'vivienda', label: 'Vivienda', icon: '🏠', color: '#DC2626' },
-  { id: 'salud', label: 'Salud', icon: '💊', color: '#16A34A' },
-  { id: 'entretenimiento', label: 'Entretenimiento', icon: '🎬', color: '#7C3AED' },
-  { id: 'suscripciones', label: 'Suscripciones', icon: '📱', color: '#7C3AED' },
-  { id: 'educacion', label: 'Educación', icon: '📚', color: '#0D9488' },
-  { id: 'supermercado', label: 'Supermercado', icon: '🛒', color: '#D97706' },
-  { id: 'servicios', label: 'Servicios', icon: '💡', color: '#64748B' },
-  { id: 'hogar', label: 'Hogar', icon: '🛋️', color: '#B45309' },
-  { id: 'hijos', label: 'Hijos', icon: '🧸', color: '#DB2777' },
-  { id: 'seguros', label: 'Seguros', icon: '🛡️', color: '#0369A1' },
-  { id: 'ingreso', label: 'Ingreso', icon: '💼', color: '#16A34A' },
-  { id: 'otros', label: 'Otros', icon: '📦', color: '#64748B' },
+  { id: 'comida', label: 'Comida', icon: 'food', color: '#D97706' },
+  { id: 'transporte', label: 'Transporte', icon: 'car', color: '#2563EB' },
+  { id: 'vivienda', label: 'Vivienda', icon: 'home', color: '#DC2626' },
+  { id: 'salud', label: 'Salud', icon: 'pill', color: '#16A34A' },
+  { id: 'entretenimiento', label: 'Entretenimiento', icon: 'film', color: '#7C3AED' },
+  { id: 'suscripciones', label: 'Suscripciones', icon: 'phone', color: '#7C3AED' },
+  { id: 'educacion', label: 'Educación', icon: 'book', color: '#0D9488' },
+  { id: 'supermercado', label: 'Supermercado', icon: 'cart', color: '#D97706' },
+  { id: 'servicios', label: 'Servicios', icon: 'bulb', color: '#64748B' },
+  { id: 'hogar', label: 'Hogar', icon: 'sofa', color: '#B45309' },
+  { id: 'hijos', label: 'Hijos', icon: 'toy', color: '#DB2777' },
+  { id: 'seguros', label: 'Seguros', icon: 'shield', color: '#0369A1' },
+  { id: 'ingreso', label: 'Ingreso', icon: 'briefcase', color: '#16A34A' },
+  { id: 'otros', label: 'Otros', icon: 'package', color: '#64748B' },
 ];
 
 // ─── Legacy localStorage helpers (kept for backward compat, not used with Supabase) ──

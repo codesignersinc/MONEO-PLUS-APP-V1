@@ -5,12 +5,14 @@ import { getErrorMessage } from '@/lib/dataError';
 import { AmountField, DateField, TextField } from '@/components/finance/formKit';
 import { FormWrapper, type QuickFormProps } from '@/components/finance/quickForms/shared';
 import { currencySymbol } from '@/lib/format';
+import Glyph from '@/components/ui/Glyph';
+import { glyphKey } from '@/lib/glyphs';
 
 export default function SuscripcionForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [nextPaymentDate, setNextPaymentDate] = useState('');
-  const [icon, setIcon] = useState('🎬');
+  const [icon, setIcon] = useState('film');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,7 +47,7 @@ export default function SuscripcionForm({ onClose, onSuccess }: QuickFormProps) 
   };
 
   return (
-    <FormWrapper title="Nueva Suscripción" emoji="📺" accentBg="bg-[#bfdbfe]" onClose={onClose}>
+    <FormWrapper title="Nueva Suscripción" icon="tv" accentBg="bg-[#bfdbfe]" onClose={onClose}>
       <div className="space-y-5">
         <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Netflix" />
         <AmountField
@@ -57,15 +59,19 @@ export default function SuscripcionForm({ onClose, onSuccess }: QuickFormProps) 
         <div>
           <span className="sr-only">Ícono</span>
           <div className="flex flex-wrap gap-2">
-            {['🎬', '🎵', '📡', '☁️', '📱', '🎮', '📚', '🔄'].map((ic) => (
-              <button
-                key={ic}
-                onClick={() => setIcon(ic)}
-                className={`w-9 h-9 rounded-xl border-2 text-lg transition-all ${icon === ic ? 'border-black bg-black' : 'border-gray-200'}`}
-              >
-                {ic}
-              </button>
-            ))}
+            {['film', 'music', 'satellite', 'cloud', 'phone', 'gamepad', 'book', 'repeat'].map(
+              (ic) => (
+                <button
+                  key={ic}
+                  onClick={() => setIcon(ic)}
+                  aria-label={`Ícono ${ic}`}
+                  aria-pressed={glyphKey(icon) === ic}
+                  className={`grid w-9 h-9 place-items-center rounded-xl border-2 transition-all ${glyphKey(icon) === ic ? 'border-black bg-black text-white' : 'border-gray-200 text-[#111]'}`}
+                >
+                  <Glyph name={ic} className="h-5 w-5" />
+                </button>
+              )
+            )}
           </div>
         </div>
         {error && (

@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { CircleCheck, TriangleAlert } from 'lucide-react';
 import { getErrorMessage } from '@/lib/dataError';
 
 type ToastVariant = 'error' | 'success';
@@ -74,7 +75,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               t.variant === 'error' ? 'bg-[#FEE2E2]' : 'bg-[#DCFCE7]'
             }`}
           >
-            <span aria-hidden="true">{t.variant === 'error' ? '⚠️' : '✅'}</span>
+            {t.variant === 'error' ? (
+              <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden />
+            ) : (
+              <CircleCheck className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden />
+            )}
             <p className="flex-1 text-sm font-bold text-black">{t.message}</p>
             <button
               type="button"
