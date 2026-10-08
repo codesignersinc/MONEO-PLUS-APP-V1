@@ -66,12 +66,6 @@ export default function BusinessAccountsPage() {
   }, [id]);
   useEffect(load, [load]);
   useDataChanged(load);
-  // The mobile "+" opens the business entry here too.
-  useEffect(() => {
-    const open = () => setEntry('gasto');
-    window.addEventListener('moneo:negocio-nuevo', open);
-    return () => window.removeEventListener('moneo:negocio-nuevo', open);
-  }, []);
   useEffect(() => {
     userSettingsService
       .get()

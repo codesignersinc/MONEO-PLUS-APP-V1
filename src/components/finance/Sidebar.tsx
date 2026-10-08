@@ -79,6 +79,17 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const items: NavItem[] = businessId
     ? [
         { href: `/finanzas/negocio/${businessId}`, label: 'Dashboard', icon: LayoutDashboard },
+        {
+          href: `/finanzas/negocio/${businessId}/cobros`,
+          label: 'Cobros y clientes',
+          icon: DollarSign,
+        },
+        {
+          href: `/finanzas/negocio/${businessId}/pagos`,
+          label: 'Pagos y proveedores',
+          icon: Receipt,
+        },
+        { href: `/finanzas/negocio/${businessId}/equipo`, label: 'Equipo', icon: Users },
         { href: `/finanzas/negocio/${businessId}/cuentas`, label: 'Cuentas', icon: Landmark },
         { href: '/finanzas', label: 'Volver a Personal', icon: ArrowLeft },
       ]

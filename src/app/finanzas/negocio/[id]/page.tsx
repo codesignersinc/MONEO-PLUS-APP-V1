@@ -89,13 +89,6 @@ export default function BusinessDashboard() {
   useEffect(load, [load]);
   useDataChanged(load);
 
-  // The mobile "+" opens the business entry here.
-  useEffect(() => {
-    const open = () => setEntry('gasto');
-    window.addEventListener('moneo:negocio-nuevo', open);
-    return () => window.removeEventListener('moneo:negocio-nuevo', open);
-  }, []);
-
   const firstName =
     String(user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? '').split(' ')[0] || '';
 
@@ -143,6 +136,25 @@ export default function BusinessDashboard() {
         </div>
       </header>
 
+      <nav
+        aria-label="Secciones del negocio"
+        className="mb-3 flex gap-1.5 overflow-x-auto pb-1 lg:hidden"
+      >
+        {[
+          ['cobros', 'Cobros'],
+          ['pagos', 'Pagos'],
+          ['equipo', 'Equipo'],
+          ['cuentas', 'Cuentas'],
+        ].map(([path, text]) => (
+          <Link
+            key={path}
+            href={`/finanzas/negocio/${id}/${path}`}
+            className="shrink-0 rounded-xl border-2 border-[#111] bg-white px-3 py-1.5 text-xs font-black"
+          >
+            {text}
+          </Link>
+        ))}
+      </nav>
       <div className="mb-4">
         <PeriodFilter value={periodState} onChange={setPeriodState} now={now} />
       </div>
@@ -307,7 +319,15 @@ export default function BusinessDashboard() {
 
           {/* Upcoming payments and collections */}
           <section className={`${card} p-5`}>
-            <p className="text-sm font-black">Próximos pagos</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-black">Próximos pagos</p>
+              <Link
+                href={`/finanzas/negocio/${id}/pagos`}
+                className="text-xs font-bold text-[#2F62F0] hover:underline"
+              >
+                Ver todos
+              </Link>
+            </div>
             {summary.nextPayments.length === 0 ? (
               <p className="mt-2 text-sm font-semibold text-[#111]/60">
                 No tienes pagos pendientes.
@@ -332,7 +352,15 @@ export default function BusinessDashboard() {
             )}
           </section>
           <section className={`${card} p-5`}>
-            <p className="text-sm font-black">Por cobrar</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-black">Por cobrar</p>
+              <Link
+                href={`/finanzas/negocio/${id}/cobros`}
+                className="text-xs font-bold text-[#2F62F0] hover:underline"
+              >
+                Ver todos
+              </Link>
+            </div>
             {summary.nextCollections.length === 0 ? (
               <p className="mt-2 text-sm font-semibold text-[#111]/60">
                 No tienes cobros pendientes.

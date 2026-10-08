@@ -1,4 +1,5 @@
 import type { GlyphKey } from '@/lib/glyphs';
+import { todayLocal } from '@/lib/dates';
 
 // MONEO NEGOCIO (docs/moneo-negocio.md): pure helpers. The numbers themselves come from
 // business_summary() in the database; this file only words and compares them.
@@ -139,4 +140,16 @@ export function rememberBusiness(id: string | null): void {
 export function businessIdFromPath(pathname: string): string | null {
   const m = pathname.match(/^\/finanzas\/negocio\/([0-9a-f-]{36})(?:\/|$)/);
   return m ? m[1] : null;
+}
+
+/** Next date with that day of the month (today or later), clamped to the month's length. */
+export function nextPayDate(day: number, today = todayLocal()): string {
+  const [y, m, d] = today.split('-').map(Number);
+  const pick = (yy: number, mm: number) => {
+    const last = new Date(yy, mm, 0).getDate();
+    return `${yy}-${String(mm).padStart(2, '0')}-${String(Math.min(day, last)).padStart(2, '0')}`;
+  };
+  const thisMonth = pick(y, m);
+  if (Number(thisMonth.slice(8)) >= d) return thisMonth;
+  return m === 12 ? pick(y + 1, 1) : pick(y, m + 1);
 }
