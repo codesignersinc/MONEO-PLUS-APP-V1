@@ -16,7 +16,7 @@ import {
 import MoneoLogo from '@/components/ui/MoneoLogo';
 import LoadError from '@/components/ui/LoadError';
 import { useAuth } from '@/contexts/AuthContext';
-import { adminService, type AdminUserRow } from '@/lib/supabaseAdmin';
+import { adminService, type AdminCountryRow, type AdminUserRow } from '@/lib/supabaseAdmin';
 import { APP_LOCALE } from '@/lib/locale';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -120,6 +120,7 @@ export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<AdminUserRow[] | null>(null);
+  const [countries, setCountries] = useState<AdminCountryRow[]>([]);
   const [error, setError] = useState<unknown>(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Status | 'todos'>('todos');
@@ -130,7 +131,10 @@ export default function AdminPage() {
       .isAdmin()
       .then(async (ok) => {
         setIsAdmin(ok);
-        if (ok) setUsers(await adminService.getUsers());
+        if (!ok) return;
+        const [u, c] = await Promise.all([adminService.getUsers(), adminService.countryStats()]);
+        setUsers(u);
+        setCountries(c);
       })
       .catch(setError);
   }, []);
@@ -255,6 +259,8 @@ export default function AdminPage() {
           />
         </div>
 
+        <CountryStats rows={countries} />
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <label className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
@@ -355,6 +361,40 @@ export default function AdminPage() {
         )}
       </main>
     </div>
+  );
+}
+
+const COUNTRY_STATUS: Record<string, string> = {
+  live: 'Activo',
+  beta: 'Beta',
+  waitlist: 'Lista de espera',
+  hidden: 'Oculto',
+};
+
+function CountryStats({ rows }: { rows: AdminCountryRow[] }) {
+  const shown = rows.filter((r) => r.users > 0 || r.status !== 'hidden');
+  if (shown.length === 0) return null;
+  return (
+    <section className="mt-6">
+      <h2 className="text-lg font-black">Usuarios por país</h2>
+      <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+        {shown.map((r) => (
+          <div
+            key={r.code ?? 'none'}
+            className="min-w-[150px] rounded-2xl border-[2.5px] border-black bg-white p-3"
+          >
+            <p className="truncate text-sm font-black">
+              {r.flag} {r.name}
+            </p>
+            <p className="mt-1 text-2xl font-black">{r.users}</p>
+            <p className="font-sans text-[11px] text-gray-600">
+              {r.status ? (COUNTRY_STATUS[r.status] ?? r.status) : 'Aún no eligen país'}
+              {r.code && r.users > r.confirmed ? ` · ${r.users - r.confirmed} sin confirmar` : ''}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

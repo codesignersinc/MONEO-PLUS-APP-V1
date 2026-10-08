@@ -24,6 +24,7 @@ import { getCurrencyInfo, CURRENCIES, getDefaultRate } from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
 import { adminService } from '@/lib/supabaseAdmin';
 import CompanionDevices from '@/components/companion/CompanionDevices';
+import { RegionSettings } from '@/components/region/Region';
 import { APP_LOCALE } from '@/lib/locale';
 
 export default function ConfiguracionPage() {
@@ -530,6 +531,8 @@ export default function ConfiguracionPage() {
           ))}
         </div>
       </div>
+
+      <RegionSettings />
 
       <CompanionDevices />
 

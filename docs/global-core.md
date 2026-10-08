@@ -1,6 +1,6 @@
 # MONEO Global Core — mapa, arquitectura y plan
 
-> Estado: **propuesta para revisión**. No se toca código de la app hasta aprobar este documento.
+> Estado: **aprobado y en implementación**. Hechos: pasos 1, 2 y 3.
 > Fecha: 7 de octubre de 2026.
 
 ## 0. Decisiones ya tomadas
@@ -242,7 +242,7 @@ Pasos pequeños, cada uno en su PR, **sin cambiar lo que ve un usuario peruano**
 |---|---|---|---|---|
 | 1 | **Arreglos inmediatos** | Calculadora de montos («1,250»), landing de precios, aviso de tasa faltante, bancos consistentes | Bajo | 1–2 días |
 | 2 | **Capa de formato única** | `formatMoney` / `formatDate` con `Intl`; reemplazar «S/», `es-PE` y meses; AUD; entrada de montos por idioma | Medio (muchos archivos; se prueba que Perú se vea igual) | 3–4 días |
-| 3 | **Contexto del usuario + países** | `country_code`, `locale`, `timezone` en `user_settings`; tabla `countries` (PE en vivo; ES, US, AU, AE, SG ocultos); detección y confirmación en la bienvenida; vista de países en el admin | Bajo | 3 días |
+| 3 | **Contexto del usuario + países** | `country_code`, `locale`, `timezone` en `user_settings`; tabla `countries` (PE en vivo; ES, US, AU, AE, SG en lista de espera); detección (IP, zona horaria, idioma) y confirmación en Inicio; «País y región» en Configuración; usuarios por país en el admin | Bajo | 3 días |
 | 4 | **Landings + lista de espera** | `/es`, `/us`, `/au`, `/ae`, `/sg`, `waitlist`, hreflang, sitemap, analítica con país | Bajo (no toca la app) | 3–4 días |
 | 5 | **Zona horaria por usuario** | Redefinir las funciones SQL con la zona del usuario; avisos por zona; funciones de borde sin −5 h | **Medio-alto** (motor de saldos y fechas; pruebas SQL completas) | 3–4 días |
 | 6 | **Catálogo administrable** | Tablas, logos en Storage, sección «Catálogo» en el admin, migrar Perú, la app lee del catálogo, `institution_id` | Medio | 1–1,5 semanas |

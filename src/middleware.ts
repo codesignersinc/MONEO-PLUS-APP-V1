@@ -66,6 +66,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Country of the visitor's IP (Vercel) for the sign-up region suggestion; only the
+  // 2-letter code, never the IP.
+  const geo = request.headers.get('x-vercel-ip-country');
+  if (geo && /^[A-Z]{2}$/.test(geo) && request.cookies.get('moneo_geo')?.value !== geo) {
+    supabaseResponse.cookies.set('moneo_geo', geo, {
+      maxAge: 60 * 60 * 24,
+      sameSite: 'lax',
+      path: '/',
+    });
+  }
+
   return supabaseResponse;
 }
 

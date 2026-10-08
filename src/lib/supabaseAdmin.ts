@@ -25,6 +25,15 @@ export interface AdminUserRow {
   ultimoMovimiento: string | null;
 }
 
+export interface AdminCountryRow {
+  code: string | null;
+  name: string;
+  flag: string;
+  status: string | null;
+  users: number;
+  confirmed: number;
+}
+
 export const adminService = {
   async isAdmin(): Promise<boolean> {
     const { data, error } = await createClient().rpc('is_app_admin');
@@ -54,6 +63,19 @@ export const adminService = {
       juntasOrganiza: Number(r.juntas_organiza),
       juntasParticipa: Number(r.juntas_participa),
       ultimoMovimiento: (r.ultimo_movimiento as string) ?? null,
+    }));
+  },
+  /** Users per country (counts only). The last row (code null) is "Sin país". */
+  async countryStats(): Promise<AdminCountryRow[]> {
+    const { data, error } = await createClient().rpc('admin_country_stats');
+    if (error) throw toDataError(error);
+    return ((data as Record<string, unknown>[]) || []).map((r) => ({
+      code: (r.code as string) ?? null,
+      name: String(r.name ?? ''),
+      flag: String(r.flag ?? ''),
+      status: (r.status as string) ?? null,
+      users: Number(r.users),
+      confirmed: Number(r.confirmed),
     }));
   },
 };
