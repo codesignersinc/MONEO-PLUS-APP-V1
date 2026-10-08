@@ -1,6 +1,6 @@
 # MONEO NEGOCIO — diagnóstico, decisiones y plan
 
-> Estado: **aprobado. Fase 1 en producción; fase 2 lista (beta: admins y quien ya tenga un negocio; para todos con `NEXT_PUBLIC_NEGOCIO=true`).** Fecha: 8 de octubre de 2026.
+> Estado: **aprobado. Fases 1 y 2 en producción; fase 3 lista (beta: admins y quien ya tenga un negocio; para todos con `NEXT_PUBLIC_NEGOCIO=true`).** Fecha: 8 de octubre de 2026.
 > Territorio: «Entender las finanzas de tu negocio sin complicarte». No es contabilidad, ERP,
 > POS, CRM, planilla ni facturación electrónica.
 
@@ -98,3 +98,14 @@ moneda principal. Cada supuesto se muestra al usuario para que el número sea ve
   ya rechaza movimientos del negocio en Hogar y Deudas).
 - Configuración → «Tus datos» cuenta todos los registros, también los del negocio (es un
   total de la cuenta, no una vista personal).
+
+## 8. Fase 3 (hecha)
+
+- Cobros y clientes, Pagos y proveedores: pendientes, «Cobrar»/«Pagar» con una cuenta del negocio
+  (mark_income_collected / mark_pago_paid), y totales por contacto (pendiente, este mes, último).
+- Equipo: empleado = contacto con sueldo mensual + pago recurrente (día de pago). Sin planilla.
+  V1 solo mensual; quincenal/semanal más adelante.
+- «Escríbelo como lo dirías» (`src/lib/businessText.ts`, reglas, sin IA): si el contacto tiene un
+  pendiente por el mismo monto, se marca cobrado/pagado en lugar de contarlo dos veces.
+- Foto del comprobante: OCR en el dispositivo (`readImageText` + `parseReceipt`) + número de
+  comprobante (F001-3256) en la nota; el comercio se asocia al proveedor existente si coincide.

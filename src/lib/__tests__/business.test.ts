@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   businessIdFromPath,
   businessInsight,
+  nextPayDate,
   pctChange,
   type BusinessSummary,
 } from '@/lib/business';
@@ -106,5 +107,18 @@ describe('businessIdFromPath', () => {
   it('ignores other routes', () => {
     expect(businessIdFromPath('/finanzas/negocio')).toBeNull();
     expect(businessIdFromPath('/finanzas/cuentas')).toBeNull();
+  });
+});
+
+describe('nextPayDate', () => {
+  it('this month when the day has not passed, next month otherwise', () => {
+    expect(nextPayDate(15, '2026-10-08')).toBe('2026-10-15');
+    expect(nextPayDate(8, '2026-10-08')).toBe('2026-10-08');
+    expect(nextPayDate(5, '2026-10-08')).toBe('2026-11-05');
+    expect(nextPayDate(5, '2026-12-20')).toBe('2027-01-05');
+  });
+  it('clamps to short months', () => {
+    expect(nextPayDate(31, '2026-11-10')).toBe('2026-11-30');
+    expect(nextPayDate(30, '2027-02-01')).toBe('2027-02-28');
   });
 });
