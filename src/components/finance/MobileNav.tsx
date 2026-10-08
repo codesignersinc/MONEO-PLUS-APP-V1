@@ -3,6 +3,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import ContextSwitch from '@/components/business/ContextSwitch';
+import { businessIdFromPath } from '@/lib/business';
 import {
   Home,
   Plus,
@@ -127,8 +129,12 @@ export default function MobileNav() {
   const [successMsg, setSuccessMsg] = useState('');
   const toast = useToast();
 
+  // Inside a business (MONEO NEGOCIO) Inicio and the second tab point to that business.
+  const bizId = businessIdFromPath(pathname);
+  const homeHref = bizId ? `/finanzas/negocio/${bizId}` : '/finanzas';
+  const secondHref = bizId ? `/finanzas/negocio/${bizId}/cuentas` : '/finanzas/movimientos';
   const isActive = (href: string) => {
-    if (href === '/finanzas') return pathname === '/finanzas';
+    if (href === '/finanzas' || href === homeHref) return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -211,6 +217,7 @@ export default function MobileNav() {
                 </button>
               </div>
             </div>
+            <ContextSwitch className="mx-3 mt-3" />
             <nav className="flex-1 px-3 py-4 space-y-0.5">
               {/* Juntas highlighted entry */}
               <Link
@@ -381,16 +388,13 @@ export default function MobileNav() {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black border-t border-gray-800 pb-[env(safe-area-inset-bottom)]">
         <div className="relative mx-auto grid max-w-lg grid-cols-5 items-center justify-items-center px-1 pt-2 pb-4">
           {/* Inicio */}
-          <Link
-            href="/finanzas"
-            className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]"
-          >
+          <Link href={homeHref} className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]">
             <Home
-              className={`w-6 h-6 ${isActive('/finanzas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              className={`w-6 h-6 ${isActive(homeHref) ? 'text-[#FFD93D]' : 'text-gray-400'}`}
               strokeWidth={2}
             />
             <span
-              className={`text-[10px] font-bold ${isActive('/finanzas') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              className={`text-[10px] font-bold ${isActive(homeHref) ? 'text-[#FFD93D]' : 'text-gray-400'}`}
             >
               Inicio
             </span>
@@ -398,11 +402,11 @@ export default function MobileNav() {
 
           {/* Movimientos */}
           <Link
-            href="/finanzas/movimientos"
+            href={secondHref}
             className="flex flex-col items-center gap-1 px-3 py-1 min-w-[56px]"
           >
             <svg
-              className={`w-6 h-6 ${isActive('/finanzas/movimientos') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              className={`w-6 h-6 ${isActive(secondHref) ? 'text-[#FFD93D]' : 'text-gray-400'}`}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -414,9 +418,9 @@ export default function MobileNav() {
               <path d="M2 10h20" />
             </svg>
             <span
-              className={`text-[10px] font-bold ${isActive('/finanzas/movimientos') ? 'text-[#FFD93D]' : 'text-gray-400'}`}
+              className={`text-[10px] font-bold ${isActive(secondHref) ? 'text-[#FFD93D]' : 'text-gray-400'}`}
             >
-              Movimientos
+              {bizId ? 'Cuentas' : 'Movimientos'}
             </span>
           </Link>
 
@@ -425,7 +429,12 @@ export default function MobileNav() {
             <span aria-hidden className="radar-ring" />
             <span aria-hidden className="radar-ring radar-ring--late" />
             <button
-              onClick={() => setSheetOpen(true)}
+              onClick={() =>
+                // Inside a business the "+" registers a business movement (its page listens).
+                pathname.startsWith('/finanzas/negocio/')
+                  ? window.dispatchEvent(new Event('moneo:negocio-nuevo'))
+                  : setSheetOpen(true)
+              }
               aria-label="Registrar"
               className="paper-opaque relative w-16 h-16 bg-[#FFD93D] rounded-full border-[3px] border-black flex items-center justify-center shadow-[0_3px_0_#000] active:scale-95 transition-all duration-150"
             >
