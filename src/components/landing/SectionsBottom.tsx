@@ -25,6 +25,8 @@ import { FaqItem, Reveal, TrackLink } from './client';
 import { GooglePlayBadge, WebBadge } from './PlayBadge';
 import { C, Phone, SectionTitle, SoonBadge, Star, btnPrimary } from './ui';
 import { SIGNUP_HREF } from '@/lib/site';
+import { ONBOARDING_V2 } from '@/lib/onboardingFlow';
+import PricingPlus from './PricingPlus';
 
 const wrap = 'mx-auto max-w-6xl px-4 sm:px-6';
 
@@ -404,12 +406,14 @@ export function Security() {
 // ─── Precios ──────────────────────────────────────────────────────────────────
 
 export function Pricing() {
+  // With MONEO PLUS live the free plan and PLUS are shown side by side (PLUS price from the
+  // live plans); before that, everything is free.
   const included = [
     'Cuentas, gastos, ingresos y transferencias',
     'Presupuesto, metas y deudas',
     'Pagos, suscripciones y calendario',
     'Juntas con sorteo de turnos',
-    'Multimoneda y reportes',
+    ONBOARDING_V2 ? 'MONEO HOGAR y multimoneda' : 'Multimoneda y reportes',
   ];
   return (
     <section id="precios" aria-labelledby="lp-pricing" className="scroll-mt-20 py-20 lg:py-28">
@@ -420,14 +424,21 @@ export function Pricing() {
             kicker="Precios"
             kickerColor={C.yellow}
             title="Empieza gratis."
-            subtitle="Hoy todas las funciones disponibles son gratuitas. Sin tarjeta, sin letra chica."
+            subtitle={
+              ONBOARDING_V2
+                ? 'MONEO es gratis para siempre. Cuando quieras más, MONEO PLUS. Sin letra chica.'
+                : 'Hoy todas las funciones disponibles son gratuitas. Sin tarjeta, sin letra chica.'
+            }
             align="center"
           />
         </Reveal>
-        <Reveal delay={100} className="mx-auto mt-12 max-w-md">
+        <Reveal
+          delay={100}
+          className={`mx-auto mt-12 grid gap-8 ${ONBOARDING_V2 ? 'max-w-4xl md:grid-cols-2' : 'max-w-md'}`}
+        >
           <div className="relative rounded-[32px] border-[3px] border-[#111] bg-white p-7 shadow-[8px_8px_0_#111] sm:p-9">
             <span className="absolute -top-4 left-7 rounded-full border-[2.5px] border-[#111] bg-[#45D98B] px-3 py-1 font-poppins text-[12px] font-extrabold uppercase">
-              Plan actual
+              {ONBOARDING_V2 ? 'Gratis' : 'Plan actual'}
             </span>
             <p className="font-poppins text-[20px] font-extrabold text-[#111]">MONEO</p>
             <p className="mt-1 font-poppins text-[56px] font-extrabold leading-none text-[#111]">
@@ -453,6 +464,7 @@ export function Pricing() {
               Crear cuenta gratis →
             </TrackLink>
           </div>
+          {ONBOARDING_V2 && <PricingPlus />}
         </Reveal>
       </div>
     </section>
@@ -491,7 +503,9 @@ const FAQS: [string, string][] = [
   ],
   [
     '¿Cuánto cuesta?',
-    'Empezar es gratis. Hoy todas las funciones disponibles se pueden usar sin pagar y sin registrar una tarjeta.',
+    ONBOARDING_V2
+      ? 'MONEO es gratis: cuentas, gastos, presupuesto, metas, deudas, juntas y MONEO HOGAR. MONEO PLUS suma MONEO AUTO, voz, escaneo, reportes avanzados y más, y puedes probarlo gratis.'
+      : 'Empezar es gratis. Hoy todas las funciones disponibles se pueden usar sin pagar y sin registrar una tarjeta.',
   ],
   [
     '¿MONEO se conecta a mi banco?',

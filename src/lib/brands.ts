@@ -1,7 +1,19 @@
 // Catálogo de marcas (bancos peruanos y servicios de suscripción) y búsqueda de su logo
 // a partir del texto guardado (institución de la cuenta/deuda o nombre del servicio).
 
-export const PERUVIAN_BANKS = [
+export interface Institution {
+  id: string;
+  name: string;
+  image?: string;
+  color: string;
+  bg: string;
+  /** Digital wallet with its own balance (PayPal…) rather than a bank. */
+  wallet?: boolean;
+  /** Usual currency of its accounts (PayPal: USD); otherwise the user's. */
+  currency?: string;
+}
+
+export const PERUVIAN_BANKS: Institution[] = [
   {
     id: 'bcp',
     name: 'BCP',
@@ -57,6 +69,22 @@ export const PERUVIAN_BANKS = [
     image: '/assets/images/falabella-1790987077026.png',
     color: '#1D4ED8',
     bg: '#DBEAFE',
+  },
+];
+
+// Every institution offered when creating an account (onboarding and Cuentas use the same list).
+// Yape and Plin are not here: they pay from a bank account (Yape → BCP, Plin → Interbank, BBVA…),
+// so an account for them would count the same money twice. They remain payment methods.
+export const PERU_INSTITUTIONS: Institution[] = [
+  ...PERUVIAN_BANKS,
+  { id: 'pichincha', name: 'Banco Pichincha', color: '#B38F00', bg: '#FFF7CC' },
+  {
+    id: 'paypal',
+    name: 'PayPal',
+    color: '#003087',
+    bg: '#E8F0FE',
+    wallet: true,
+    currency: 'USD',
   },
 ];
 
@@ -176,6 +204,8 @@ const BANK_ALIASES: Record<string, string[]> = {
   nacion: ['banco de la nacion', 'nacion'],
   ripley: ['ripley'],
   falabella: ['falabella'],
+  pichincha: ['pichincha'],
+  paypal: ['paypal'],
 };
 
 // Bank matching any of the texts (e.g. institution, then account name).
@@ -183,7 +213,7 @@ export function findBank(...texts: (string | undefined | null)[]) {
   for (const text of texts) {
     if (!text) continue;
     const t = normalize(text);
-    const bank = PERUVIAN_BANKS.find((b) =>
+    const bank = PERU_INSTITUTIONS.find((b) =>
       (BANK_ALIASES[b.id] ?? [b.id]).some((a) => t.includes(a))
     );
     if (bank) return bank;

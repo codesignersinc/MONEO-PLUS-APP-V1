@@ -14,7 +14,7 @@ import {
   groupAccountsByCurrency,
 } from '@/lib/currency';
 import { Plus, X, Pencil, Trash2, ChevronRight } from 'lucide-react';
-import { PERUVIAN_BANKS } from '@/lib/brands';
+import { PERU_INSTITUTIONS, type Institution } from '@/lib/brands';
 import BrandLogo from '@/components/finance/BrandLogo';
 import { useDataChanged } from '@/lib/dataSync';
 
@@ -208,7 +208,8 @@ export default function CuentasPage() {
     const preset = ACCOUNT_TYPES.find((t) => t.value === type);
     setForm((f) => ({ ...f, type, icon: preset?.icon || '🏦' }));
     if (!editingAcc) {
-      if (type === 'banco') {
+      // Banks and digital wallets start from the institution list.
+      if (type === 'banco' || type === 'digital') {
         setFormStep('banco');
       } else {
         setFormStep('cuenta');
@@ -216,11 +217,12 @@ export default function CuentasPage() {
     }
   };
 
-  const handleBankSelect = (bank: (typeof PERUVIAN_BANKS)[0]) => {
+  const handleBankSelect = (bank: Institution) => {
     setForm((f) => ({
       ...f,
       institution: bank.name,
       name: f.name || bank.name,
+      currency: bank.currency ?? f.currency,
       color: bank.color,
       bgColor: bank.bg,
     }));
@@ -499,49 +501,55 @@ export default function CuentasPage() {
               {/* Step: Banco selector */}
               {formStep === 'banco' && !editingAcc && (
                 <>
-                  <p className="text-sm font-bold text-gray-700">Selecciona tu banco</p>
+                  <p className="text-sm font-bold text-gray-700">
+                    {form.type === 'digital' ? 'Selecciona tu billetera' : 'Selecciona tu banco'}
+                  </p>
                   <div className="grid grid-cols-4 gap-2">
-                    {PERUVIAN_BANKS.map((bank) => (
-                      <button
-                        key={bank.id}
-                        onClick={() => handleBankSelect(bank)}
-                        className="flex flex-col items-center gap-1.5 group"
-                      >
-                        {/* Retro black-bordered card */}
-                        <div
-                          className="w-full aspect-square rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] bg-white flex items-center justify-center overflow-hidden transition-all duration-150 group-hover:shadow-[1px_1px_0px_0px_#000] group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-active:shadow-none group-active:translate-x-[3px] group-active:translate-y-[3px]"
-                          style={{ background: bank.bg }}
+                    {PERU_INSTITUTIONS.filter((b) => !!b.wallet === (form.type === 'digital')).map(
+                      (bank) => (
+                        <button
+                          key={bank.id}
+                          onClick={() => handleBankSelect(bank)}
+                          className="flex flex-col items-center gap-1.5 group"
                         >
-                          {bank.image ? (
-                            <div className="relative w-full h-full p-1.5">
-                              <Image
-                                src={bank.image}
-                                alt={`Logo ${bank.name}`}
-                                fill
-                                className="object-contain p-1"
-                                sizes="80px"
-                              />
-                            </div>
-                          ) : (
-                            <span
-                              className="text-lg font-black tracking-tight"
-                              style={{ color: bank.color }}
-                            >
-                              {bank.name.charAt(0)}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight line-clamp-2">
-                          {bank.name}
-                        </span>
-                      </button>
-                    ))}
+                          {/* Retro black-bordered card */}
+                          <div
+                            className="w-full aspect-square rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] bg-white flex items-center justify-center overflow-hidden transition-all duration-150 group-hover:shadow-[1px_1px_0px_0px_#000] group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-active:shadow-none group-active:translate-x-[3px] group-active:translate-y-[3px]"
+                            style={{ background: bank.bg }}
+                          >
+                            {bank.image ? (
+                              <div className="relative w-full h-full p-1.5">
+                                <Image
+                                  src={bank.image}
+                                  alt={`Logo ${bank.name}`}
+                                  fill
+                                  className="object-contain p-1"
+                                  sizes="80px"
+                                />
+                              </div>
+                            ) : (
+                              <span
+                                className="text-lg font-black tracking-tight"
+                                style={{ color: bank.color }}
+                              >
+                                {bank.name.charAt(0)}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight line-clamp-2">
+                            {bank.name}
+                          </span>
+                        </button>
+                      )
+                    )}
                   </div>
                   <button
                     onClick={() => setFormStep('cuenta')}
                     className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-xs font-semibold text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all"
                   >
-                    Otro banco / continuar sin seleccionar
+                    {form.type === 'digital'
+                      ? 'Otra billetera / continuar sin seleccionar'
+                      : 'Otro banco / continuar sin seleccionar'}
                   </button>
                 </>
               )}
@@ -563,7 +571,7 @@ export default function CuentasPage() {
                     type="text"
                     value={form.institution}
                     onChange={(e) => setForm((f) => ({ ...f, institution: e.target.value }))}
-                    placeholder="Institución (ej: BCP, Interbank, Yape)"
+                    placeholder="Institución (ej: BCP, Interbank, PayPal)"
                     className="w-full px-4 h-14 bg-white rounded-2xl border-[3px] border-[#111] text-[16px] font-bold text-[#111] placeholder:font-semibold placeholder:text-gray-400 outline-none focus:shadow-[0_0_0_3px_#FFD83D] transition-shadow"
                   />
                   {!editingAcc && (
