@@ -324,6 +324,7 @@ export const bizObligationsService = {
       partyId: string | null;
       notes?: string;
       recurringDay?: number | null; // pagos only: repeats every month on that day
+      everyDays?: 7 | 14 | null; // pagos only: repeats every 7 or 14 days instead
     }
   ): Promise<void> {
     const supabase = createClient();
@@ -343,8 +344,9 @@ export const bizObligationsService = {
         ? await supabase.from('pagos').insert({
             ...common,
             payment_date: o.due,
-            is_recurring: !!o.recurringDay,
+            is_recurring: !!o.recurringDay || !!o.everyDays,
             payment_day: o.recurringDay ?? null,
+            ...(o.everyDays ? { every_days: o.everyDays } : {}),
           })
         : await supabase.from('income_entries').insert({ ...common, collection_date: o.due });
     if (error) throw toDataError(error);
@@ -408,29 +410,34 @@ export const bizMovementsService = {
   /** A business income or expense; the account must be of this business. */
   async create(
     tx: Omit<Transaction, 'id'> & TransactionCurrencyFields & { partyId: string | null }
-  ): Promise<void> {
+  ): Promise<string> {
     const supabase = createClient();
     const userId = await requireUserId(supabase);
-    const { error } = await supabase.from('transactions').insert({
-      user_id: userId,
-      account_id: tx.accountId,
-      party_id: tx.partyId,
-      name: tx.name,
-      category: tx.category,
-      category_icon: tx.categoryIcon,
-      account_name: tx.account,
-      amount: tx.amount,
-      transaction_date: tx.date,
-      transaction_time: tx.time,
-      transaction_type: tx.type,
-      notes: tx.notes || '',
-      currency_code: tx.currencyCode,
-      original_amount: tx.originalAmount,
-      base_currency_code: tx.baseCurrencyCode,
-      base_amount: tx.baseAmount,
-      exchange_rate: tx.exchangeRate,
-      exchange_rate_date: tx.exchangeRateDate,
-    });
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: userId,
+        account_id: tx.accountId,
+        party_id: tx.partyId,
+        name: tx.name,
+        category: tx.category,
+        category_icon: tx.categoryIcon,
+        account_name: tx.account,
+        amount: tx.amount,
+        transaction_date: tx.date,
+        transaction_time: tx.time,
+        transaction_type: tx.type,
+        notes: tx.notes || '',
+        currency_code: tx.currencyCode,
+        original_amount: tx.originalAmount,
+        base_currency_code: tx.baseCurrencyCode,
+        base_amount: tx.baseAmount,
+        exchange_rate: tx.exchangeRate,
+        exchange_rate_date: tx.exchangeRateDate,
+      })
+      .select('id')
+      .single();
     if (error) throw toDataError(error);
+    return String(data.id);
   },
 };

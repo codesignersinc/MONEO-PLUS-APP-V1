@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
 import ContextSwitch from '@/components/business/ContextSwitch';
+import NegocioBanner from '@/components/business/NegocioBanner';
 import BusinessEntrySheet, {
   type BusinessEntryMode,
 } from '@/components/business/BusinessEntrySheet';
@@ -108,6 +109,7 @@ export default function BusinessDashboard() {
   return (
     <div className="mx-auto max-w-6xl px-4 pb-28 pt-5 text-[#111] lg:px-8 lg:py-6">
       <ContextSwitch className="mb-4 lg:hidden" />
+      <NegocioBanner className="mb-4" />
       <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-[26px] font-black leading-tight lg:text-[32px]">

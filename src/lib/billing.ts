@@ -65,6 +65,7 @@ export const PLUS_BENEFITS = [
   'MONEO AUTO',
   'MONEO VOZ',
   'MONEO SCAN',
+  'MONEO NEGOCIO',
   'Reportes avanzados',
   'Alertas inteligentes',
   'Metas avanzadas',

@@ -23,11 +23,16 @@ import { parseBankMessage } from '@/lib/auto';
 import { readImageText } from '@/lib/ocr';
 import {
   autoService,
+  bizMerchantKey,
   rulesService,
   suggestDefaults,
   type AutoRules,
   type AutoSuggestion,
 } from '@/lib/supabaseAuto';
+import { businessService, partiesService, type Party } from '@/lib/supabaseBusiness';
+import { BUSINESS_EXPENSE_CATEGORIES, BUSINESS_INCOME_CATEGORIES } from '@/lib/business';
+import { usePlus } from '@/contexts/PlusContext';
+import { PartyField } from '@/components/business/kit';
 import { accountsService } from '@/lib/supabaseFinance';
 import { formatCurrency } from '@/lib/currency';
 import { getErrorMessage } from '@/lib/dataError';
@@ -36,6 +41,22 @@ import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
 import { looksLikeHouseholdExpense } from '@/lib/household';
 import { householdService, shareOwnMovement } from '@/lib/supabaseHousehold';
 import { monthNames } from '@/lib/format';
+
+// MONEO NEGOCIO: an account of a business, offered next to the personal ones (fase 6).
+interface BizAccount {
+  businessId: string;
+  businessName: string;
+  account: Account;
+}
+
+// Business accounts of the person, only with MONEO NEGOCIO (paid PLUS); none on failure.
+async function loadBizAccounts(): Promise<BizAccount[]> {
+  const businesses = await businessService.list();
+  const lists = await Promise.all(businesses.map((b) => businessService.accounts(b.id)));
+  return businesses.flatMap((b, i) =>
+    lists[i].map((account) => ({ businessId: b.id, businessName: b.name, account }))
+  );
+}
 
 const BANK_LABEL: Record<string, string> = {
   bcp: 'BCP',
@@ -97,6 +118,8 @@ function MoneoAuto() {
   const toast = useToast();
   const [items, setItems] = useState<AutoSuggestion[] | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [bizAccounts, setBizAccounts] = useState<BizAccount[]>([]);
+  const { business: hasNegocio } = usePlus();
   const [rules, setRules] = useState<AutoRules>({ cardAccount: {}, merchantCategory: {} });
   const [loadError, setLoadError] = useState<unknown>(null);
   const [text, setText] = useState('');
@@ -116,7 +139,14 @@ function MoneoAuto() {
         setRules(r);
       })
       .catch(setLoadError);
-  }, []);
+    if (hasNegocio) {
+      loadBizAccounts()
+        .then(setBizAccounts)
+        .catch(() => setBizAccounts([]));
+    } else {
+      setBizAccounts([]);
+    }
+  }, [hasNegocio]);
 
   useDataChanged(load);
 
@@ -453,6 +483,7 @@ function MoneoAuto() {
         <RegisterModal
           suggestion={registering}
           accounts={accounts}
+          bizAccounts={bizAccounts}
           rules={rules}
           onClose={() => setRegistering(null)}
           onDone={() => {
@@ -467,17 +498,25 @@ function MoneoAuto() {
 
 function RegisterModal({
   suggestion: s,
-  accounts,
+  accounts: personalAccounts,
+  bizAccounts,
   rules,
   onClose,
   onDone,
 }: {
   suggestion: AutoSuggestion;
   accounts: Account[];
+  bizAccounts: BizAccount[];
   rules: AutoRules;
   onClose: () => void;
   onDone: () => void;
 }) {
+  // Personal accounts first (the first one is the default), then each business's accounts.
+  const accounts = useMemo(
+    () => [...personalAccounts, ...bizAccounts.map((b) => b.account)],
+    [personalAccounts, bizAccounts]
+  );
+  const bizOf = (id: string) => bizAccounts.find((b) => b.account.id === id) ?? null;
   const defaults = suggestDefaults(s, rules, accounts);
   const [name, setName] = useState(s.merchant);
   // Card rule first; otherwise the first registered account (the user can change it).
@@ -486,6 +525,11 @@ function RegisterModal({
     () => accounts.find((a) => a.id !== (defaults.accountId || accounts[0]?.id))?.id ?? ''
   );
   const [category, setCategory] = useState(defaults.categoryLabel);
+  // MONEO NEGOCIO: category (per business) and customer / supplier when the account is a
+  // business one. The merchant is the usual contact (Makro, the person who paid you).
+  const [bizCategory, setBizCategory] = useState<Record<string, string>>({});
+  const [partyName, setPartyName] = useState(s.type === 'transferencia' ? '' : s.merchant || '');
+  const [parties, setParties] = useState<Party[]>([]);
   const [date, setDate] = useState(s.date);
   const [time, setTime] = useState(s.time ?? '');
   const [accountAmount, setAccountAmount] = useState('');
@@ -503,8 +547,27 @@ function RegisterModal({
       .then((h) => setHouseholdName(h?.household.name ?? null))
       .catch(() => setHouseholdName(null));
   }, [s.type]);
-  const suggestedHome = looksLikeHouseholdExpense(category);
-  const shareWithHome = !!householdName && s.type === 'gasto' && (toHome ?? suggestedHome);
+  const biz = bizOf(accountId);
+  const bizId = biz?.businessId ?? null;
+  useEffect(() => {
+    if (!bizId) return;
+    partiesService
+      .list(bizId)
+      .then(setParties)
+      .catch(() => setParties([]));
+  }, [bizId]);
+  const bizCategories =
+    s.type === 'ingreso' ? BUSINESS_INCOME_CATEGORIES : BUSINESS_EXPENSE_CATEGORIES;
+  const bizCategoryLabel = bizId
+    ? (bizCategory[bizId] ??
+      (bizCategories.some(
+        (c) => c.label === rules.merchantCategory[bizMerchantKey(bizId, s.merchant)]
+      )
+        ? rules.merchantCategory[bizMerchantKey(bizId, s.merchant)]
+        : bizCategories[0].label))
+    : '';
+  const suggestedHome = !biz && looksLikeHouseholdExpense(category);
+  const shareWithHome = !biz && !!householdName && s.type === 'gasto' && (toHome ?? suggestedHome);
 
   const account = accounts.find((a) => a.id === accountId);
   const foreign = !!account && (account.currency || 'PEN') !== s.currency;
@@ -522,16 +585,34 @@ function RegisterModal({
     setSaving(true);
     setError('');
     try {
+      let business: { id: string; categoryIcon: string; partyId: string | null } | undefined;
+      if (biz && !isTransfer) {
+        const who = partyName.trim();
+        const party = who
+          ? await partiesService.ensure(
+              biz.businessId,
+              s.type === 'ingreso' ? 'cliente' : 'proveedor',
+              who,
+              parties
+            )
+          : null;
+        business = {
+          id: biz.businessId,
+          categoryIcon: bizCategories.find((c) => c.label === bizCategoryLabel)?.icon ?? 'tag',
+          partyId: party?.id ?? null,
+        };
+      }
       const { transactionId } = await autoService.register(
         s,
         {
           accountId,
           toAccountId: isTransfer ? toAccountId : undefined,
           accountAmount: foreign ? amt : undefined,
-          categoryLabel: isTransfer ? '' : category,
+          categoryLabel: isTransfer ? '' : business ? bizCategoryLabel : category,
           name: name.trim(),
           date,
           time: time || null,
+          business,
         },
         accounts
       );
@@ -560,14 +641,31 @@ function RegisterModal({
     }
   };
 
-  const accountOptions = (exclude?: string) =>
-    accounts
-      .filter((a) => a.id !== exclude)
-      .map((a) => (
-        <option key={a.id} value={a.id}>
-          {a.name} ({a.currency})
-        </option>
-      ));
+  const option = (a: Account) => (
+    <option key={a.id} value={a.id}>
+      {a.name} ({a.currency})
+    </option>
+  );
+  // Without businesses the list stays flat; with them, Personal and each business apart.
+  const accountOptions = (exclude?: string) => {
+    const mine = personalAccounts.filter((a) => a.id !== exclude);
+    if (bizAccounts.length === 0) return mine.map(option);
+    const groups = new Map<string, BizAccount[]>();
+    for (const b of bizAccounts) {
+      if (b.account.id === exclude) continue;
+      groups.set(b.businessId, [...(groups.get(b.businessId) ?? []), b]);
+    }
+    return (
+      <>
+        {mine.length > 0 && <optgroup label="Personal">{mine.map(option)}</optgroup>}
+        {[...groups.values()].map((list) => (
+          <optgroup key={list[0].businessId} label={`Negocio · ${list[0].businessName}`}>
+            {list.map((b) => option(b.account))}
+          </optgroup>
+        ))}
+      </>
+    );
+  };
 
   return (
     <div
@@ -663,7 +761,36 @@ function RegisterModal({
           </>
         )}
 
-        {!isTransfer && (
+        {!isTransfer && biz && (
+          <>
+            <p className="rounded-xl border-2 border-black bg-[#EDE5FF] px-3 py-2 text-xs font-bold text-black">
+              Se registra en tu negocio {biz.businessName}: no cuenta en tus finanzas personales.
+            </p>
+            <div>
+              <label className={labelClass}>Categoría del negocio</label>
+              <select
+                value={bizCategoryLabel}
+                onChange={(e) =>
+                  setBizCategory((m) => ({ ...m, [biz.businessId]: e.target.value }))
+                }
+                className={inputClass}
+              >
+                {bizCategories.map((c) => (
+                  <option key={c.label} value={c.label}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <PartyField
+              kind={s.type === 'ingreso' ? 'cliente' : 'proveedor'}
+              parties={parties}
+              value={partyName}
+              onChange={setPartyName}
+            />
+          </>
+        )}
+        {!isTransfer && !biz && (
           <div>
             <label className={labelClass}>Categoría</label>
             <select
@@ -701,7 +828,7 @@ function RegisterModal({
           </div>
         </div>
 
-        {householdName && s.type === 'gasto' && (
+        {householdName && s.type === 'gasto' && !biz && (
           <div
             className={`rounded-xl border-2 p-3 ${suggestedHome ? 'border-black bg-[#FFF4CC]' : 'border-gray-200 bg-white'}`}
           >

@@ -37,6 +37,12 @@ BEGIN
   INSERT INTO auth.users (id, email) VALUES (ua, 'a@test.local'), (ub, 'b@test.local');
   INSERT INTO public.user_profiles (id, email) VALUES (ua, 'a@test.local'), (ub, 'b@test.local')
     ON CONFLICT (id) DO NOTHING;
+  -- MONEO NEGOCIO needs paid MONEO PLUS (fase 6, migración 20261021120000).
+  INSERT INTO public.user_entitlements (user_id, plan_code, status, current_period_end)
+    VALUES (ua, 'plus_yearly', 'active', now() + interval '1 year'),
+           (ub, 'plus_yearly', 'active', now() + interval '1 year')
+    ON CONFLICT (user_id) DO UPDATE SET plan_code = excluded.plan_code, status = excluded.status,
+      current_period_end = excluded.current_period_end;
   PERFORM moneo_test.as_user(ua);
 
   -- Businesses: owner only, up to 5.

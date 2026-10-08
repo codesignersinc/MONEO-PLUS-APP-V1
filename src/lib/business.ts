@@ -161,3 +161,16 @@ export function whatsappLink(phone: string | null | undefined): string | null {
   const full = digits.length === 9 && digits.startsWith('9') ? `51${digits}` : digits;
   return `https://wa.me/${full}`;
 }
+
+/** Next date (today or later) that falls on that weekday (0 = Sunday … 6 = Saturday). */
+export function nextWeekday(weekday: number, today = todayLocal()): string {
+  const d = new Date(`${today}T00:00:00`);
+  d.setDate(d.getDate() + ((weekday - d.getDay() + 7) % 7));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** What an employee costs per month, from their usual pay and how often it is paid. */
+export function monthlyPay(amount: number, frequency: string | null | undefined): number {
+  const n = frequency === 'semanal' ? (amount * 52) / 12 : amount;
+  return Math.round(n * 100) / 100;
+}
