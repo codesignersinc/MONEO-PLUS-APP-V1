@@ -91,6 +91,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           icon: Receipt,
         },
         { href: `/finanzas/negocio/${businessId}/contactos`, label: 'Contactos', icon: BookUser },
+        { href: `/finanzas/negocio/${businessId}/reportes`, label: 'Reportes', icon: BarChart3 },
         { href: `/finanzas/negocio/${businessId}/equipo`, label: 'Equipo', icon: Users },
         { href: `/finanzas/negocio/${businessId}/cuentas`, label: 'Cuentas', icon: Landmark },
         { href: '/finanzas', label: 'Volver a Personal', icon: ArrowLeft },

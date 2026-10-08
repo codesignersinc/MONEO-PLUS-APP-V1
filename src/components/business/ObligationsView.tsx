@@ -58,7 +58,7 @@ export default function ObligationsView({
     Promise.all([
       bizObligationsService.list(businessId),
       partiesService.list(businessId),
-      bizMovementsService.list(businessId, monthStart),
+      bizMovementsService.list(businessId, { from: monthStart }),
       userSettingsService.get(),
     ])
       .then(([o, p, m, s]) => {
