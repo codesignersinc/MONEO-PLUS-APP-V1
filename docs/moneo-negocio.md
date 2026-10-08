@@ -1,6 +1,6 @@
 # MONEO NEGOCIO — diagnóstico, decisiones y plan
 
-> Estado: **aprobado. Fases 1 y 2 en producción; fase 3 lista (beta: admins y quien ya tenga un negocio; para todos con `NEXT_PUBLIC_NEGOCIO=true`).** Fecha: 8 de octubre de 2026.
+> Estado: **aprobado. Fases 1, 2 y 3 en producción; fase 4 lista (beta: admins y quien ya tenga un negocio; para todos con `NEXT_PUBLIC_NEGOCIO=true`).** Fecha: 8 de octubre de 2026.
 > Territorio: «Entender las finanzas de tu negocio sin complicarte». No es contabilidad, ERP,
 > POS, CRM, planilla ni facturación electrónica.
 
@@ -109,3 +109,11 @@ moneda principal. Cada supuesto se muestra al usuario para que el número sea ve
   pendiente por el mismo monto, se marca cobrado/pagado en lugar de contarlo dos veces.
 - Foto del comprobante: OCR en el dispositivo (`readImageText` + `parseReceipt`) + número de
   comprobante (F001-3256) en la nota; el comercio se asocia al proveedor existente si coincide.
+
+## 9. Fase 4 (hecha)
+
+- Directorio `/finanzas/negocio/[id]/contactos`: clientes, proveedores y equipo con búsqueda,
+  filtro por tipo y lo pendiente con cada uno; alta de contacto.
+- Ficha `/contactos/[partyId]`: teléfono (llamar), WhatsApp (celular peruano de 9 dígitos → +51),
+  correo, notas; te debe / le debes, este mes, total, último movimiento; pendientes con
+  Cobrar/Pagar; historial; editar, marcar inactivo y eliminar (el historial se conserva).

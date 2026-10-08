@@ -153,3 +153,11 @@ export function nextPayDate(day: number, today = todayLocal()): string {
   if (Number(thisMonth.slice(8)) >= d) return thisMonth;
   return m === 12 ? pick(y + 1, 1) : pick(y, m + 1);
 }
+
+/** wa.me link for a phone as people write it ("987 654 321" → Peru +51), or null. */
+export function whatsappLink(phone: string | null | undefined): string | null {
+  const digits = (phone ?? '').replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  const full = digits.length === 9 && digits.startsWith('9') ? `51${digits}` : digits;
+  return `https://wa.me/${full}`;
+}

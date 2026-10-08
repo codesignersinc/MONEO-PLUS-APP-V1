@@ -25,6 +25,7 @@ import {
   ShoppingBag,
   Sparkles,
   PictureInPicture2,
+  BookUser,
   Sofa,
   ArrowLeft,
 } from 'lucide-react';
@@ -89,6 +90,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           label: 'Pagos y proveedores',
           icon: Receipt,
         },
+        { href: `/finanzas/negocio/${businessId}/contactos`, label: 'Contactos', icon: BookUser },
         { href: `/finanzas/negocio/${businessId}/equipo`, label: 'Equipo', icon: Users },
         { href: `/finanzas/negocio/${businessId}/cuentas`, label: 'Cuentas', icon: Landmark },
         { href: '/finanzas', label: 'Volver a Personal', icon: ArrowLeft },

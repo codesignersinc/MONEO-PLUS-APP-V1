@@ -3,6 +3,7 @@ import {
   businessIdFromPath,
   businessInsight,
   nextPayDate,
+  whatsappLink,
   pctChange,
   type BusinessSummary,
 } from '@/lib/business';
@@ -120,5 +121,18 @@ describe('nextPayDate', () => {
   it('clamps to short months', () => {
     expect(nextPayDate(31, '2026-11-10')).toBe('2026-11-30');
     expect(nextPayDate(30, '2027-02-01')).toBe('2027-02-28');
+  });
+});
+
+describe('whatsappLink', () => {
+  it('adds Peru to a 9-digit mobile and keeps full numbers', () => {
+    expect(whatsappLink('987 654 321')).toBe('https://wa.me/51987654321');
+    expect(whatsappLink('+51 987-654-321')).toBe('https://wa.me/51987654321');
+    expect(whatsappLink('+34 612 345 678')).toBe('https://wa.me/34612345678');
+  });
+  it('no link without a usable number', () => {
+    expect(whatsappLink('')).toBeNull();
+    expect(whatsappLink(null)).toBeNull();
+    expect(whatsappLink('123')).toBeNull();
   });
 });

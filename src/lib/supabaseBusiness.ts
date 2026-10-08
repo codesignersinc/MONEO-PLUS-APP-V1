@@ -363,7 +363,7 @@ export const bizObligationsService = {
 };
 
 export const bizMovementsService = {
-  async list(businessId: string, from?: string): Promise<BizMovement[]> {
+  async list(businessId: string, from?: string, partyId?: string): Promise<BizMovement[]> {
     let q = createClient()
       .from('transactions')
       .select(
@@ -372,6 +372,7 @@ export const bizMovementsService = {
       .eq('business_id', businessId)
       .order('transaction_date', { ascending: false });
     if (from) q = q.gte('transaction_date', `${from}T00:00:00`);
+    if (partyId) q = q.eq('party_id', partyId);
     const { data, error } = await q;
     if (error) throw toDataError(error);
     return (data ?? []).map((r) => ({
