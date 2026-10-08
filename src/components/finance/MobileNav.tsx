@@ -194,7 +194,7 @@ export default function MobileNav() {
         >
           <div className="absolute inset-0 bg-black/40" />
           <div
-            className="relative w-72 max-w-[85vw] h-full bg-white border-l-2 border-black flex flex-col overflow-y-auto"
+            className="paper-opaque relative w-72 max-w-[85vw] h-full bg-white border-l-2 border-black flex flex-col overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b-2 border-black">
@@ -379,7 +379,7 @@ export default function MobileNav() {
 
       {/* ── Bottom Nav Bar ── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black border-t border-gray-800 pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-center justify-around px-2 pt-2 pb-4 relative max-w-lg mx-auto">
+        <div className="relative mx-auto grid max-w-lg grid-cols-5 items-center justify-items-center px-1 pt-2 pb-4">
           {/* Inicio */}
           <Link
             href="/finanzas"
@@ -421,10 +421,13 @@ export default function MobileNav() {
           </Link>
 
           {/* FAB */}
-          <div className="flex flex-col items-center -mt-8">
+          <div className="relative -mt-8 flex flex-col items-center">
+            <span aria-hidden className="radar-ring" />
+            <span aria-hidden className="radar-ring radar-ring--late" />
             <button
               onClick={() => setSheetOpen(true)}
-              className="w-16 h-16 bg-[#FFD93D] rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all duration-150"
+              aria-label="Registrar"
+              className="paper-opaque relative w-16 h-16 bg-[#FFD93D] rounded-full border-[3px] border-black flex items-center justify-center shadow-[0_3px_0_#000] active:scale-95 transition-all duration-150"
             >
               <Plus className="w-8 h-8 text-black" strokeWidth={2.5} />
             </button>
