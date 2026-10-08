@@ -35,6 +35,11 @@ export function authErrorMessage(
   fallback = 'Ocurrió un error. Intenta de nuevo.'
 ): string {
   const msg = err instanceof Error ? err.message : typeof err === 'string' ? err : '';
+  // Sign-up email checks (src/lib/emailCheck.ts, and the database hook, whose messages start
+  // with "MONEO: ") are already written for the person.
+  if (err instanceof Error && err.name === 'SignupEmailError') return msg;
+  const own = msg.match(/MONEO: (.+)$/);
+  if (own) return own[1];
   for (const [re, text] of MESSAGES) if (re.test(msg)) return text;
   return fallback;
 }

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
-import { toDataError } from '@/lib/dataError';
+import { DataError, toDataError } from '@/lib/dataError';
 
 // Admin panel data. The database only answers these to users listed in app_admins and
 // returns counts of records, never amounts or other financial content.
@@ -39,6 +39,13 @@ export const adminService = {
     const { data, error } = await createClient().rpc('is_app_admin');
     if (error) throw toDataError(error);
     return data === true;
+  },
+
+  /** Deletes the user and all their data, like «Eliminar cuenta» (admin_delete_user). */
+  async deleteUser(userId: string): Promise<void> {
+    const { error } = await createClient().rpc('admin_delete_user', { p_user: userId });
+    // The database explains why (own account, another admin, an active Junta…).
+    if (error) throw new DataError(toDataError(error).kind, error, error.message);
   },
 
   async getUsers(): Promise<AdminUserRow[]> {

@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Search,
   ShieldAlert,
+  Trash2,
   UserPlus,
   Users,
   UsersRound,
@@ -20,6 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { adminService, type AdminCountryRow, type AdminUserRow } from '@/lib/supabaseAdmin';
 import { waitlistService, type WaitlistStats } from '@/lib/supabaseWaitlist';
 import { APP_LOCALE } from '@/lib/locale';
+import { getErrorMessage } from '@/lib/dataError';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -173,6 +175,36 @@ export default function AdminPage() {
     juntas: rows.filter(({ u }) => u.juntasOrganiza + u.juntasParticipa > 0).length,
   };
 
+  // Deletes the user and all their data (as «Eliminar cuenta»); they can sign up again.
+  // The email must be typed back so a slip of the finger cannot delete anyone.
+  const removeUser = async (u: AdminUserRow) => {
+    const typed = window.prompt(
+      `Se eliminará la cuenta de ${u.email} con todos sus datos. No se puede deshacer.\n\nEscribe el correo para confirmar:`
+    );
+    if (typed === null) return;
+    if (typed.trim().toLowerCase() !== u.email.toLowerCase()) {
+      window.alert('El correo no coincide. No se eliminó nada.');
+      return;
+    }
+    try {
+      await adminService.deleteUser(u.userId);
+      setUsers((list) => (list ?? []).filter((x) => x.userId !== u.userId));
+    } catch (e) {
+      window.alert(getErrorMessage(e));
+    }
+  };
+  const deleteButton = (u: AdminUserRow) =>
+    u.userId === user?.id ? null : (
+      <button
+        type="button"
+        onClick={() => removeUser(u)}
+        aria-label={`Eliminar ${u.email}`}
+        className="inline-flex items-center gap-1 rounded-lg border-2 border-black bg-white px-2 py-1 text-[11px] font-black text-[#B42318] hover:bg-[#FFE1DB]"
+      >
+        <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} /> Eliminar
+      </button>
+    );
+
   if (!authLoading && !user) {
     return (
       <Centered>
@@ -308,6 +340,9 @@ export default function AdminPage() {
                 <th className="px-4 py-3">Registro</th>
                 <th className="px-4 py-3">Último acceso</th>
                 <th className="px-4 py-3">Registros</th>
+                <th className="px-4 py-3">
+                  <span className="sr-only">Acciones</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -332,6 +367,7 @@ export default function AdminPage() {
                   <td className="px-4 py-3">
                     <Counts u={u} />
                   </td>
+                  <td className="px-4 py-3 text-right">{deleteButton(u)}</td>
                 </tr>
               ))}
             </tbody>
@@ -358,6 +394,7 @@ export default function AdminPage() {
               <div className="mt-3">
                 <Counts u={u} />
               </div>
+              <div className="mt-3 flex justify-end">{deleteButton(u)}</div>
             </li>
           ))}
         </ul>
