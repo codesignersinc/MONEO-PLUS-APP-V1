@@ -89,7 +89,8 @@ html {
 body {
   /* Installed app (iOS status bar "black-translucent"): keep content below the clock. */
   padding-top: env(safe-area-inset-top);
-  background-color: var(--color-void);
+  /* Paper tone under the paper layer (iOS overscroll, full-page captures). */
+  background-color: #f7f6f1;
   color: var(--color-phosphor);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

@@ -84,6 +84,7 @@ async function fetchPendingIncomes(): Promise<PendingIncome[]> {
     .from('income_entries')
     .select('*')
     .eq('user_id', user.id)
+    .is('business_id', null)
     .eq('status', 'pendiente')
     .order('collection_date', { ascending: true });
   if (error) throw toDataError(error);
@@ -465,27 +466,32 @@ export default function MovimientosPage() {
   return (
     <div className="px-4 lg:px-8 py-6 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-3xl font-black text-black leading-tight">Movimientos</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <h1 className="min-w-0 truncate text-3xl font-black text-black leading-tight">
+          Movimientos
+        </h1>
+        <div className="flex shrink-0 items-center gap-2">
           <button
             onClick={() => setShowSearch((s) => !s)}
+            aria-label="Buscar"
             className="w-9 h-9 rounded-xl border-[2px] border-black bg-white flex items-center justify-center text-black hover:bg-gray-50 transition-all duration-200"
           >
             <Search className="w-4 h-4" strokeWidth={1.75} />
           </button>
           <button
             onClick={() => setShowFilters((s) => !s)}
+            aria-label="Filtros"
             className={`w-9 h-9 rounded-xl border-[2px] border-black flex items-center justify-center text-black transition-all duration-200 ${showFilters || currencyFilter !== 'todas' ? 'bg-[#FFD43B]' : 'bg-white hover:bg-gray-50'}`}
           >
             <Filter className="w-4 h-4" strokeWidth={1.75} />
           </button>
           <button
             onClick={openAdd}
-            className="group flex items-center gap-2 px-3 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
+            aria-label="Agregar movimiento"
+            className="group flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-[#FFD43B] text-sm rounded-xl transition-all duration-200 text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
           >
             <Plus className="w-4 h-4" strokeWidth={2.5} />
-            Agregar
+            <span className="hidden sm:inline">Agregar</span>
           </button>
         </div>
       </div>

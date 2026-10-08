@@ -1,6 +1,6 @@
 # MONEO Global Core — mapa, arquitectura y plan
 
-> Estado: **aprobado y en implementación**. Hechos: pasos 1, 2 y 3.
+> Estado: **aprobado y en implementación**. Hechos: pasos 1, 2, 3 y 4.
 > Fecha: 7 de octubre de 2026.
 
 ## 0. Decisiones ya tomadas
@@ -21,58 +21,58 @@ Auditoría de solo lectura de `src/`, `supabase/`, `public/` y `android/` (7 de 
 
 ### 1.1 Moneda y formatos
 
-| Hallazgo | Dónde | Volumen | Impacto |
-|---|---|---|---|
-| «S/» literal delante de montos (`S/ {x.toFixed(2)}`), ignora la moneda del usuario | reportes (~20), deudas, suscripciones, presupuesto, ingresos, pagos, ahorros, inversiones, calendario, juntas (+3 formateadores copiados) | ~45 archivos | **Alto**: un usuario en euros ve «S/» |
-| Monto por defecto `'PEN'` (`\|\| 'PEN'`, `useState('PEN')`) | lib + ~30 componentes | ~85 lugares | Alto |
-| `AmountField` con `currency = 'S/'` por defecto; etiquetas «Monto (S/)» | `formKit.tsx:249`, formularios rápidos | 6 | Medio |
-| `formatCurrency` y `moneyFormatter` arman el texto a mano (`toFixed` + regex / `en-US`); el campo `locale` de cada moneda existe pero no se usa | `src/lib/currency.ts`, `src/components/dashboard/ui.tsx` | 2 núcleos, 24 usos | Medio: CLP/COP con decimales, separadores fijos |
-| `getCurrencyInfo` cae en PEN si no conoce la moneda; `getDefaultRate` devuelve **1** para pares desconocidos (también en SQL `moneo_fx_rate`) | `currency.ts:27,49`, `moneo_summary.sql` | — | **Alto: totales silenciosamente incorrectos** |
-| AUD no está en la lista de monedas | `currency.ts` | — | Bloquea Australia |
-| Suscripciones, pagos, ingresos, presupuestos, deudas, metas y juntas **no tienen columna de moneda** (se asumen en PEN) | esquema; `supabaseFinance.ts:781-811` | 7 tablas | Alto |
-| Hogar limita monedas a PEN/USD/EUR (CHECK en SQL y UI) | `household.sql:34,98`, `CreateHousehold`, `ExpenseSheet` | 4 | Medio |
-| Defaults `'PEN'` en tablas (`accounts`, `transactions`, `user_settings`, `moneo_auto`) y `coalesce(…,'PEN')` en funciones | 6 migraciones | ~15 | Medio |
-| En el **modo calculadora** del monto, `evalAmount` convierte toda coma en punto decimal: **«1,250» da 1.25** (el campo normal es numérico y no tiene el problema) | `formKit.tsx:192`, `empezar:1250` | 2 | **Bug actual también en Perú** |
+| Hallazgo                                                                                                                                                          | Dónde                                                                                                                                     | Volumen            | Impacto                                         |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------- |
+| «S/» literal delante de montos (`S/ {x.toFixed(2)}`), ignora la moneda del usuario                                                                                | reportes (~20), deudas, suscripciones, presupuesto, ingresos, pagos, ahorros, inversiones, calendario, juntas (+3 formateadores copiados) | ~45 archivos       | **Alto**: un usuario en euros ve «S/»           |
+| Monto por defecto `'PEN'` (`\|\| 'PEN'`, `useState('PEN')`)                                                                                                       | lib + ~30 componentes                                                                                                                     | ~85 lugares        | Alto                                            |
+| `AmountField` con `currency = 'S/'` por defecto; etiquetas «Monto (S/)»                                                                                           | `formKit.tsx:249`, formularios rápidos                                                                                                    | 6                  | Medio                                           |
+| `formatCurrency` y `moneyFormatter` arman el texto a mano (`toFixed` + regex / `en-US`); el campo `locale` de cada moneda existe pero no se usa                   | `src/lib/currency.ts`, `src/components/dashboard/ui.tsx`                                                                                  | 2 núcleos, 24 usos | Medio: CLP/COP con decimales, separadores fijos |
+| `getCurrencyInfo` cae en PEN si no conoce la moneda; `getDefaultRate` devuelve **1** para pares desconocidos (también en SQL `moneo_fx_rate`)                     | `currency.ts:27,49`, `moneo_summary.sql`                                                                                                  | —                  | **Alto: totales silenciosamente incorrectos**   |
+| AUD no está en la lista de monedas                                                                                                                                | `currency.ts`                                                                                                                             | —                  | Bloquea Australia                               |
+| Suscripciones, pagos, ingresos, presupuestos, deudas, metas y juntas **no tienen columna de moneda** (se asumen en PEN)                                           | esquema; `supabaseFinance.ts:781-811`                                                                                                     | 7 tablas           | Alto                                            |
+| Hogar limita monedas a PEN/USD/EUR (CHECK en SQL y UI)                                                                                                            | `household.sql:34,98`, `CreateHousehold`, `ExpenseSheet`                                                                                  | 4                  | Medio                                           |
+| Defaults `'PEN'` en tablas (`accounts`, `transactions`, `user_settings`, `moneo_auto`) y `coalesce(…,'PEN')` en funciones                                         | 6 migraciones                                                                                                                             | ~15                | Medio                                           |
+| En el **modo calculadora** del monto, `evalAmount` convierte toda coma en punto decimal: **«1,250» da 1.25** (el campo normal es numérico y no tiene el problema) | `formKit.tsx:192`, `empezar:1250`                                                                                                         | 2                  | **Bug actual también en Perú**                  |
 
 ### 1.2 Fechas, idioma y zona horaria
 
-| Hallazgo | Dónde | Volumen |
-|---|---|---|
-| `'es-PE'` fijo en `toLocale*String` | ~25 archivos | 29 usos |
-| Arreglos de meses en español escritos a mano (uno usa «set», los demás «sep») | 14 en TS + 1 en Java | 15 |
-| Semana empieza el lunes, fijo | `calendario` | 1 |
-| **Ningún uso de `Intl.*`**; `<html lang="es">`, manifests `es-PE`, OpenGraph `es_PE`, voz `es-PE` | layout, manifests, landing, `VoiceButton` | — |
-| `America/Lima` fijo en SQL: el «hoy», el inicio de mes y el día de cada movimiento | 6 migraciones (incluye `moneo_summary`, motor de transferencias, pagos/ingresos, deudas, avisos del hogar) | 6 |
-| Funciones de borde con −5 h fijas | `auto-inbound:149`, `mail-oauth:377` | 2 |
-| Cron de avisos a las 13:00 UTC (= 8:00 Lima) | `household_payment_reminders` | 1 |
-| Fechas calculadas en UTC (día equivocado de noche en América) | `supabaseCurrency.ts:94`, `convertir:105`, `householdImport.ts:32` | 3 |
-| **No existe columna de zona horaria, país ni idioma** en ningún usuario | `user_profiles`, `user_settings`, `onboarding_profiles` | — |
+| Hallazgo                                                                                          | Dónde                                                                                                      | Volumen |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
+| `'es-PE'` fijo en `toLocale*String`                                                               | ~25 archivos                                                                                               | 29 usos |
+| Arreglos de meses en español escritos a mano (uno usa «set», los demás «sep»)                     | 14 en TS + 1 en Java                                                                                       | 15      |
+| Semana empieza el lunes, fijo                                                                     | `calendario`                                                                                               | 1       |
+| **Ningún uso de `Intl.*`**; `<html lang="es">`, manifests `es-PE`, OpenGraph `es_PE`, voz `es-PE` | layout, manifests, landing, `VoiceButton`                                                                  | —       |
+| `America/Lima` fijo en SQL: el «hoy», el inicio de mes y el día de cada movimiento                | 6 migraciones (incluye `moneo_summary`, motor de transferencias, pagos/ingresos, deudas, avisos del hogar) | 6       |
+| Funciones de borde con −5 h fijas                                                                 | `auto-inbound:149`, `mail-oauth:377`                                                                       | 2       |
+| Cron de avisos a las 13:00 UTC (= 8:00 Lima)                                                      | `household_payment_reminders`                                                                              | 1       |
+| Fechas calculadas en UTC (día equivocado de noche en América)                                     | `supabaseCurrency.ts:94`, `convertir:105`, `householdImport.ts:32`                                         | 3       |
+| **No existe columna de zona horaria, país ni idioma** en ningún usuario                           | `user_profiles`, `user_settings`, `onboarding_profiles`                                                    | —       |
 
 ### 1.3 Catálogos
 
-| Hallazgo | Dónde | Volumen |
-|---|---|---|
-| Bancos fijos en código (`PERUVIAN_BANKS`) + alias aparte | `src/lib/brands.ts` | 8 bancos, 8 grupos de alias |
-| La bienvenida suma 3 más (Pichincha, Yape, Plin) y su propia lista «con MONEO AUTO» | `empezar/page.tsx:126-134` | 11 |
-| Cuentas usa otra lista (sin billeteras): **inconsistente** con la bienvenida | `cuentas/page.tsx:504` | — |
-| Mapas de nombres de banco duplicados | `auto/page.tsx`, `AutoLiveListener.tsx` | 2 × 6 |
-| 41 servicios de suscripción (7 con logo enlazado desde Wikimedia), todos globales | `brands.ts` | 41 |
-| **La institución se guarda como texto libre** (`accounts.institution`, `debts.institution`); el logo se adivina buscando texto | esquema | — |
-| 8 logos de bancos en `public/assets/images` | — | 8 |
-| Categorías: 4 listas distintas (presets 14, gasto 8, ingreso 8 ×2, pago 8 ×2) y **se guardan como texto en español** (`'Otros'`, `'Comida'`) | `financeStore.ts`, `quickForms/shared.tsx`, `ingresos`, `pagos` | 4 listas |
-| Reglas palabra → categoría con marcas peruanas (Wong, Tottus, Luz del Sur, SOAT, predial, combi, lonche…) | `auto/merchant.ts`, `auto/freeText.ts`, `householdImport.ts` | 3 conjuntos, 29 reglas |
+| Hallazgo                                                                                                                                     | Dónde                                                           | Volumen                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------- |
+| Bancos fijos en código (`PERUVIAN_BANKS`) + alias aparte                                                                                     | `src/lib/brands.ts`                                             | 8 bancos, 8 grupos de alias |
+| La bienvenida suma 3 más (Pichincha, Yape, Plin) y su propia lista «con MONEO AUTO»                                                          | `empezar/page.tsx:126-134`                                      | 11                          |
+| Cuentas usa otra lista (sin billeteras): **inconsistente** con la bienvenida                                                                 | `cuentas/page.tsx:504`                                          | —                           |
+| Mapas de nombres de banco duplicados                                                                                                         | `auto/page.tsx`, `AutoLiveListener.tsx`                         | 2 × 6                       |
+| 41 servicios de suscripción (7 con logo enlazado desde Wikimedia), todos globales                                                            | `brands.ts`                                                     | 41                          |
+| **La institución se guarda como texto libre** (`accounts.institution`, `debts.institution`); el logo se adivina buscando texto               | esquema                                                         | —                           |
+| 8 logos de bancos en `public/assets/images`                                                                                                  | —                                                               | 8                           |
+| Categorías: 4 listas distintas (presets 14, gasto 8, ingreso 8 ×2, pago 8 ×2) y **se guardan como texto en español** (`'Otros'`, `'Comida'`) | `financeStore.ts`, `quickForms/shared.tsx`, `ingresos`, `pagos` | 4 listas                    |
+| Reglas palabra → categoría con marcas peruanas (Wong, Tottus, Luz del Sur, SOAT, predial, combi, lonche…)                                    | `auto/merchant.ts`, `auto/freeText.ts`, `householdImport.ts`    | 3 conjuntos, 29 reglas      |
 
 ### 1.4 Captura de datos (MONEO AUTO)
 
-| Canal real | Se guarda como | Nota |
-|---|---|---|
-| Reenvío de correo (Postmark) | `source='email'` | — |
-| Gmail conectado | `source='email'` | **Indistinguible** del reenvío |
-| Texto pegado | `source='text'` | — |
-| Captura o boleta (OCR) | `source='text'` | No se registra que fue OCR ni qué lector |
-| Voz | `source='text'` (o solo rellena un formulario) | Voz en `es-PE` fijo |
-| Notificaciones Android / SMS | existen en el tipo, **nada las produce** | Pendiente (lector de notificaciones) |
-| Banca abierta | no existe | — |
+| Canal real                   | Se guarda como                                 | Nota                                     |
+| ---------------------------- | ---------------------------------------------- | ---------------------------------------- |
+| Reenvío de correo (Postmark) | `source='email'`                               | —                                        |
+| Gmail conectado              | `source='email'`                               | **Indistinguible** del reenvío           |
+| Texto pegado                 | `source='text'`                                | —                                        |
+| Captura o boleta (OCR)       | `source='text'`                                | No se registra que fue OCR ni qué lector |
+| Voz                          | `source='text'` (o solo rellena un formulario) | Voz en `es-PE` fijo                      |
+| Notificaciones Android / SMS | existen en el tipo, **nada las produce**       | Pendiente (lector de notificaciones)     |
+| Banca abierta                | no existe                                      | —                                        |
 
 - `bank` y `kind` son listas cerradas en SQL con nombres peruanos (`yape_enviado`, `plin_recibido`).
 - Remitentes de confianza (6 dominios `.pe`), paquetes de apps y palabras de OCR están en código, y además copiados en las funciones de borde (`interpreter.js` ×2) y en el cliente.
@@ -143,17 +143,17 @@ user_settings
 
 Tabla administrable desde el panel:
 
-| Campo | Ejemplo PE | Ejemplo ES |
-|---|---|---|
-| `code` | PE | ES |
-| `default_currency` | PEN | EUR |
-| `default_locale` | es-PE | es-ES |
-| `default_timezone` | America/Lima | Europe/Madrid |
-| `week_start` | lunes | lunes |
-| `tax_label`, `tax_rate`, `prices_include_tax` | IGV 18 %, sí | IVA 21 %, sí |
-| `status` | `live` | `hidden` → `waitlist` → `beta` → `live` |
-| `features` (jsonb) | `{ "juntas": true, "juntas_label": "Juntas" }` | `{ "juntas": false }` |
-| `legal_profile` | `pe` | `eu` |
+| Campo                                         | Ejemplo PE                                     | Ejemplo ES                              |
+| --------------------------------------------- | ---------------------------------------------- | --------------------------------------- |
+| `code`                                        | PE                                             | ES                                      |
+| `default_currency`                            | PEN                                            | EUR                                     |
+| `default_locale`                              | es-PE                                          | es-ES                                   |
+| `default_timezone`                            | America/Lima                                   | Europe/Madrid                           |
+| `week_start`                                  | lunes                                          | lunes                                   |
+| `tax_label`, `tax_rate`, `prices_include_tax` | IGV 18 %, sí                                   | IVA 21 %, sí                            |
+| `status`                                      | `live`                                         | `hidden` → `waitlist` → `beta` → `live` |
+| `features` (jsonb)                            | `{ "juntas": true, "juntas_label": "Juntas" }` | `{ "juntas": false }`                   |
+| `legal_profile`                               | `pe`                                           | `eu`                                    |
 
 El paquete de país es la suma de: esta fila + su catálogo (3.3) + sus categorías y reglas (3.4) + sus textos (3.5) + sus precios (3.7) + sus documentos legales (3.8).
 
@@ -212,7 +212,7 @@ Sugerencia  (deduplicada por huella entre canales)  →  Movimiento confirmado
 
 ### 3.7 Cobros
 
-- **`billing_prices`** (`plan_code`, `country`, `currency`, `price`, `tax_included`, `provider`, `active`): el plan define *qué es*; el precio, *cuánto cuesta en cada país*.
+- **`billing_prices`** (`plan_code`, `country`, `currency`, `price`, `tax_included`, `provider`, `active`): el plan define _qué es_; el precio, _cuánto cuesta en cada país_.
 - **Proveedor abstracto**: `mercadopago_pe` hoy; luego Google Play / App Store (que cobran impuestos por ti en cada país) y, para la web fuera de Latinoamérica, un intermediario que actúe como vendedor responsable de impuestos (Paddle/Lemon Squeezy) o Stripe vía empresa en EE. UU.
 - **Medios de pago por país** (Yape y PagoEfectivo solo en PE).
 - La interfaz formatea con `plan.currency`; sin precios escritos a mano.
@@ -238,19 +238,19 @@ Sugerencia  (deduplicada por huella entre canales)  →  Movimiento confirmado
 
 Pasos pequeños, cada uno en su PR, **sin cambiar lo que ve un usuario peruano** salvo los arreglos del punto 2.
 
-| # | Paso | Qué incluye | Riesgo | Tiempo |
-|---|---|---|---|---|
-| 1 | **Arreglos inmediatos** | Calculadora de montos («1,250»), landing de precios, aviso de tasa faltante, bancos consistentes | Bajo | 1–2 días |
-| 2 | **Capa de formato única** | `formatMoney` / `formatDate` con `Intl`; reemplazar «S/», `es-PE` y meses; AUD; entrada de montos por idioma | Medio (muchos archivos; se prueba que Perú se vea igual) | 3–4 días |
-| 3 | **Contexto del usuario + países** | `country_code`, `locale`, `timezone` en `user_settings`; tabla `countries` (PE en vivo; ES, US, AU, AE, SG en lista de espera); detección (IP, zona horaria, idioma) y confirmación en Inicio; «País y región» en Configuración; usuarios por país en el admin | Bajo | 3 días |
-| 4 | **Landings + lista de espera** | `/es`, `/us`, `/au`, `/ae`, `/sg`, `waitlist`, hreflang, sitemap, analítica con país | Bajo (no toca la app) | 3–4 días |
-| 5 | **Zona horaria por usuario** | Redefinir las funciones SQL con la zona del usuario; avisos por zona; funciones de borde sin −5 h | **Medio-alto** (motor de saldos y fechas; pruebas SQL completas) | 3–4 días |
-| 6 | **Catálogo administrable** | Tablas, logos en Storage, sección «Catálogo» en el admin, migrar Perú, la app lee del catálogo, `institution_id` | Medio | 1–1,5 semanas |
-| 7 | **Sistema de idiomas** | next-intl, estructura de mensajes, extraer landing + bienvenida + cobros primero; inglés de esas partes | Medio | 1–1,5 semanas (base) |
-| 8 | **Categorías con clave** | Claves + etiquetas, migrar filas, reglas por país en la base de datos | Medio | 1 semana |
-| 9 | **Captura agnóstica** | `channel`/`parser`/`institution_id`, `capture_channel` en movimientos, identidades desde el catálogo | Medio | 1 semana |
-| 10 | **Precios por país** | `billing_prices`, proveedor abstracto, medios por país (sin proveedor nuevo aún) | Medio | 1 semana |
-| — | Después | Errores SQL con código, Android en varios idiomas, legal por país, extracción completa de textos, Paquete España | — | según el país ganador |
+| #   | Paso                              | Qué incluye                                                                                                                                                                                                                                                    | Riesgo                                                           | Tiempo                |
+| --- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------- |
+| 1   | **Arreglos inmediatos**           | Calculadora de montos («1,250»), landing de precios, aviso de tasa faltante, bancos consistentes                                                                                                                                                               | Bajo                                                             | 1–2 días              |
+| 2   | **Capa de formato única**         | `formatMoney` / `formatDate` con `Intl`; reemplazar «S/», `es-PE` y meses; AUD; entrada de montos por idioma                                                                                                                                                   | Medio (muchos archivos; se prueba que Perú se vea igual)         | 3–4 días              |
+| 3   | **Contexto del usuario + países** | `country_code`, `locale`, `timezone` en `user_settings`; tabla `countries` (PE en vivo; ES, US, AU, AE, SG en lista de espera); detección (IP, zona horaria, idioma) y confirmación en Inicio; «País y región» en Configuración; usuarios por país en el admin | Bajo                                                             | 3 días                |
+| 4   | **Landings + lista de espera**    | `/es`, `/us`, `/au`, `/ae`, `/sg`, `waitlist`, hreflang, sitemap, analítica con país                                                                                                                                                                           | Bajo (no toca la app)                                            | 3–4 días              |
+| 5   | **Zona horaria por usuario**      | Redefinir las funciones SQL con la zona del usuario; avisos por zona; funciones de borde sin −5 h                                                                                                                                                              | **Medio-alto** (motor de saldos y fechas; pruebas SQL completas) | 3–4 días              |
+| 6   | **Catálogo administrable**        | Tablas, logos en Storage, sección «Catálogo» en el admin, migrar Perú, la app lee del catálogo, `institution_id`                                                                                                                                               | Medio                                                            | 1–1,5 semanas         |
+| 7   | **Sistema de idiomas**            | next-intl, estructura de mensajes, extraer landing + bienvenida + cobros primero; inglés de esas partes                                                                                                                                                        | Medio                                                            | 1–1,5 semanas (base)  |
+| 8   | **Categorías con clave**          | Claves + etiquetas, migrar filas, reglas por país en la base de datos                                                                                                                                                                                          | Medio                                                            | 1 semana              |
+| 9   | **Captura agnóstica**             | `channel`/`parser`/`institution_id`, `capture_channel` en movimientos, identidades desde el catálogo                                                                                                                                                           | Medio                                                            | 1 semana              |
+| 10  | **Precios por país**              | `billing_prices`, proveedor abstracto, medios por país (sin proveedor nuevo aún)                                                                                                                                                                               | Medio                                                            | 1 semana              |
+| —   | Después                           | Errores SQL con código, Android en varios idiomas, legal por país, extracción completa de textos, Paquete España                                                                                                                                               | —                                                                | según el país ganador |
 
 **Orden recomendado**: 1 → 2 → 3 → 4 (la validación de mercado empieza ya) → 5 → 6 → 7 → 8 → 9 → 10.
 Los pasos 1–4 suman unas **2 semanas** y dejan corriendo la validación internacional; los pasos 5–10, unas **5–6 semanas** más, en paralelo al crecimiento en Perú.
@@ -261,10 +261,10 @@ Los pasos 1–4 suman unas **2 semanas** y dejan corriendo la validación intern
 
 ## 5. Decisiones
 
-| # | Tema | Decisión (7 oct 2026) |
-|---|---|---|
-| 1 | Orden del plan | **Aprobado**, empezando por el paso 1 |
-| 2 | Libro de Reclamaciones | **Más adelante**: el titular enviará los datos (razón social, RUC, dirección, correo) |
-| 3 | Español base | **Neutro**, con ajustes por país (es-PE, es-ES, es-US) |
-| 4 | Landings | **Rutas**: `moneo.plus/es`, `/us`, `/au`, `/ae`, `/sg` |
-| 5 | Empresa | Pendiente: persona natural mientras solo se cobre en Perú; revisar con contador antes de cobrar fuera |
+| #   | Tema                   | Decisión (7 oct 2026)                                                                                 |
+| --- | ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1   | Orden del plan         | **Aprobado**, empezando por el paso 1                                                                 |
+| 2   | Libro de Reclamaciones | **Más adelante**: el titular enviará los datos (razón social, RUC, dirección, correo)                 |
+| 3   | Español base           | **Neutro**, con ajustes por país (es-PE, es-ES, es-US)                                                |
+| 4   | Landings               | **Rutas**: `moneo.plus/es`, `/us`, `/au`, `/ae`, `/sg`                                                |
+| 5   | Empresa                | Pendiente: persona natural mientras solo se cobre en Perú; revisar con contador antes de cobrar fuera |

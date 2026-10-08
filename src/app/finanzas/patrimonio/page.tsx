@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   accountsService,
@@ -131,18 +132,18 @@ export default function PatrimonioPage() {
             Agrega cuentas, ahorros e inversiones para calcular tu patrimonio neto automáticamente.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <a
+            <Link
               href="/finanzas/cuentas"
               className="px-5 py-3 bg-[#FFD43B] text-sm rounded-xl transition-colors text-black font-black border-[3px] border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
             >
               Agregar cuentas
-            </a>
-            <a
+            </Link>
+            <Link
               href="/finanzas/inversiones"
               className="px-5 py-3 border border-black text-black text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors"
             >
               Agregar inversiones
-            </a>
+            </Link>
           </div>
         </div>
       ) : (
