@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { loadFinanceData } from '@/lib/supabaseFinance';
 import type { FinanceData } from '@/lib/financeStore';
 import { pagosService, type PagoEntry } from '@/lib/supabaseObligations';
@@ -471,9 +471,9 @@ export default function DashboardPage() {
             aria-label="Cerrar"
             className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full border-2 border-black bg-white text-sm font-black"
           >
-            ✕
+            <X className="h-4 w-4" strokeWidth={2.5} aria-hidden />
           </button>
-          <p className="pr-8 font-poppins text-lg font-black">¡Bienvenido a tu MONEO! 🐒</p>
+          <p className="pr-8 font-poppins text-lg font-black">¡Bienvenido a tu MONEO!</p>
           <p className="mt-1 text-sm font-semibold">
             Este es tu dinero. Registra tu primer movimiento con el botón «+».
           </p>
@@ -504,7 +504,7 @@ export default function DashboardPage() {
               <div className="min-w-0 space-y-5">
                 <div>
                   <h1 className="text-[34px] font-black leading-tight tracking-tight">
-                    Hola, {displayName} 👋
+                    Hola, {displayName}
                   </h1>
                   <p className="text-[17px] font-medium text-[#111]/80">Tu dinero, más simple.</p>
                 </div>
@@ -541,7 +541,7 @@ export default function DashboardPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <h1 className="truncate text-[19px] font-black leading-tight">
-                  Hola, {displayName} 👋
+                  Hola, {displayName}
                 </h1>
                 <p className="text-xs font-medium text-[#111]/70">Tu dinero, más simple.</p>
               </div>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import type { Notification } from '@/types/notifications';
 import NotificationItem from './NotificationItem';
 import NotificationEmpty from './NotificationEmpty';
+import Glyph from '@/components/ui/Glyph';
 
 interface NotificationPanelProps {
   notifications: Notification[];
@@ -93,7 +94,7 @@ export default function NotificationPanel({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b-[3px] border-black bg-[#FFD43B] flex-shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🔔</span>
+            <Glyph name="bell" className="h-5 w-5 text-[#111]" />
             <h2 className="font-black text-black text-sm uppercase tracking-wide">
               Notificaciones
             </h2>
@@ -168,7 +169,7 @@ export default function NotificationPanel({
           {!loading && error && (
             <div className="p-6 text-center">
               <div className="w-12 h-12 rounded-2xl border-[3px] border-black bg-[#FEE2E2] flex items-center justify-center text-2xl mx-auto mb-3 shadow-[3px_3px_0px_#000]">
-                ⚠️
+                <Glyph name="alert" className="h-6 w-6 text-[#111]" />
               </div>
               <p className="text-xs font-black text-black uppercase mb-1">Error al cargar</p>
               <p className="text-xs text-gray-500 mb-3">No pudimos cargar tus notificaciones.</p>

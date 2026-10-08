@@ -4,6 +4,7 @@ import { budgetService, BudgetCategory, transactionsService } from '@/lib/supaba
 import { CATEGORY_PRESETS } from '@/lib/financeStore';
 import { Plus, X, Pencil, Trash2, Wallet, BarChart3 } from 'lucide-react';
 import LoadError from '@/components/ui/LoadError';
+import Glyph from '@/components/ui/Glyph';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
@@ -23,7 +24,7 @@ export default function PresupuestoPage() {
   const toast = useToast();
   const [form, setForm] = useState({
     name: 'Comida',
-    icon: '🍽️',
+    icon: 'food',
     budget: '',
     color: '#D97706',
     bgColor: '#FEF3C7',
@@ -74,7 +75,7 @@ export default function PresupuestoPage() {
 
   const openAdd = () => {
     setEditingCat(null);
-    setForm({ name: 'Comida', icon: '🍽️', budget: '', color: '#D97706', bgColor: '#FEF3C7' });
+    setForm({ name: 'Comida', icon: 'food', budget: '', color: '#D97706', bgColor: '#FEF3C7' });
     setFormError('');
     setShowForm(true);
   };
@@ -214,7 +215,7 @@ export default function PresupuestoPage() {
       {categories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-3xl mb-4">
-            📊
+            <Glyph name="chart" className="h-8 w-8 text-[#111]" />
           </div>
           <h2 className="text-lg font-black text-black mb-2">Sin presupuesto</h2>
           <p className="text-sm text-gray-500 max-w-xs mb-6">
@@ -245,7 +246,7 @@ export default function PresupuestoPage() {
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                     style={{ background: cat.bgColor }}
                   >
-                    {cat.icon}
+                    <Glyph name={cat.icon} fallback="tag" className="h-5 w-5 text-[#111]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -352,7 +353,7 @@ export default function PresupuestoPage() {
               >
                 {CATEGORY_PRESETS.map((c) => (
                   <option key={c.id} value={c.label}>
-                    {c.icon} {c.label}
+                    {c.label}
                   </option>
                 ))}
               </select>

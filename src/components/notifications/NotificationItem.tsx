@@ -2,6 +2,8 @@
 import React from 'react';
 import { formatNotificationTime, getNotificationTypeConfig } from '@/lib/notifications';
 import type { Notification } from '@/types/notifications';
+import Glyph from '@/components/ui/Glyph';
+import { glyphKey } from '@/lib/glyphs';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -11,6 +13,7 @@ interface NotificationItemProps {
 export default function NotificationItem({ notification, onClick }: NotificationItemProps) {
   const config = getNotificationTypeConfig(notification.type);
   const icon = notification.icon || config.icon;
+  const fallbackIcon = glyphKey(config.icon) ?? 'bell';
   const bgColor = notification.color || config.color;
 
   return (
@@ -23,10 +26,10 @@ export default function NotificationItem({ notification, onClick }: Notification
     >
       {/* Icon */}
       <div
-        className="flex-shrink-0 w-9 h-9 rounded-xl border-2 border-black flex items-center justify-center text-base shadow-[2px_2px_0px_#000]"
+        className="flex-shrink-0 w-9 h-9 rounded-xl border-2 border-black flex items-center justify-center text-base shadow-[2px_2px_0px_#000] text-[#111]"
         style={{ backgroundColor: bgColor }}
       >
-        {icon}
+        <Glyph name={icon} fallback={fallbackIcon} className="h-4 w-4" />
       </div>
 
       {/* Content */}

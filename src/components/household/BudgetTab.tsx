@@ -21,7 +21,7 @@ import { ErrorNote, Sheet } from '@/components/household/ui';
 // Household categories: the presets (without income), with Comida + Supermercado shown
 // together as Alimentación, as in every household view.
 const CATEGORIES = [
-  { label: 'Alimentación', icon: '🛒' },
+  { label: 'Alimentación', icon: 'cart' },
   ...CATEGORY_PRESETS.filter((c) => !['ingreso', 'comida', 'supermercado'].includes(c.id)).map(
     (c) => ({ label: c.label, icon: c.icon })
   ),

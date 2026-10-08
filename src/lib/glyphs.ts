@@ -235,7 +235,7 @@ export function glyphKey(value: string | null | undefined): GlyphKey | null {
   const v = value.trim();
   if (KEY_SET.has(v)) return v as GlyphKey;
   // Drop variation selectors and skin tones before looking the emoji up.
-  const bare = v.replace(/[︎️\u{1F3FB}-\u{1F3FF}]/gu, '');
+  const bare = v.replace(/\uFE0E|\uFE0F/g, '').replace(/\uD83C[\uDFFB-\uDFFF]/g, '');
   return EMOJI_TO_GLYPH[bare] ?? null;
 }
 

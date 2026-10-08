@@ -7,6 +7,9 @@ import LoadError from '@/components/ui/LoadError';
 import { toDataError } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
 import { formatMoney, monthNames } from '@/lib/format';
+import { X } from 'lucide-react';
+import Glyph from '@/components/ui/Glyph';
+import type { GlyphKey } from '@/lib/glyphs';
 
 const DAYS_HEADER = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
@@ -60,32 +63,44 @@ interface SavingsGoalRow {
 
 const KIND_CONFIG: Record<
   string,
-  { bg: string; text: string; border: string; badge: string; emoji: string }
+  { bg: string; text: string; border: string; badge: string; glyph: GlyphKey }
 > = {
   ingreso: {
     bg: '#DCFCE7',
     text: '#15803D',
     border: '#16A34A',
     badge: 'bg-green-500',
-    emoji: '💰',
+    glyph: 'coins',
   },
-  gasto: { bg: '#FEE2E2', text: '#B91C1C', border: '#DC2626', badge: 'bg-red-500', emoji: '💸' },
+  gasto: { bg: '#FEE2E2', text: '#B91C1C', border: '#DC2626', badge: 'bg-red-500', glyph: 'cash' },
   transferencia: {
     bg: '#DBEAFE',
     text: '#1D4ED8',
     border: '#2563EB',
     badge: 'bg-blue-500',
-    emoji: '🔄',
+    glyph: 'repeat',
   },
   suscripcion: {
     bg: '#F3E8FF',
     text: '#7E22CE',
     border: '#9333EA',
     badge: 'bg-purple-500',
-    emoji: '📱',
+    glyph: 'phone',
   },
-  pago: { bg: '#FEF3C7', text: '#B45309', border: '#D97706', badge: 'bg-amber-500', emoji: '📋' },
-  meta: { bg: '#ECFDF5', text: '#065F46', border: '#059669', badge: 'bg-emerald-600', emoji: '🎯' },
+  pago: {
+    bg: '#FEF3C7',
+    text: '#B45309',
+    border: '#D97706',
+    badge: 'bg-amber-500',
+    glyph: 'clipboard',
+  },
+  meta: {
+    bg: '#ECFDF5',
+    text: '#065F46',
+    border: '#059669',
+    badge: 'bg-emerald-600',
+    glyph: 'target',
+  },
 };
 
 function formatAmount(amount: number): string {
@@ -155,7 +170,7 @@ export default function CalendarioPage() {
             id: tx.id,
             label: tx.name,
             amount: tx.amount,
-            icon: tx.categoryIcon || KIND_CONFIG[tx.type].emoji,
+            icon: tx.categoryIcon || KIND_CONFIG[tx.type].glyph,
             kind: tx.type,
           });
         }
@@ -175,7 +190,7 @@ export default function CalendarioPage() {
             id: sub.id,
             label: sub.name,
             amount: sub.amount,
-            icon: sub.icon || '📱',
+            icon: sub.icon || 'phone',
             kind: 'suscripcion',
           });
         }
@@ -189,7 +204,7 @@ export default function CalendarioPage() {
             id: p.id,
             label: p.name,
             amount: p.amount,
-            icon: p.categoryIcon || '📋',
+            icon: p.categoryIcon || 'clipboard',
             kind: 'pago',
           });
         }
@@ -203,7 +218,7 @@ export default function CalendarioPage() {
             id: g.id,
             label: g.name,
             amount: g.target,
-            icon: g.icon || '🎯',
+            icon: g.icon || 'target',
             kind: 'meta',
           });
         }
@@ -259,13 +274,13 @@ export default function CalendarioPage() {
       kindCounts[e.kind] = (kindCounts[e.kind] || 0) + 1;
     });
 
-  const FILTERS = [
-    { key: 'todos', label: 'Todo', emoji: '📅' },
-    { key: 'ingreso', label: 'Ingresos', emoji: '💰' },
-    { key: 'gasto', label: 'Gastos', emoji: '💸' },
-    { key: 'suscripcion', label: 'Suscripciones', emoji: '📱' },
-    { key: 'pago', label: 'Pagos', emoji: '📋' },
-    { key: 'meta', label: 'Metas', emoji: '🎯' },
+  const FILTERS: { key: string; label: string; glyph: GlyphKey }[] = [
+    { key: 'todos', label: 'Todo', glyph: 'calendar' },
+    { key: 'ingreso', label: 'Ingresos', glyph: 'coins' },
+    { key: 'gasto', label: 'Gastos', glyph: 'cash' },
+    { key: 'suscripcion', label: 'Suscripciones', glyph: 'phone' },
+    { key: 'pago', label: 'Pagos', glyph: 'clipboard' },
+    { key: 'meta', label: 'Metas', glyph: 'target' },
   ];
 
   // A failed load must not render an empty calendar ("Sin eventos este día").
@@ -273,10 +288,11 @@ export default function CalendarioPage() {
     return (
       <div className="px-3 lg:px-8 py-5 max-w-2xl mx-auto">
         <h1
-          className="text-3xl font-black text-black uppercase tracking-tight mb-5"
+          className="text-3xl font-black text-black uppercase tracking-tight mb-5 flex items-center gap-2"
           style={{ fontFamily: 'monospace' }}
         >
-          📅 CALENDARIO
+          <Glyph name="calendar" className="h-7 w-7" />
+          CALENDARIO
         </h1>
         <LoadError what="tu calendario" error={loadError} onRetry={loadAllData} />
       </div>
@@ -288,10 +304,11 @@ export default function CalendarioPage() {
       {/* Header */}
       <div className="mb-5">
         <h1
-          className="text-3xl font-black text-black uppercase tracking-tight"
+          className="text-3xl font-black text-black uppercase tracking-tight flex items-center gap-2"
           style={{ fontFamily: 'monospace' }}
         >
-          📅 CALENDARIO
+          <Glyph name="calendar" className="h-7 w-7" />
+          CALENDARIO
         </h1>
         <p className="text-sm font-bold text-gray-500 mt-0.5">Mapa visual de tus finanzas</p>
       </div>
@@ -329,7 +346,7 @@ export default function CalendarioPage() {
               className="flex items-center gap-1 rounded-full border-[2px] border-black px-2 py-0.5 text-xs font-bold"
               style={{ background: cfg.bg, color: cfg.text }}
             >
-              <span>{cfg.emoji}</span>
+              <Glyph name={cfg.glyph} className="h-3.5 w-3.5" />
               <span className="capitalize">{kind}</span>
               <span className="bg-black text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
                 {count}
@@ -434,9 +451,10 @@ export default function CalendarioPage() {
             </div>
             <button
               onClick={() => setSelectedDay(null)}
+              aria-label="Cerrar"
               className="text-[#FFD43B] font-black text-xl hover:text-white transition-colors"
             >
-              ✕
+              <X className="h-6 w-6" strokeWidth={2.5} aria-hidden />
             </button>
           </div>
 
@@ -456,7 +474,8 @@ export default function CalendarioPage() {
                     className={`flex-shrink-0 px-3 py-2 text-xs font-black border-r-[2px] border-black transition-colors
                       ${activeFilter === f.key ? 'bg-[#FFD43B] text-black' : 'bg-transparent text-gray-600 hover:bg-[#FFF9E6]'}`}
                   >
-                    {f.emoji} {f.label}
+                    <Glyph name={f.glyph} className="mr-1 inline-block h-3.5 w-3.5 align-[-2px]" />
+                    {f.label}
                     {count > 0 && (
                       <span
                         className={`ml-1 text-[10px] px-1 rounded border border-black font-black
@@ -475,12 +494,12 @@ export default function CalendarioPage() {
           <div className="divide-y-[2px] divide-black">
             {loading ? (
               <div className="p-8 text-center">
-                <div className="text-2xl animate-spin inline-block">⚙️</div>
+                <Glyph name="settings" className="h-6 w-6 animate-spin inline-block" />
                 <p className="text-xs font-bold text-gray-500 mt-2">Cargando...</p>
               </div>
             ) : filteredEvents.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-4xl mb-3">📭</p>
+                <Glyph name="inbox" className="h-10 w-10 mx-auto mb-3 text-[#111]" />
                 <p className="font-black text-gray-500 text-sm uppercase tracking-wide">
                   Sin eventos este día
                 </p>
@@ -502,7 +521,7 @@ export default function CalendarioPage() {
                       className="w-10 h-10 rounded-xl border-[2px] border-black flex items-center justify-center text-lg flex-shrink-0 font-black"
                       style={{ background: cfg.bg }}
                     >
-                      {ev.icon}
+                      <Glyph name={ev.icon} fallback={cfg.glyph} className="h-5 w-5 text-[#111]" />
                     </div>
 
                     {/* Info */}
@@ -596,7 +615,7 @@ export default function CalendarioPage() {
       {/* Hint when nothing selected */}
       {!selectedDay && !loading && (
         <div className="rounded-2xl border-[3px] border-black border-dashed p-6 text-center bg-[#FAFAF8]">
-          <p className="text-3xl mb-2">👆</p>
+          <Glyph name="pointer" className="h-8 w-8 mx-auto mb-2 text-[#111]" />
           <p className="font-black text-sm text-gray-600 uppercase tracking-wide">
             Toca un día para ver sus eventos
           </p>

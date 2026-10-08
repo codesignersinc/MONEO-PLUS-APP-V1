@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import LoadError from '@/components/ui/LoadError';
+import Glyph from '@/components/ui/Glyph';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { incomeService, type IncomeEntry, type NewIncome } from '@/lib/supabaseObligations';
@@ -21,21 +22,21 @@ interface IncomeForm {
 }
 
 const INCOME_CATEGORIES = [
-  { label: 'Salario', icon: '💼' },
-  { label: 'Freelance', icon: '💻' },
-  { label: 'Negocio', icon: '🏪' },
-  { label: 'Inversión', icon: '📈' },
-  { label: 'Alquiler', icon: '🏠' },
-  { label: 'Bono', icon: '🎁' },
-  { label: 'Comisión', icon: '🤝' },
-  { label: 'Otro', icon: '💰' },
+  { label: 'Salario', icon: 'briefcase' },
+  { label: 'Freelance', icon: 'laptop' },
+  { label: 'Negocio', icon: 'store' },
+  { label: 'Inversión', icon: 'trending' },
+  { label: 'Alquiler', icon: 'home' },
+  { label: 'Bono', icon: 'gift' },
+  { label: 'Comisión', icon: 'handshake' },
+  { label: 'Otro', icon: 'coins' },
 ];
 
 const defaultForm: IncomeForm = {
   name: '',
   amount: '',
   category: 'Salario',
-  categoryIcon: '💼',
+  categoryIcon: 'briefcase',
   collectionDate: '',
   notes: '',
   status: 'pendiente',
@@ -105,7 +106,7 @@ export default function IngresosPage() {
 
   const handleCategoryChange = (label: string) => {
     const cat = INCOME_CATEGORIES.find((c) => c.label === label);
-    setForm((f) => ({ ...f, category: label, categoryIcon: cat?.icon || '💰' }));
+    setForm((f) => ({ ...f, category: label, categoryIcon: cat?.icon || 'coins' }));
   };
 
   const setStatus = (id: string, status: IncomeEntry['status'], transactionId: string | null) =>
@@ -271,7 +272,7 @@ export default function IngresosPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-4xl mb-3">💰</p>
+          <Glyph name="coins" className="h-10 w-10 mb-3 text-[#111]" />
           <p className="text-gray-500 font-medium mb-1">Sin ingresos registrados</p>
           <p className="text-xs text-gray-500 mb-4">Registra tus ingresos y su fecha de cobro</p>
           <button
@@ -291,7 +292,7 @@ export default function IngresosPage() {
               }`}
             >
               <div className="w-10 h-10 rounded-xl bg-white border-[2px] border-black flex items-center justify-center text-lg flex-shrink-0">
-                {entry.categoryIcon}
+                <Glyph name={entry.categoryIcon} fallback="coins" className="h-5 w-5 text-[#111]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -423,7 +424,7 @@ export default function IngresosPage() {
                           : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                       }`}
                     >
-                      <span className="text-lg">{cat.icon}</span>
+                      <Glyph name={cat.icon} fallback="coins" className="h-5 w-5 text-[#111]" />
                       <span className="text-[10px] leading-tight text-center">{cat.label}</span>
                     </button>
                   ))}
@@ -463,7 +464,13 @@ export default function IngresosPage() {
                           : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                       }`}
                     >
-                      {s === 'pendiente' ? '⏳ Por cobrar' : '✅ Cobrado'}
+                      <span className="inline-flex items-center justify-center gap-1.5">
+                        <Glyph
+                          name={s === 'pendiente' ? 'hourglass' : 'check'}
+                          className="h-4 w-4"
+                        />
+                        {s === 'pendiente' ? 'Por cobrar' : 'Cobrado'}
+                      </span>
                     </button>
                   ))}
                 </div>

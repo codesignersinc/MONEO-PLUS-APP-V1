@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Globe2, Loader2, MapPin } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
+import { CodeBadge } from '@/components/ui/Glyph';
 import { getErrorMessage } from '@/lib/dataError';
 import { CURRENCIES } from '@/lib/currency';
 import { accountsService } from '@/lib/supabaseFinance';
@@ -135,7 +136,7 @@ function RegionForm({
         >
           {offered.map((c) => (
             <option key={c.code} value={c.code}>
-              {c.flag} {c.name}
+              {c.name}
             </option>
           ))}
         </select>
@@ -191,7 +192,7 @@ function RegionForm({
   );
 }
 
-/** One-time card on Inicio: "Parece que estás en 🇵🇪 Perú… ¿Correcto?". */
+/** One-time card on Inicio: "Parece que estás en Perú… ¿Correcto?". */
 export function RegionConfirm() {
   const { data, setData } = useRegionData(true);
   const [editing, setEditing] = useState(false);
@@ -250,8 +251,8 @@ export function RegionConfirm() {
       ) : (
         <>
           <p className="mt-1 text-sm font-semibold">
-            Parece que estás en {suggestion.flag} <b>{suggestion.name}</b>, con la hora de{' '}
-            {timezoneCity(tz)}
+            Parece que estás en <CodeBadge code={suggestion.code} /> <b>{suggestion.name}</b>, con
+            la hora de {timezoneCity(tz)}
             {!data.hasAccounts && <> y {currencyName(currencyForCountry(suggestion, SUPPORTED))}</>}
             .
           </p>
@@ -314,7 +315,13 @@ export function RegionSettings() {
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1 text-sm font-semibold text-black">
             <p className="font-black">
-              {current ? `${current.flag} ${current.name}` : 'Sin país elegido'}
+              {current ? (
+                <>
+                  <CodeBadge code={current.code} /> {current.name}
+                </>
+              ) : (
+                'Sin país elegido'
+              )}
             </p>
             <p className="text-xs text-gray-600">
               Hora de {data.mine.timezone ? timezoneCity(data.mine.timezone) : '—'} · Español

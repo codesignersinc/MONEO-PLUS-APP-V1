@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import LoadError from '@/components/ui/LoadError';
+import Glyph from '@/components/ui/Glyph';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { pagosService, type NewPago, type PagoEntry } from '@/lib/supabaseObligations';
@@ -23,21 +24,21 @@ interface PagoForm {
 }
 
 const PAGO_CATEGORIES = [
-  { label: 'Servicios', icon: '💡' },
-  { label: 'Alquiler', icon: '🏠' },
-  { label: 'Alimentación', icon: '🛒' },
-  { label: 'Transporte', icon: '🚗' },
-  { label: 'Salud', icon: '💊' },
-  { label: 'Educación', icon: '📚' },
-  { label: 'Entretenimiento', icon: '🎬' },
-  { label: 'Otro', icon: '📦' },
+  { label: 'Servicios', icon: 'bulb' },
+  { label: 'Alquiler', icon: 'home' },
+  { label: 'Alimentación', icon: 'cart' },
+  { label: 'Transporte', icon: 'car' },
+  { label: 'Salud', icon: 'pill' },
+  { label: 'Educación', icon: 'book' },
+  { label: 'Entretenimiento', icon: 'film' },
+  { label: 'Otro', icon: 'package' },
 ];
 
 const defaultForm: PagoForm = {
   name: '',
   amount: '',
   category: 'Servicios',
-  categoryIcon: '💡',
+  categoryIcon: 'bulb',
   paymentDate: '',
   notes: '',
   status: 'pendiente',
@@ -127,7 +128,7 @@ export default function PagosPage() {
 
   const handleCategoryChange = (label: string) => {
     const cat = PAGO_CATEGORIES.find((c) => c.label === label);
-    setForm((f) => ({ ...f, category: label, categoryIcon: cat?.icon || '📦' }));
+    setForm((f) => ({ ...f, category: label, categoryIcon: cat?.icon || 'package' }));
   };
 
   const handleSave = async () => {
@@ -328,7 +329,7 @@ export default function PagosPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-4xl mb-3">💳</p>
+          <Glyph name="card" className="h-10 w-10 mb-3 text-[#111]" />
           <p className="text-gray-500 font-medium mb-1">Sin pagos registrados</p>
           <p className="text-xs text-gray-500 mb-4">Registra tus pagos y su fecha de vencimiento</p>
           <button
@@ -481,7 +482,7 @@ export default function PagosPage() {
                           : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                       }`}
                     >
-                      <span className="text-lg">{cat.icon}</span>
+                      <Glyph name={cat.icon} fallback="package" className="h-5 w-5 text-[#111]" />
                       <span className="text-[10px] leading-tight text-center text-black">
                         {cat.label}
                       </span>
@@ -518,7 +519,10 @@ export default function PagosPage() {
                         : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                     }`}
                   >
-                    💳 Único
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Glyph name="card" className="h-4 w-4" />
+                      Único
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -529,7 +533,10 @@ export default function PagosPage() {
                         : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                     }`}
                   >
-                    🔄 Recurrente
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Glyph name="repeat" className="h-4 w-4" />
+                      Recurrente
+                    </span>
                   </button>
                 </div>
                 {form.isRecurring && (
@@ -559,7 +566,13 @@ export default function PagosPage() {
                           : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                       }`}
                     >
-                      {s === 'pendiente' ? '⏳ Pendiente' : '✅ Pagado'}
+                      <span className="inline-flex items-center justify-center gap-1.5">
+                        <Glyph
+                          name={s === 'pendiente' ? 'hourglass' : 'check'}
+                          className="h-4 w-4"
+                        />
+                        {s === 'pendiente' ? 'Pendiente' : 'Pagado'}
+                      </span>
                     </button>
                   ))}
                 </div>

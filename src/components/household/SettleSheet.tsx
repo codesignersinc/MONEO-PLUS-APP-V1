@@ -79,7 +79,7 @@ export default function SettleSheet({
               ? `Compensación hogar a ${otherName}`
               : `Compensación hogar de ${otherName}`,
           category: side === 'pay' ? 'Hogar' : 'Ingreso',
-          categoryIcon: side === 'pay' ? '🛋️' : '💼',
+          categoryIcon: side === 'pay' ? 'sofa' : 'briefcase',
           date: todayLocal(),
           fx,
         });

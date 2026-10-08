@@ -8,8 +8,21 @@ import { getErrorMessage } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
 import { currencySymbol, formatMoney } from '@/lib/format';
 import { APP_LOCALE } from '@/lib/locale';
+import Glyph from '@/components/ui/Glyph';
+import { glyphKey, type GlyphKey } from '@/lib/glyphs';
 
-const GOAL_ICONS = ['🛡️', '✈️', '🚗', '💻', '🏠', '📱', '🎓', '💍', '🐷', '🌟'];
+const GOAL_ICONS: { key: GlyphKey; label: string }[] = [
+  { key: 'shield', label: 'Emergencia' },
+  { key: 'plane', label: 'Viaje' },
+  { key: 'car', label: 'Auto' },
+  { key: 'laptop', label: 'Laptop' },
+  { key: 'home', label: 'Casa' },
+  { key: 'phone', label: 'Celular' },
+  { key: 'graduation', label: 'Estudios' },
+  { key: 'gem', label: 'Anillo' },
+  { key: 'piggy', label: 'Ahorro' },
+  { key: 'star', label: 'Otro' },
+];
 
 function formatTargetDate(dateStr: string): string {
   if (!dateStr) return '';
@@ -29,7 +42,7 @@ export default function AhorrosPage() {
   const toast = useToast();
   const [form, setForm] = useState({
     name: '',
-    icon: '🐷',
+    icon: 'piggy',
     current: '0',
     target: '',
     color: '#16A34A',
@@ -57,7 +70,14 @@ export default function AhorrosPage() {
 
   const openAdd = () => {
     setEditingGoal(null);
-    setForm({ name: '', icon: '🐷', current: '0', target: '', color: '#16A34A', targetDate: '' });
+    setForm({
+      name: '',
+      icon: 'piggy',
+      current: '0',
+      target: '',
+      color: '#16A34A',
+      targetDate: '',
+    });
     setFormError('');
     setShowForm(true);
   };
@@ -212,7 +232,7 @@ export default function AhorrosPage() {
                   >
                     <div className="flex items-start gap-3 mb-4">
                       <div className="w-12 h-12 rounded-2xl border-[2.5px] border-black flex items-center justify-center text-2xl flex-shrink-0 bg-[#FFD43B] shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                        {goal.icon}
+                        <Glyph name={goal.icon} fallback="piggy" className="h-6 w-6 text-[#111]" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
@@ -281,8 +301,9 @@ export default function AhorrosPage() {
                           <button
                             onClick={() => setAddAmount(null)}
                             className="text-xs font-black px-2 py-1.5 border-[2px] border-black rounded-lg bg-white hover:bg-gray-100 transition-all"
+                            aria-label="Cancelar"
                           >
-                            ✕
+                            <X className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
                           </button>
                         </div>
                       ) : (
@@ -347,17 +368,19 @@ export default function AhorrosPage() {
                   Ícono
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {GOAL_ICONS.map((ic) => (
+                  {GOAL_ICONS.map(({ key: ic, label }) => (
                     <button
                       key={ic}
                       onClick={() => setForm((f) => ({ ...f, icon: ic }))}
                       className={`w-11 h-11 rounded-xl text-xl flex items-center justify-center border-[2.5px] transition-all ${
-                        form.icon === ic
+                        glyphKey(form.icon) === ic
                           ? 'bg-[#FFD43B] border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]'
                           : 'bg-white border-gray-300 hover:border-black'
                       }`}
+                      aria-label={label}
+                      aria-pressed={glyphKey(form.icon) === ic}
                     >
-                      {ic}
+                      <Glyph name={ic} className="h-5 w-5 text-[#111]" />
                     </button>
                   ))}
                 </div>

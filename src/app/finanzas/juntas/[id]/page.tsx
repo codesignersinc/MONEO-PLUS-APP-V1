@@ -16,6 +16,7 @@ import {
   Plus,
   Trophy,
   Clock,
+  Check,
 } from 'lucide-react';
 import {
   juntasService,
@@ -33,6 +34,7 @@ import {
   type JuntaEvent,
 } from '@/lib/supabaseJuntas';
 import { formatMoney, monthNames } from '@/lib/format';
+import Glyph from '@/components/ui/Glyph';
 
 const MONTHS_ES = monthNames('short', { capitalize: true });
 
@@ -138,7 +140,7 @@ function CountdownTimer({ junta, onZero }: { junta: Junta; onZero?: () => void }
       >
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 bg-[#FFD43B] border-[3px] border-white rounded-2xl flex items-center justify-center text-xl shrink-0 animate-bounce">
-            🎰
+            <Glyph name="dice" className="h-5 w-5 text-[#111]" />
           </div>
           <div>
             <p className="font-black text-white text-sm">¡Es hora del sorteo!</p>
@@ -367,7 +369,7 @@ function ResumenTab({
           className="flex items-center gap-3 bg-black border-[3px] border-black rounded-3xl p-5 shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
         >
           <div className="w-12 h-12 bg-[#FFD43B] border-[3px] border-white rounded-2xl flex items-center justify-center text-2xl shrink-0">
-            🎰
+            <Glyph name="dice" className="h-6 w-6 text-[#111]" />
           </div>
           <div className="flex-1">
             <p className="font-black text-white text-base">Sorteo mensual</p>
@@ -513,7 +515,11 @@ function ParticipantesTab({
             onClick={handleCopy}
             className="shrink-0 px-2 py-1 bg-black text-white text-xs font-black rounded-lg"
           >
-            {copied ? '✓' : <Copy className="w-3 h-3" />}
+            {copied ? (
+              <Check className="w-3 h-3" strokeWidth={2.5} />
+            ) : (
+              <Copy className="w-3 h-3" />
+            )}
           </button>
         </div>
         <div className="flex gap-2">
@@ -571,7 +577,13 @@ function ParticipantesTab({
                       : 'bg-gray-100 text-gray-500'
                   }`}
                 >
-                  {m.status === 'unido' ? '✓ Unido' : 'Pendiente'}
+                  {m.status === 'unido' ? (
+                    <span className="inline-flex items-center gap-0.5">
+                      <Check className="h-3 w-3" strokeWidth={2.5} /> Unido
+                    </span>
+                  ) : (
+                    'Pendiente'
+                  )}
                 </span>
               </div>
             </div>
@@ -600,7 +612,7 @@ function TurnosTab({
       {turns.length === 0 && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 border-2 border-black rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">
-            🎰
+            <Glyph name="dice" className="h-7 w-7 text-[#111]" />
           </div>
           <p className="font-black text-black mb-1">Aún no hay turnos</p>
           <p className="text-sm text-gray-500">Realiza el sorteo para definir el orden.</p>
@@ -656,11 +668,11 @@ function ActividadTab({ events, members }: { events: JuntaEvent[]; members: Junt
   const getMember = (id: string | null) => (id ? members.find((m) => m.id === id) : null);
 
   const EVENT_ICONS: Record<string, string> = {
-    junta_creada: '🎉',
-    aporte_registrado: '💰',
-    sorteo_realizado: '🎰',
-    miembro_unido: '👋',
-    default: '📋',
+    junta_creada: 'party',
+    aporte_registrado: 'coins',
+    sorteo_realizado: 'dice',
+    miembro_unido: 'hand',
+    default: 'clipboard',
   };
 
   return (
@@ -668,7 +680,7 @@ function ActividadTab({ events, members }: { events: JuntaEvent[]; members: Junt
       {events.length === 0 && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 border-2 border-black rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">
-            📋
+            <Glyph name="clipboard" className="h-7 w-7 text-[#111]" />
           </div>
           <p className="font-black text-black mb-1">Sin actividad aún</p>
           <p className="text-sm text-gray-500">Las acciones de la junta aparecerán aquí.</p>
@@ -685,7 +697,7 @@ function ActividadTab({ events, members }: { events: JuntaEvent[]; members: Junt
             className="flex items-start gap-3 bg-white border-2 border-gray-100 rounded-2xl px-4 py-3"
           >
             <div className="w-9 h-9 bg-[#FAFAF8] border-2 border-black rounded-xl flex items-center justify-center text-lg shrink-0">
-              {icon}
+              <Glyph name={icon} fallback="clipboard" className="h-5 w-5 text-[#111]" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-black leading-snug">{ev.description}</p>
@@ -838,7 +850,7 @@ export default function JuntaDetailPage() {
       {/* Created banner */}
       {showCreatedBanner && (
         <div className="fixed top-4 left-4 right-4 z-50 bg-[#4ADE80] border-[3px] border-black rounded-2xl px-4 py-3 shadow-[4px_4px_0px_rgba(0,0,0,1)] flex items-center gap-3">
-          <span className="text-2xl">🎉</span>
+          <Glyph name="party" className="h-6 w-6 shrink-0 text-[#111]" />
           <div>
             <p className="font-black text-black text-sm">¡Junta creada!</p>
             <p className="text-xs text-black/70 font-medium">Todo listo para empezar.</p>

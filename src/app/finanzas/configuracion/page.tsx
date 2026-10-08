@@ -18,7 +18,16 @@ import {
   ChevronRight,
   Check,
   Globe,
+  Settings,
+  Pencil,
+  RefreshCw,
+  X,
+  Lightbulb,
+  Upload,
+  Download,
+  Cloud,
 } from 'lucide-react';
+import { CodeBadge } from '@/components/ui/Glyph';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, CURRENCIES, getDefaultRate } from '@/lib/currency';
 import { createClient } from '@/lib/supabase/client';
@@ -210,8 +219,8 @@ export default function ConfiguracionPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="inline-block bg-[#FFD43B] border-[3px] border-black rounded-2xl px-4 py-1 shadow-[4px_4px_0px_#000] mb-3">
-          <span className="text-xs font-black text-black uppercase tracking-widest">
-            ⚙️ Ajustes
+          <span className="inline-flex items-center gap-1.5 text-xs font-black text-black uppercase tracking-widest">
+            <Settings className="h-3.5 w-3.5" strokeWidth={2.5} /> Ajustes
           </span>
         </div>
         <h1 className="text-3xl font-black text-black uppercase tracking-tight">CONFIGURACIÓN</h1>
@@ -320,7 +329,6 @@ export default function ConfiguracionPage() {
                         : 'bg-white text-black hover:bg-gray-50'
                     }`}
                   >
-                    <span className="text-base">{c.flag}</span>
                     <div className="text-left">
                       <p className="text-xs font-black">{c.code}</p>
                       <p className="text-[10px] text-gray-600">{c.symbol}</p>
@@ -334,8 +342,7 @@ export default function ConfiguracionPage() {
               {baseCurrency && (
                 <div className="mt-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-xl">
                   <p className="text-xs text-yellow-800 font-semibold">
-                    {getCurrencyInfo(baseCurrency).flag} Moneda activa:{' '}
-                    {getCurrencyInfo(baseCurrency).name} ({baseCurrency} ·{' '}
+                    Moneda activa: {getCurrencyInfo(baseCurrency).name} ({baseCurrency} ·{' '}
                     {getCurrencyInfo(baseCurrency).symbol})
                   </p>
                   <p className="text-xs text-yellow-600 mt-0.5">
@@ -359,7 +366,14 @@ export default function ConfiguracionPage() {
                         : 'bg-white text-black hover:bg-gray-50'
                     }`}
                   >
-                    {mode === 'manual' ? '✏️ Manual' : '🔄 Automático'}
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      {mode === 'manual' ? (
+                        <Pencil className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      )}
+                      {mode === 'manual' ? 'Manual' : 'Automático'}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -373,7 +387,6 @@ export default function ConfiguracionPage() {
               {foreignCurrencies.length > 0 ? (
                 <div className="space-y-2">
                   {foreignCurrencies.map((fc) => {
-                    const ci = getCurrencyInfo(fc);
                     const bci = getCurrencyInfo(baseCurrency);
                     const rateKey = `${fc}_${baseCurrency}`;
                     const currentRate = ratesMap[rateKey] || getDefaultRate(fc, baseCurrency);
@@ -383,7 +396,7 @@ export default function ConfiguracionPage() {
                         key={fc}
                         className="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-xl border-[2px] border-black"
                       >
-                        <span className="text-base">{ci.flag}</span>
+                        <CodeBadge code={fc} className="text-base" />
                         <div className="flex-1">
                           <p className="text-xs font-black text-black">
                             1 {fc} = ? {baseCurrency}
@@ -411,8 +424,9 @@ export default function ConfiguracionPage() {
                                   setRateInput('');
                                 }}
                                 className="px-2 py-1 bg-gray-200 border-[2px] border-black rounded-lg text-xs font-black"
+                                aria-label="Cancelar"
                               >
-                                ✕
+                                <X className="h-3.5 w-3.5" strokeWidth={2.5} />
                               </button>
                             </div>
                           ) : (
@@ -429,8 +443,9 @@ export default function ConfiguracionPage() {
                               setRateInput(String(currentRate));
                             }}
                             className="px-2 py-1 bg-white border-[2px] border-black rounded-lg text-xs font-black hover:bg-gray-100 transition-colors"
+                            aria-label="Editar tipo de cambio"
                           >
-                            ✏️
+                            <Pencil className="h-3.5 w-3.5" strokeWidth={2.5} />
                           </button>
                         )}
                       </div>
@@ -445,8 +460,8 @@ export default function ConfiguracionPage() {
               ) : (
                 <div className="px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl">
                   <p className="text-xs text-blue-700 font-semibold">
-                    💡 Los tipos de cambio aparecerán aquí cuando tengas cuentas en diferentes
-                    monedas.
+                    <Lightbulb className="mr-1 inline h-3.5 w-3.5 align-[-2px]" strokeWidth={2.5} />
+                    Los tipos de cambio aparecerán aquí cuando tengas cuentas en diferentes monedas.
                   </p>
                 </div>
               )}
@@ -482,11 +497,15 @@ export default function ConfiguracionPage() {
                   : 'bg-[#FFD43B] text-black hover:bg-yellow-300'
               } disabled:opacity-50`}
             >
-              {savedFeedback
-                ? '✅ Guardado'
-                : savingSettings
-                  ? 'Guardando...'
-                  : 'Guardar configuración'}
+              {savedFeedback ? (
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <Check className="h-4 w-4" strokeWidth={2.5} /> Guardado
+                </span>
+              ) : savingSettings ? (
+                'Guardando...'
+              ) : (
+                'Guardar configuración'
+              )}
             </button>
           </div>
         )}
@@ -546,15 +565,15 @@ export default function ConfiguracionPage() {
         </div>
         <div className="space-y-2">
           {[
-            { label: 'Exportar datos (CSV)', icon: '📤' },
-            { label: 'Importar transacciones', icon: '📥' },
-            { label: 'Hacer copia de seguridad', icon: '☁️' },
+            { label: 'Exportar datos (CSV)', icon: Upload },
+            { label: 'Importar transacciones', icon: Download },
+            { label: 'Hacer copia de seguridad', icon: Cloud },
           ].map((item) => (
             <button
               key={item.label}
               className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border-[3px] border-black bg-white hover:bg-gray-50 transition-all shadow-[3px_3px_0px_#000] active:shadow-none active:translate-y-0.5 text-left"
             >
-              <span className="text-xl">{item.icon}</span>
+              <item.icon className="h-5 w-5 text-black" strokeWidth={2.5} />
               <span className="text-sm font-black text-black">{item.label}</span>
               <ChevronRight className="w-4 h-4 text-black ml-auto" strokeWidth={2.5} />
             </button>
@@ -575,7 +594,7 @@ export default function ConfiguracionPage() {
             { label: 'Versión', value: '2.0.0' },
             {
               label: 'Moneda activa',
-              value: `${getCurrencyInfo(baseCurrency).flag} ${baseCurrency} · ${getCurrencyInfo(baseCurrency).symbol}`,
+              value: `${baseCurrency} · ${getCurrencyInfo(baseCurrency).symbol}`,
             },
             {
               label: 'Tipo de cambio',
@@ -603,13 +622,11 @@ export default function ConfiguracionPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             {usedCurrencies.map((c) => {
-              const ci = getCurrencyInfo(c);
               return (
                 <div
                   key={c}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-[3px] border-black text-xs font-black shadow-[2px_2px_0px_#000] ${c === baseCurrency ? 'bg-[#FFD43B]' : 'bg-white'}`}
                 >
-                  <span>{ci.flag}</span>
                   <span>{c}</span>
                   {c === baseCurrency && (
                     <span className="text-[10px] text-gray-600">principal</span>

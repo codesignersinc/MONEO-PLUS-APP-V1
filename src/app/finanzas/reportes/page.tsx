@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { transactionsService, subscriptionsService } from '@/lib/supabaseFinance';
 import LoadError from '@/components/ui/LoadError';
 import PlusGate from '@/components/billing/PlusGate';
+import Glyph, { CodeBadge } from '@/components/ui/Glyph';
 import { toDataError } from '@/lib/dataError';
 import { Transaction, Subscription, countsAsTransfer } from '@/lib/financeStore';
 import { createClient } from '@/lib/supabase/client';
@@ -179,7 +180,7 @@ export default function ReportesPage() {
     .filter((t) => t.type === 'gasto')
     .forEach((t) => {
       if (!categoryMap[t.category])
-        categoryMap[t.category] = { amount: 0, icon: t.categoryIcon || '📦' };
+        categoryMap[t.category] = { amount: 0, icon: t.categoryIcon || 'package' };
       categoryMap[t.category].amount += Math.abs(t.amount);
     });
   const categoryData = Object.entries(categoryMap)
@@ -257,7 +258,10 @@ export default function ReportesPage() {
       <div className="rounded-2xl border-[3px] border-black bg-[#FFD43B] shadow-[6px_6px_0px_#000] p-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-black">📊 REPORTES</h1>
+            <h1 className="flex items-center gap-2 text-2xl font-black uppercase tracking-tight text-black">
+              <Glyph name="chart" className="h-6 w-6 shrink-0" />
+              REPORTES
+            </h1>
             <p className="text-xs font-bold text-black/70 uppercase tracking-widest mt-0.5">
               ANÁLISIS FINANCIERO
             </p>
@@ -295,7 +299,11 @@ export default function ReportesPage() {
           {formatMoney(balance)}
         </p>
         <p className="text-xs font-bold text-black/50 mt-1 uppercase">
-          {balance >= 0 ? '✅ MES POSITIVO' : '⚠️ MES NEGATIVO'} · TASA AHORRO: {savingsRate}%
+          <Glyph
+            name={balance >= 0 ? 'check' : 'alert'}
+            className="mr-1 inline-block h-3.5 w-3.5 align-[-2px]"
+          />
+          {balance >= 0 ? 'MES POSITIVO' : 'MES NEGATIVO'} · TASA AHORRO: {savingsRate}%
         </p>
       </div>
 
@@ -326,8 +334,9 @@ export default function ReportesPage() {
               onClick={() => setShowCurrencyBreakdown((s) => !s)}
               className="w-full border-b-[3px] border-black px-4 py-2 bg-black flex items-center justify-between"
             >
-              <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-                💱 DESGLOSE POR MONEDA
+              <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B] flex items-center gap-1.5">
+                <Glyph name="exchange" className="h-3.5 w-3.5 shrink-0" />
+                DESGLOSE POR MONEDA
               </p>
               <span className="text-[#FFD43B] text-sm">{showCurrencyBreakdown ? '▲' : '▼'}</span>
             </button>
@@ -345,7 +354,7 @@ export default function ReportesPage() {
                       <div key={code}>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-base">{ci.flag}</span>
+                            <CodeBadge code={code} />
                             <span className="text-xs font-black text-black">{ci.name}</span>
                           </div>
                           <div className="text-right">
@@ -381,8 +390,9 @@ export default function ReportesPage() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         {/* Dinero cobrado */}
         <div className="rounded-2xl border-[3px] border-black bg-[#DCFCE7] p-4 shadow-[4px_4px_0px_#000]">
-          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
-            💰 DINERO COBRADO
+          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1 flex items-center gap-1.5">
+            <Glyph name="coins" className="h-3.5 w-3.5 shrink-0" />
+            DINERO COBRADO
           </p>
           <p className="text-xl font-black text-black">{formatMoney(totalCobrado)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
@@ -392,8 +402,9 @@ export default function ReportesPage() {
 
         {/* Por cobrar */}
         <div className="rounded-2xl border-[3px] border-black bg-[#FEF9C3] p-4 shadow-[4px_4px_0px_#000]">
-          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
-            🕐 POR COBRAR
+          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1 flex items-center gap-1.5">
+            <Glyph name="clock" className="h-3.5 w-3.5 shrink-0" />
+            POR COBRAR
           </p>
           <p className="text-xl font-black text-black">{formatMoney(totalPorCobrar)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
@@ -403,8 +414,9 @@ export default function ReportesPage() {
 
         {/* Gastos */}
         <div className="rounded-2xl border-[3px] border-black bg-[#FEE2E2] p-4 shadow-[4px_4px_0px_#000]">
-          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
-            💸 GASTOS
+          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1 flex items-center gap-1.5">
+            <Glyph name="cash" className="h-3.5 w-3.5 shrink-0" />
+            GASTOS
           </p>
           <p className="text-xl font-black text-black">{formatMoney(totalGastos)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
@@ -414,8 +426,9 @@ export default function ReportesPage() {
 
         {/* Pagos realizados */}
         <div className="rounded-2xl border-[3px] border-black bg-[#DBEAFE] p-4 shadow-[4px_4px_0px_#000]">
-          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
-            ✅ PAGOS REALIZADOS
+          <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1 flex items-center gap-1.5">
+            <Glyph name="check" className="h-3.5 w-3.5 shrink-0" />
+            PAGOS REALIZADOS
           </p>
           <p className="text-xl font-black text-black">{formatMoney(totalPagosPagados)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
@@ -427,8 +440,9 @@ export default function ReportesPage() {
       {/* ── Resumen detallado ── */}
       <div className="rounded-2xl border-[3px] border-black bg-[#FAFAF8] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
         <div className="border-b-[3px] border-black px-4 py-2 bg-black">
-          <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-            📋 RESUMEN DETALLADO
+          <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B] flex items-center gap-1.5">
+            <Glyph name="clipboard" className="h-3.5 w-3.5 shrink-0" />
+            RESUMEN DETALLADO
           </p>
         </div>
         <div className="p-4 space-y-2">
@@ -492,8 +506,9 @@ export default function ReportesPage() {
       >
         <div className="rounded-2xl border-[3px] border-black bg-[#F3E8FF] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
           <div className="border-b-[3px] border-black px-4 py-2 bg-black rounded-t-xl">
-            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-              📈 TENDENCIA 6 MESES
+            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B] flex items-center gap-1.5">
+              <Glyph name="trending" className="h-3.5 w-3.5 shrink-0" />
+              TENDENCIA 6 MESES
             </p>
           </div>
           <div className="p-4">
@@ -541,8 +556,9 @@ export default function ReportesPage() {
       {categoryData.length > 0 && (
         <div className="rounded-2xl border-[3px] border-black bg-[#FEF3C7] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
           <div className="border-b-[3px] border-black px-4 py-2 bg-black rounded-t-xl">
-            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-              🏷️ GASTOS POR CATEGORÍA
+            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B] flex items-center gap-1.5">
+              <Glyph name="tag" className="h-3.5 w-3.5 shrink-0" />
+              GASTOS POR CATEGORÍA
             </p>
           </div>
           <div className="p-4 space-y-3">
@@ -551,8 +567,9 @@ export default function ReportesPage() {
               return (
                 <div key={cat.name}>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="font-black uppercase text-black">
-                      {cat.icon} {cat.name}
+                    <span className="flex items-center gap-1.5 font-black uppercase text-black">
+                      <Glyph name={cat.icon} fallback="package" className="h-3.5 w-3.5 shrink-0" />
+                      {cat.name}
                     </span>
                     <span className="font-black text-black">{formatMoney(cat.amount)}</span>
                   </div>
@@ -573,15 +590,20 @@ export default function ReportesPage() {
       {monthPagos.length > 0 && (
         <div className="rounded-2xl border-[3px] border-black bg-[#DBEAFE] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
           <div className="border-b-[3px] border-black px-4 py-2 bg-black rounded-t-xl">
-            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-              📅 PAGOS DEL MES
+            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B] flex items-center gap-1.5">
+              <Glyph name="calendar" className="h-3.5 w-3.5 shrink-0" />
+              PAGOS DEL MES
             </p>
           </div>
           <div className="divide-y-[2px] divide-dashed divide-black/20">
             {monthPagos.map((p) => (
               <div key={p.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">{p.categoryIcon}</span>
+                  <Glyph
+                    name={p.categoryIcon}
+                    fallback="package"
+                    className="h-4 w-4 shrink-0 text-[#111]"
+                  />
                   <div>
                     <p className="text-xs font-black uppercase text-black">{p.name}</p>
                     <p className="text-[10px] font-bold text-black/50">{p.paymentDate}</p>
@@ -598,11 +620,21 @@ export default function ReportesPage() {
                           : 'bg-[#fff3cd] text-black'
                     }`}
                   >
+                    <Glyph
+                      name={
+                        p.status === 'pagado'
+                          ? 'check'
+                          : p.status === 'vencido'
+                            ? 'alert'
+                            : 'hourglass'
+                      }
+                      className="mr-0.5 inline-block h-2.5 w-2.5 align-[-1px]"
+                    />
                     {p.status === 'pagado'
-                      ? '✓ PAGADO'
+                      ? 'PAGADO'
                       : p.status === 'vencido'
-                        ? '⚠ VENCIDO'
-                        : '⏳ PENDIENTE'}
+                        ? 'VENCIDO'
+                        : 'PENDIENTE'}
                   </span>
                 </div>
               </div>
@@ -614,8 +646,9 @@ export default function ReportesPage() {
       {/* ── Movimientos del mes ── */}
       <div className="rounded-2xl border-[3px] border-black bg-[#ECFDF5] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
         <div className="border-b-[3px] border-black px-4 py-2 bg-black rounded-t-xl">
-          <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-            🔄 MOVIMIENTOS DEL MES
+          <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B] flex items-center gap-1.5">
+            <Glyph name="repeat" className="h-3.5 w-3.5 shrink-0" />
+            MOVIMIENTOS DEL MES
           </p>
         </div>
         <div className="p-4">
@@ -649,8 +682,9 @@ export default function ReportesPage() {
       {subscriptions.filter((s) => s.active).length > 0 && (
         <div className="rounded-2xl border-[3px] border-black bg-[#F3E8FF] shadow-[4px_4px_0px_#000] mb-4 overflow-hidden">
           <div className="border-b-[3px] border-black px-4 py-2 bg-black rounded-t-xl">
-            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B]">
-              📱 SUSCRIPCIONES ACTIVAS
+            <p className="text-xs font-black uppercase tracking-widest text-[#FFD43B] flex items-center gap-1.5">
+              <Glyph name="phone" className="h-3.5 w-3.5 shrink-0" />
+              SUSCRIPCIONES ACTIVAS
             </p>
           </div>
           <div className="p-4">
@@ -668,8 +702,9 @@ export default function ReportesPage() {
                 .slice(0, 4)
                 .map((sub) => (
                   <div key={sub.id} className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-black/70">
-                      {sub.icon} {sub.name}
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-black/70">
+                      <Glyph name={sub.icon} fallback="repeat" className="h-3.5 w-3.5 shrink-0" />
+                      {sub.name}
                     </span>
                     <span className="text-xs font-black text-black">{formatMoney(sub.amount)}</span>
                   </div>
