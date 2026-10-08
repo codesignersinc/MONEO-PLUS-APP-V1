@@ -130,6 +130,7 @@ export default function CalendarioPage() {
         supabase
           .from('pagos')
           .select('id,name,amount,category_icon,payment_date,status')
+          .is('business_id', null)
           .order('payment_date'),
         supabase
           .from('savings_goals')

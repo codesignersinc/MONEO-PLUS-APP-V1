@@ -84,6 +84,7 @@ async function fetchPendingIncomes(): Promise<PendingIncome[]> {
     .from('income_entries')
     .select('*')
     .eq('user_id', user.id)
+    .is('business_id', null)
     .eq('status', 'pendiente')
     .order('collection_date', { ascending: true });
   if (error) throw toDataError(error);

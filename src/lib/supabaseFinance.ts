@@ -38,6 +38,7 @@ export const accountsService = {
     const { data, error } = await supabase
       .from('accounts')
       .select('*')
+      .is('business_id', null)
       .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
     return (data || []).map((r) => ({
@@ -162,6 +163,7 @@ export const transactionsService = {
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
+      .is('business_id', null)
       .order('transaction_date', { ascending: false });
     if (error) throw toDataError(error);
     return (data || []).map((r) => ({
@@ -344,6 +346,7 @@ export const budgetService = {
     const { data, error } = await supabase
       .from('budget_categories')
       .select('*')
+      .is('business_id', null)
       .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
     return (data || []).map((r) => ({
@@ -698,6 +701,7 @@ export const subscriptionsService = {
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*')
+      .is('business_id', null)
       .order('created_at', { ascending: true });
     if (error) throw toDataError(error);
     return (data || []).map((r) => ({

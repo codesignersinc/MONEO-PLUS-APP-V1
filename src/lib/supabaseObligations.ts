@@ -91,6 +91,7 @@ export const pagosService = {
     const { data, error } = await supabase
       .from('pagos')
       .select('*')
+      .is('business_id', null)
       .order('payment_date', { ascending: true });
     if (error) throw toDataError(error);
     return (data || []).map(toPago);
@@ -170,6 +171,7 @@ export const incomeService = {
     const { data, error } = await supabase
       .from('income_entries')
       .select('*')
+      .is('business_id', null)
       .order('collection_date', { ascending: true });
     if (error) throw toDataError(error);
     return (data || []).map(toIncome);

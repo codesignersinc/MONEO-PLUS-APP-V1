@@ -73,9 +73,17 @@ export default function ReportesPage() {
     setLoadError(null);
     Promise.all([
       transactionsService.getAll(),
-      supabase.from('pagos').select('*').order('payment_date', { ascending: true }),
+      supabase
+        .from('pagos')
+        .select('*')
+        .is('business_id', null)
+        .order('payment_date', { ascending: true }),
       subscriptionsService.getAll(),
-      supabase.from('income_entries').select('*').order('collection_date', { ascending: true }),
+      supabase
+        .from('income_entries')
+        .select('*')
+        .is('business_id', null)
+        .order('collection_date', { ascending: true }),
       userSettingsService.get(),
       exchangeRatesService.getRatesMap(),
     ])
