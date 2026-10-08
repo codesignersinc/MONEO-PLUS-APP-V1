@@ -22,6 +22,8 @@ import {
   VozScan,
 } from '@/components/landing/SectionsBottom';
 import { SITE } from '@/lib/site';
+import { landingAlternates } from '@/lib/markets';
+import { MarketBanner } from '@/components/landing/market/client';
 
 // Public landing of moneo.plus. Signed-in users never see it: the middleware sends
 // them to /finanzas.
@@ -32,7 +34,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: { absolute: TITLE },
   description: SITE.description,
-  alternates: { canonical: '/' },
+  alternates: { canonical: '/', languages: landingAlternates() },
   openGraph: {
     type: 'website',
     url: SITE.url,
@@ -67,6 +69,7 @@ export default function LandingPage() {
         Saltar al contenido
       </a>
       <TrackView />
+      <MarketBanner />
       <LandingNav />
       <main id="contenido">
         <Hero />

@@ -15,7 +15,12 @@ export type LandingEvent =
   | 'scan_click'
   | 'pricing_click'
   | 'faq_open'
-  | 'google_play_click';
+  | 'google_play_click'
+  | 'market_view'
+  | 'market_peru_click'
+  | 'market_banner_click'
+  | 'waitlist_submit'
+  | 'waitlist_error';
 
 // Onboarding / MONEO PLUS funnel. Properties are ids and plan codes only, never
 // amounts, balances, account names or bank data.
@@ -82,10 +87,22 @@ export function track(
   if (typeof window === 'undefined') return;
   const w = window as AnalyticsWindow;
   try {
+    // Every event carries the visitor's country (from the IP, see middleware) and language,
+    // to compare markets (docs/global-core.md, step 4).
+    props = {
+      country: geoCountry() ?? 'unknown',
+      locale: navigator.language || 'unknown',
+      ...props,
+    };
     w.gtag?.('event', event, props);
     w.plausible?.(event, { props });
     window.dispatchEvent(new CustomEvent('moneo:track', { detail: { event, props } }));
   } catch {
     // Analytics must never break the page.
   }
+}
+
+function geoCountry(): string | null {
+  const m = document.cookie.match(/(?:^|;\s*)moneo_geo=([A-Z]{2})/);
+  return m ? m[1] : null;
 }

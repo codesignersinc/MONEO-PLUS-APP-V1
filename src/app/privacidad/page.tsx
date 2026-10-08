@@ -28,7 +28,8 @@ const SECTIONS: LegalSection[] = [
       'Preferencias: tus respuestas al configurar MONEO+ (tus objetivos, las categorías en las que más gastas, cómo prefieres registrar y tu primera meta) y qué avisos quieres recibir. No incluyen montos.',
       'MONEO AUTO (registro automático): solo si tú lo usas. (a) Si conectas tu Gmail, leemos únicamente los correos que envían tus bancos (BCP, BBVA, Interbank y Yape) para identificar cada movimiento; ver la sección 3. (b) Si reenvías los correos de tu banco a tu dirección privada de MONEO+, los leemos para identificar el movimiento y guardamos únicamente el monto, la moneda, el comercio o destinatario, la fecha y la hora, el banco, los últimos 4 dígitos de la tarjeta o cuenta y una huella cifrada del número de operación (para evitar duplicados). No guardamos el contenido del correo, ni números completos de tarjeta o cuenta, ni códigos de seguridad. También guardamos el código de confirmación que Gmail envía al activar el reenvío, para mostrártelo. (c) Las capturas de pantalla y fotos de comprobantes se leen en tu propio dispositivo: la imagen no se envía a nuestros servidores. (d) El dictado por voz usa el reconocimiento de voz de tu navegador: según el navegador, el audio puede ser procesado por su fabricante (por ejemplo, Google o Apple); MONEO+ no recibe ni guarda el audio, solo el texto que tú confirmas. (e) Del texto que pegas o escribes solo guardamos los datos del movimiento detectado.',
       'Pagos de MONEO PLUS: los procesa Mercado Pago. Nosotros recibimos y guardamos el plan elegido, el estado y las fechas de tu suscripción o compra y el número de operación de Mercado Pago. Nunca recibimos ni guardamos los datos de tu tarjeta.',
-      'Datos técnicos: para mantener tu sesión iniciada y recordar preferencias de la app (por ejemplo, ocultar montos) usamos cookies y el almacenamiento local de tu navegador. No usamos cookies de publicidad ni herramientas de seguimiento de terceros.',
+      'Lista de espera de otros países (por ejemplo moneo.plus/es o moneo.plus/us): si te unes, guardamos tu correo, el país y el idioma de la página, tu respuesta opcional sobre cuánto pagarías por MONEO PLUS y, si llegaste desde una campaña, su origen (parámetros UTM). No necesitas una cuenta. Solo usamos tu correo para avisarte cuando MONEO llegue a tu país.',
+      'Datos técnicos: para mantener tu sesión iniciada y recordar preferencias de la app (por ejemplo, ocultar montos) usamos cookies y el almacenamiento local de tu navegador. También guardamos por 24 horas una cookie con el código de dos letras del país desde el que te conectas (nunca tu dirección IP), para sugerirte tu país y tu moneda. No usamos cookies de publicidad ni herramientas de seguimiento de terceros.',
     ],
   },
   {
@@ -66,6 +67,7 @@ const SECTIONS: LegalSection[] = [
     title: '6. Cuánto tiempo los conservamos',
     paragraphs: [
       'Mientras mantengas tu cuenta. Cuando eliminas tu cuenta, borramos de inmediato tu cuenta y todos tus datos. Las copias de seguridad de nuestros proveedores se eliminan automáticamente en sus ciclos de rotación.',
+      'Lista de espera: hasta que MONEO llegue a tu país y te avisemos, o hasta que nos pidas que te borremos, lo que ocurra primero.',
       'Los registros de pagos (plan, monto, fecha y número de operación) se conservan el tiempo que exijan las normas tributarias y contables.',
     ],
   },

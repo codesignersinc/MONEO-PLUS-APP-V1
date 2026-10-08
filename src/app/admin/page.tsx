@@ -18,6 +18,7 @@ import LoadError from '@/components/ui/LoadError';
 import { CodeBadge } from '@/components/ui/Glyph';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminService, type AdminCountryRow, type AdminUserRow } from '@/lib/supabaseAdmin';
+import { waitlistService, type WaitlistStats } from '@/lib/supabaseWaitlist';
 import { APP_LOCALE } from '@/lib/locale';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -122,6 +123,7 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<AdminUserRow[] | null>(null);
   const [countries, setCountries] = useState<AdminCountryRow[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistStats[]>([]);
   const [error, setError] = useState<unknown>(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Status | 'todos'>('todos');
@@ -133,9 +135,14 @@ export default function AdminPage() {
       .then(async (ok) => {
         setIsAdmin(ok);
         if (!ok) return;
-        const [u, c] = await Promise.all([adminService.getUsers(), adminService.countryStats()]);
+        const [u, c, w] = await Promise.all([
+          adminService.getUsers(),
+          adminService.countryStats(),
+          waitlistService.stats(),
+        ]);
         setUsers(u);
         setCountries(c);
+        setWaitlist(w);
       })
       .catch(setError);
   }, []);
@@ -260,7 +267,7 @@ export default function AdminPage() {
           />
         </div>
 
-        <CountryStats rows={countries} />
+        <CountryStats rows={countries} waitlist={waitlist} />
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <label className="relative flex-1">
@@ -372,28 +379,49 @@ const COUNTRY_STATUS: Record<string, string> = {
   hidden: 'Oculto',
 };
 
-function CountryStats({ rows }: { rows: AdminCountryRow[] }) {
+function CountryStats({ rows, waitlist }: { rows: AdminCountryRow[]; waitlist: WaitlistStats[] }) {
   const shown = rows.filter((r) => r.users > 0 || r.status !== 'hidden');
   if (shown.length === 0) return null;
+  const waiting = new Map(waitlist.map((w) => [w.code, w]));
   return (
     <section className="mt-6">
       <h2 className="text-lg font-black">Usuarios por país</h2>
+      <p className="font-sans text-xs text-gray-600">
+        Lista de espera de las landings (moneo.plus/es, /us, /au, /ae, /sg) y cuánto pagarían al
+        mes: gratis · bajo · medio · alto.
+      </p>
       <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-        {shown.map((r) => (
-          <div
-            key={r.code ?? 'none'}
-            className="min-w-[150px] rounded-2xl border-[2.5px] border-black bg-white p-3"
-          >
-            <p className="truncate text-sm font-black">
-              {r.code && <CodeBadge code={r.code} />} {r.name}
-            </p>
-            <p className="mt-1 text-2xl font-black">{r.users}</p>
-            <p className="font-sans text-[11px] text-gray-600">
-              {r.status ? (COUNTRY_STATUS[r.status] ?? r.status) : 'Aún no eligen país'}
-              {r.code && r.users > r.confirmed ? ` · ${r.users - r.confirmed} sin confirmar` : ''}
-            </p>
-          </div>
-        ))}
+        {shown.map((r) => {
+          const w = r.code ? waiting.get(r.code) : undefined;
+          return (
+            <div
+              key={r.code ?? 'none'}
+              className="min-w-[170px] rounded-2xl border-[2.5px] border-black bg-white p-3"
+            >
+              <p className="truncate text-sm font-black">
+                {r.code && <CodeBadge code={r.code} />} {r.name}
+              </p>
+              <p className="mt-1 text-2xl font-black">{r.users}</p>
+              <p className="font-sans text-[11px] text-gray-600">
+                {r.status ? (COUNTRY_STATUS[r.status] ?? r.status) : 'Aún no eligen país'}
+                {r.code && r.users > r.confirmed ? ` · ${r.users - r.confirmed} sin confirmar` : ''}
+              </p>
+              {r.status && r.status !== 'live' && (
+                <div className="mt-2 border-t border-black/10 pt-2 font-sans text-[11px]">
+                  <p className="font-bold text-black">
+                    En espera: {w?.total ?? 0}
+                    {w && w.last7Days > 0 ? ` (+${w.last7Days} en 7 días)` : ''}
+                  </p>
+                  {w && (
+                    <p className="text-gray-600">
+                      Pagaría: {w.pay.free} · {w.pay.low} · {w.pay.mid} · {w.pay.high}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
