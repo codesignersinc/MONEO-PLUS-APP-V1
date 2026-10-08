@@ -66,6 +66,11 @@ ejecuta en cada pull request (`.github/workflows/ci.yml`). Las pruebas SQL
 - **Migraciones**: nuevo archivo en `supabase/migrations/` con prefijo de fecha; no editar
   migraciones existentes. Se aplican primero en staging (`moneo-staging`) y se registran en
   `supabase_migrations.schema_migrations`; producción solo con aprobación explícita.
+- **Registro**: solo correos reales. Reglas en `src/lib/emailCheck.ts` y, en la base,
+  `signup_email_problem()` + el hook de Auth «Before User Created»
+  (`pg-functions://postgres/public/hook_before_user_created`, se activa por proyecto en la
+  configuración de Auth). En staging, `app_settings('allow_test_signups','on')` deja pasar
+  `@test.local` para las pruebas E2E.
 - **Privacidad**: no guardar texto bruto de notificaciones/correos; los logs no llevan montos,
   comercios, cuentas, ids ni contenido.
 

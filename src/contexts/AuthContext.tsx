@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { AuthResponse, AuthTokenResponsePassword, Session, User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { assertSignupEmail } from '@/lib/emailCheck';
 
 interface AuthContextValue {
   user: User | null;
@@ -76,6 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     password: string,
     metadata: { fullName?: string; avatarUrl?: string } = {}
   ) => {
+    await assertSignupEmail(email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
