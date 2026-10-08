@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, Square } from 'lucide-react';
+import { APP_LOCALE } from '@/lib/locale';
 
 // Dictation with the browser's own speech recognition (Chrome, Edge, Safari). The audio
 // is handled by the browser/OS speech service; MONEO only receives the transcribed text.
@@ -67,7 +68,7 @@ export default function VoiceButton({ onPartial, onFinal, onError, disabled }: P
     const Ctor = getSpeechCtor();
     if (!Ctor) return;
     const rec = new Ctor();
-    rec.lang = 'es-PE';
+    rec.lang = APP_LOCALE;
     rec.interimResults = true;
     rec.continuous = false;
     rec.maxAlternatives = 1;

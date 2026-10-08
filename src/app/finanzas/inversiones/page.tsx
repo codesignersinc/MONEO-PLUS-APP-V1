@@ -6,6 +6,7 @@ import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
+import { currencySymbol, formatMoney } from '@/lib/format';
 
 const INVESTMENT_TYPES = ['Acciones', 'ETF', 'Fondo mutuo', 'Cripto', 'Bonos', 'Otro'];
 
@@ -172,15 +173,11 @@ export default function InversionesPage() {
             <DollarSign className="w-4 h-4 text-gray-500" strokeWidth={1.75} />
             <p className="text-xs text-gray-500">Valor del portafolio</p>
           </div>
-          <p className="text-3xl font-black text-black mb-3">
-            S/ {totalValue.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-          </p>
+          <p className="text-3xl font-black text-black mb-3">{formatMoney(totalValue)}</p>
           <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-50">
             <div>
               <p className="text-xs text-gray-500 mb-1">Invertido</p>
-              <p className="text-sm font-black text-black">
-                S/ {totalCost.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-              </p>
+              <p className="text-sm font-black text-black">{formatMoney(totalCost)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Ganancia</p>
@@ -193,8 +190,8 @@ export default function InversionesPage() {
                 <p
                   className={`text-sm font-black ${totalGain >= 0 ? 'text-fin-green' : 'text-fin-red'}`}
                 >
-                  {totalGain >= 0 ? '+' : ''}S/{' '}
-                  {totalGain.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                  {totalGain >= 0 ? '+' : ''}
+                  {formatMoney(totalGain)}
                 </p>
               </div>
             </div>
@@ -266,9 +263,7 @@ export default function InversionesPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-right">
-                        <p className="font-black text-black">
-                          S/ {currentValue.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                        </p>
+                        <p className="font-black text-black">{formatMoney(currentValue)}</p>
                         <p
                           className={`text-xs font-semibold ${Number(gainPct) >= 0 ? 'text-fin-green' : 'text-fin-red'}`}
                         >
@@ -362,7 +357,7 @@ export default function InversionesPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-gray-500 px-1">Precio S/</span>
+                  <span className="text-xs text-gray-500 px-1">Precio {currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.price}
@@ -372,7 +367,7 @@ export default function InversionesPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-gray-500 px-1">Costo S/</span>
+                  <span className="text-xs text-gray-500 px-1">Costo {currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.cost}

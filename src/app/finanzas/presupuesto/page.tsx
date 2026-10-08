@@ -7,6 +7,7 @@ import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
+import { currencySymbol, formatMoney, monthNames } from '@/lib/format';
 
 export default function PresupuestoPage() {
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
@@ -29,20 +30,7 @@ export default function PresupuestoPage() {
   });
   const [month] = useState(() => {
     const now = new Date();
-    const months = [
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ];
+    const months = monthNames('short', { capitalize: true });
     return `${months[now.getMonth()]} ${now.getFullYear()}`;
   });
 
@@ -191,7 +179,7 @@ export default function PresupuestoPage() {
             <BarChart3 className="w-4 h-4 text-gray-500" strokeWidth={1.75} />
             <p className="text-sm text-gray-500">Presupuesto total</p>
           </div>
-          <p className="text-3xl font-black text-black mb-3">S/ {totalBudget.toFixed(2)}</p>
+          <p className="text-3xl font-black text-black mb-3">{formatMoney(totalBudget)}</p>
           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2">
             <div
               className={`h-full rounded-full transition-all duration-500 ${totalPct > 90 ? 'bg-red-500' : totalPct > 70 ? 'bg-amber-400' : 'bg-fin-green'}`}
@@ -199,7 +187,7 @@ export default function PresupuestoPage() {
             />
           </div>
           <div className="flex justify-between text-xs text-gray-500">
-            <span>Gastado: S/ {totalSpent.toFixed(2)}</span>
+            <span>Gastado: {formatMoney(totalSpent)}</span>
             <span>{totalPct}% usado</span>
           </div>
         </div>
@@ -294,7 +282,7 @@ export default function PresupuestoPage() {
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
                       <span className="text-xs text-gray-500">
-                        S/ {spent.toFixed(2)} / S/ {cat.budget.toFixed(2)}
+                        {formatMoney(spent)} / {formatMoney(cat.budget)}
                       </span>
                       <span className="text-xs font-semibold" style={{ color: barColor }}>
                         {pct}%
@@ -309,7 +297,7 @@ export default function PresupuestoPage() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Restante: S/ {Math.max(cat.budget - spent, 0).toFixed(2)}
+                  Restante: {formatMoney(Math.max(cat.budget - spent, 0))}
                 </p>
               </div>
             );
@@ -369,7 +357,7 @@ export default function PresupuestoPage() {
                 ))}
               </select>
               <div className="flex items-center gap-2 px-4 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
-                <span className="text-gray-500 font-semibold text-sm">S/</span>
+                <span className="text-gray-500 font-semibold text-sm">{currencySymbol()}</span>
                 <input
                   type="number"
                   value={form.budget}

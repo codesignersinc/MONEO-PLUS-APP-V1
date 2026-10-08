@@ -21,22 +21,10 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
+import { currencySymbol, formatMoney, monthNames } from '@/lib/format';
 
 const PARTICIPANT_OPTIONS = [4, 6, 8, 10, 12];
-const MONTHS_FULL = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+const MONTHS_FULL = monthNames('long', { capitalize: true });
 
 const FREQUENCY_OPTIONS = [
   { value: 'semanal', label: 'Semanal', desc: 'Aportes cada semana' },
@@ -359,11 +347,11 @@ export default function NuevaJuntaPage() {
           <div className="space-y-5">
             <div>
               <label className="text-xs font-black text-gray-500 uppercase tracking-wide">
-                Monto de aporte (S/)
+                Monto de aporte ({currencySymbol()})
               </label>
               <div className="mt-1.5 relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400 text-sm">
-                  S/
+                  {currencySymbol()}
                 </span>
                 <input
                   type="number"
@@ -430,7 +418,7 @@ export default function NuevaJuntaPage() {
               </div>
               <p className="mt-1.5 text-xs text-gray-500 font-medium">
                 Fondo total:{' '}
-                {amount ? `S/ ${(parseFloat(amount) * effectiveParticipants).toFixed(2)}` : '—'}
+                {amount ? `${formatMoney(parseFloat(amount) * effectiveParticipants)}` : '—'}
               </p>
             </div>
 

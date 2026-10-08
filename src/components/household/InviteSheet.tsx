@@ -7,9 +7,10 @@ import { getErrorMessage } from '@/lib/dataError';
 import { track } from '@/lib/analytics';
 import { ErrorNote, SectionLabel, Sheet } from '@/components/household/ui';
 import type { Household } from '@/lib/household';
+import { APP_LOCALE } from '@/lib/locale';
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  return new Date(iso).toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'short' });
 }
 
 // "Invitar": a single-use link (7 days), optionally only for one email. Owner only.

@@ -1,3 +1,4 @@
+import { currencyDecimals, formatNumber } from '@/lib/locale';
 import type { TransactionCurrencyFields } from './financeStore';
 
 // ─── Currency Constants & Types ───────────────────────────────────────────────
@@ -52,11 +53,10 @@ export function getDefaultRate(from: string, to: string): number {
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
 
+// Compact "S/1,234.50" (no sign, no space) used by Cuentas, Patrimonio and the converters.
 export function formatCurrency(amount: number, currencyCode: string): string {
-  const info = getCurrencyInfo(currencyCode);
-  const absAmount = Math.abs(amount);
-  const formatted = absAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return `${info.symbol}${formatted}`;
+  const symbol = CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
+  return `${symbol}${formatNumber(Math.abs(amount), currencyDecimals(currencyCode))}`;
 }
 
 export function formatCurrencyWithCode(amount: number, currencyCode: string): string {

@@ -5,6 +5,7 @@ import { ChevronRight, Loader2, Smartphone } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { companionDevicesService, type CompanionDevice } from '@/lib/supabaseCompanion';
+import { APP_LOCALE } from '@/lib/locale';
 
 // Configuración → "Widgets y dispositivos": what is linked to MONEO Companion, with a way to
 // cut any device off at once (a lost phone, a sold laptop).
@@ -12,7 +13,7 @@ import { companionDevicesService, type CompanionDevice } from '@/lib/supabaseCom
 function ago(iso: string | null): string {
   if (!iso) return 'Aún no se ha usado';
   const d = new Date(iso);
-  return `Último uso: ${d.toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`;
+  return `Último uso: ${d.toLocaleString(APP_LOCALE, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`;
 }
 
 export default function CompanionDevices() {

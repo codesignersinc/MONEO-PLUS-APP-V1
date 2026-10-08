@@ -23,6 +23,7 @@ import { moneyFormatter } from '@/components/dashboard/ui';
 import { companionService, type CompanionSummary } from '@/lib/supabaseCompanion';
 import { dueLabel, safeToSpendHint } from '@/lib/companion';
 import { useDataChanged } from '@/lib/dataSync';
+import { APP_LOCALE } from '@/lib/locale';
 
 // MONEO Mini: a compact view of the user's money for a small window on the laptop (or a
 // phone). Everything comes from MONEO Core (moneo_summary), the same numbers as Inicio.
@@ -342,7 +343,7 @@ function pctHint(pct: number | null): string | undefined {
 function when(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('es-PE', {
+  return d.toLocaleString(APP_LOCALE, {
     day: 'numeric',
     month: 'short',
     hour: 'numeric',

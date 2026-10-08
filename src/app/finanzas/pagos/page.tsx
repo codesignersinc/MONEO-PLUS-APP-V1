@@ -9,6 +9,7 @@ import { todayLocal } from '@/lib/dates';
 import { Plus, X, Clock, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useDataChanged } from '@/lib/dataSync';
 import PagoRow from '@/components/finance/PagoRow';
+import { currencySymbol, formatMoney, monthNames } from '@/lib/format';
 
 interface PagoForm {
   name: string;
@@ -239,20 +240,7 @@ export default function PagosPage() {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
     const [year, month, day] = dateStr.split('-');
-    const months = [
-      'ene',
-      'feb',
-      'mar',
-      'abr',
-      'may',
-      'jun',
-      'jul',
-      'ago',
-      'sep',
-      'oct',
-      'nov',
-      'dic',
-    ];
+    const months = monthNames('short');
     return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
   };
 
@@ -296,7 +284,7 @@ export default function PagosPage() {
             <p className="text-xs text-gray-500 font-medium">Por pagar</p>
           </div>
           <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-amber-600">
-            S/ {totalPendiente.toFixed(2)}
+            {formatMoney(totalPendiente)}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {entries.filter((e) => e.status === 'pendiente' || e.status === 'vencido').length} pagos
@@ -308,7 +296,7 @@ export default function PagosPage() {
             <p className="text-xs text-gray-500 font-medium">Pagado</p>
           </div>
           <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-green-700">
-            S/ {totalPagado.toFixed(2)}
+            {formatMoney(totalPagado)}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {entries.filter((e) => e.status === 'pagado').length} pagos
@@ -371,7 +359,7 @@ export default function PagosPage() {
                   <>
                     {editAmountId === entry.id ? (
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-400">S/</span>
+                        <span className="text-xs text-gray-400">{currencySymbol()}</span>
                         <input
                           type="number"
                           value={editAmountValue}
@@ -397,11 +385,7 @@ export default function PagosPage() {
                         className="whitespace-nowrap text-[14px] font-black tabular-nums text-black transition-colors hover:text-blue-600 sm:text-[15px]"
                         title="Clic para editar monto"
                       >
-                        -S/{' '}
-                        {entry.amount.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        -{formatMoney(entry.amount)}
                       </button>
                     )}
                   </>
@@ -461,7 +445,7 @@ export default function PagosPage() {
               {/* Amount */}
               <div>
                 <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
-                  Monto (S/)
+                  Monto ({currencySymbol()})
                 </label>
                 <input
                   type="number"

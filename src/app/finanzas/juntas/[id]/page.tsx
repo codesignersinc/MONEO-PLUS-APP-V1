@@ -32,24 +32,12 @@ import {
   type JuntaContribution,
   type JuntaEvent,
 } from '@/lib/supabaseJuntas';
+import { formatMoney, monthNames } from '@/lib/format';
 
-const MONTHS_ES = [
-  'Ene',
-  'Feb',
-  'Mar',
-  'Abr',
-  'May',
-  'Jun',
-  'Jul',
-  'Ago',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dic',
-];
+const MONTHS_ES = monthNames('short', { capitalize: true });
 
 function fmtAmount(n: number) {
-  return 'S/ ' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return formatMoney(n);
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
@@ -292,7 +280,7 @@ function ResumenTab({
           <div>
             <h2 className="text-xl font-black text-black">{junta.name}</h2>
             <p className="text-sm text-gray-500 font-medium">
-              {members.length} participantes · S/ {junta.contributionAmount} mensual
+              {members.length} participantes · {formatMoney(junta.contributionAmount)} mensual
             </p>
           </div>
           <span

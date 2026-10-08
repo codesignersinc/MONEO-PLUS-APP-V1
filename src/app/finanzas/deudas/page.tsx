@@ -8,6 +8,7 @@ import LoadError from '@/components/ui/LoadError';
 import { useToast } from '@/components/ui/Toast';
 import { getErrorMessage } from '@/lib/dataError';
 import { useDataChanged } from '@/lib/dataSync';
+import { currencySymbol, formatMoney } from '@/lib/format';
 
 const DEBT_TYPES = [
   'Tarjeta de crédito',
@@ -148,7 +149,7 @@ export default function DeudasPage() {
     toast.showSuccess(
       newBalance <= 0
         ? `¡${paying.name} quedó pagada!`
-        : `Pago registrado. Saldo de ${paying.name}: S/ ${newBalance.toFixed(2)}`
+        : `Pago registrado. Saldo de ${paying.name}: ${formatMoney(newBalance)}`
     );
     setPaying(null);
   };
@@ -201,12 +202,12 @@ export default function DeudasPage() {
             <AlertCircle className="w-4 h-4 text-red-500" strokeWidth={1.75} />
             <p className="text-sm text-gray-500">Total deudas</p>
           </div>
-          <p className="text-3xl font-black text-fin-red">S/ {totalDebt.toFixed(2)}</p>
+          <p className="text-3xl font-black text-fin-red">{formatMoney(totalDebt)}</p>
           {nextPayment && (
             <p className="text-sm text-gray-500 mt-1">
               Próximo pago:{' '}
               <span className="font-semibold text-black">
-                {nextPayment.dueDate} · S/ {nextPayment.monthlyPayment.toFixed(2)}
+                {nextPayment.dueDate} · {formatMoney(nextPayment.monthlyPayment)}
               </span>
             </p>
           )}
@@ -253,7 +254,7 @@ export default function DeudasPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right">
-                      <p className="font-black text-fin-red">S/ {debt.balance.toFixed(2)}</p>
+                      <p className="font-black text-fin-red">{formatMoney(debt.balance)}</p>
                       <p className="text-xs text-gray-500">saldo</p>
                     </div>
                     <div className="flex items-center gap-1">
@@ -275,14 +276,12 @@ export default function DeudasPage() {
                 <div className="grid grid-cols-3 gap-3 mb-4 py-3 border-y border-gray-50">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Límite</p>
-                    <p className="text-sm font-semibold text-black">
-                      S/ {debt.limit.toLocaleString('es-PE')}
-                    </p>
+                    <p className="text-sm font-semibold text-black">{formatMoney(debt.limit)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Pago mensual</p>
                     <p className="text-sm font-semibold text-black">
-                      S/ {debt.monthlyPayment.toFixed(2)}
+                      {formatMoney(debt.monthlyPayment)}
                     </p>
                   </div>
                   <div>
@@ -299,7 +298,7 @@ export default function DeudasPage() {
                     <div className="mb-4">
                       <div className="flex justify-between text-xs mb-1.5">
                         <span className="font-bold text-gray-600">
-                          Pagado S/ {paid.toFixed(2)} de S/ {original.toFixed(2)}
+                          Pagado {formatMoney(paid)} de {formatMoney(original)}
                         </span>
                         <span className="font-black text-black">{pct}%</span>
                       </div>
@@ -409,7 +408,7 @@ export default function DeudasPage() {
               </select>
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center gap-2 px-3 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
-                  <span className="text-gray-500 text-xs">Saldo S/</span>
+                  <span className="text-gray-500 text-xs">Saldo {currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.balance}
@@ -419,7 +418,7 @@ export default function DeudasPage() {
                   />
                 </div>
                 <div className="flex items-center gap-2 px-3 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
-                  <span className="text-gray-500 text-xs">Límite S/</span>
+                  <span className="text-gray-500 text-xs">Límite {currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.limit}
@@ -431,7 +430,7 @@ export default function DeudasPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center gap-2 px-3 min-h-[56px] bg-white rounded-2xl border-[3px] border-[#111] focus-within:shadow-[0_0_0_3px_#FFD83D]">
-                  <span className="text-gray-500 text-xs">Pago S/</span>
+                  <span className="text-gray-500 text-xs">Pago {currencySymbol()}</span>
                   <input
                     type="number"
                     value={form.monthlyPayment}
@@ -468,13 +467,13 @@ export default function DeudasPage() {
         <AccountPickerModal
           title={`Pagar ${paying.name}`}
           amount={payAmountNum}
-          confirmLabel={payAmountNum > 0 ? `Pagar S/ ${payAmountNum.toFixed(2)}` : 'Pagar'}
+          confirmLabel={payAmountNum > 0 ? `Pagar ${formatMoney(payAmountNum)}` : 'Pagar'}
           onConfirm={confirmPay}
           onClose={() => setPaying(null)}
           validate={() =>
             payAmountNum > 0 && payAmountNum <= paying.balance
               ? null
-              : `Ingresa un monto mayor que 0 y hasta S/ ${paying.balance.toFixed(2)}.`
+              : `Ingresa un monto mayor que 0 y hasta ${formatMoney(paying.balance)}.`
           }
           header={<PayAmountChooser debt={paying} value={payAmount} onChange={setPayAmount} />}
         />
@@ -502,7 +501,7 @@ function PayAmountChooser({
   return (
     <div className="space-y-2">
       <p className="text-sm text-gray-600">
-        Saldo actual: <span className="font-black text-black">S/ {debt.balance.toFixed(2)}</span>
+        Saldo actual: <span className="font-black text-black">{formatMoney(debt.balance)}</span>
       </p>
       <div className="flex gap-2">
         {options.map((o) => (
@@ -517,12 +516,12 @@ function PayAmountChooser({
             }`}
           >
             {o.label}
-            <span className="block font-bold">S/ {o.amount.toFixed(2)}</span>
+            <span className="block font-bold">{formatMoney(o.amount)}</span>
           </button>
         ))}
       </div>
       <label className="block text-xs font-black text-black uppercase tracking-wide">
-        Monto a pagar (S/)
+        Monto a pagar ({currencySymbol()})
       </label>
       <input
         type="number"

@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { userSettingsService, exchangeRatesService } from '@/lib/supabaseCurrency';
 import { getCurrencyInfo, formatCurrency, getRateFromMap } from '@/lib/currency';
 import { useDataChanged } from '@/lib/dataSync';
+import { formatMoney, monthNames } from '@/lib/format';
 
 interface PagoEntry {
   id: string;
@@ -50,20 +51,7 @@ interface IncomeRow {
   status: IncomeEntry['status'];
 }
 
-const MONTHS_SHORT = [
-  'Ene',
-  'Feb',
-  'Mar',
-  'Abr',
-  'May',
-  'Jun',
-  'Jul',
-  'Ago',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dic',
-];
+const MONTHS_SHORT = monthNames('short', { capitalize: true });
 
 export default function ReportesPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -303,7 +291,8 @@ export default function ReportesPage() {
           BALANCE DEL MES
         </p>
         <p className={`text-4xl font-black text-black`}>
-          {balance >= 0 ? '+' : ''}S/ {balance.toFixed(2)}
+          {balance >= 0 ? '+' : ''}
+          {formatMoney(balance)}
         </p>
         <p className="text-xs font-bold text-black/50 mt-1 uppercase">
           {balance >= 0 ? '✅ MES POSITIVO' : '⚠️ MES NEGATIVO'} · TASA AHORRO: {savingsRate}%
@@ -395,7 +384,7 @@ export default function ReportesPage() {
           <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
             💰 DINERO COBRADO
           </p>
-          <p className="text-xl font-black text-black">S/ {totalCobrado.toFixed(2)}</p>
+          <p className="text-xl font-black text-black">{formatMoney(totalCobrado)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
             {cobradosDelMes.length} ingreso(s) cobrado(s)
           </p>
@@ -406,7 +395,7 @@ export default function ReportesPage() {
           <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
             🕐 POR COBRAR
           </p>
-          <p className="text-xl font-black text-black">S/ {totalPorCobrar.toFixed(2)}</p>
+          <p className="text-xl font-black text-black">{formatMoney(totalPorCobrar)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
             {porCobrarDelMes.length} ingreso(s) pendiente(s)
           </p>
@@ -417,7 +406,7 @@ export default function ReportesPage() {
           <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
             💸 GASTOS
           </p>
-          <p className="text-xl font-black text-black">S/ {totalGastos.toFixed(2)}</p>
+          <p className="text-xl font-black text-black">{formatMoney(totalGastos)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
             {monthTxs.filter((t) => t.type === 'gasto').length} gasto(s)
           </p>
@@ -428,7 +417,7 @@ export default function ReportesPage() {
           <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
             ✅ PAGOS REALIZADOS
           </p>
-          <p className="text-xl font-black text-black">S/ {totalPagosPagados.toFixed(2)}</p>
+          <p className="text-xl font-black text-black">{formatMoney(totalPagosPagados)}</p>
           <p className="text-[10px] font-bold text-black/50 mt-1">
             {pagosPagados.length} pago(s) completado(s)
           </p>
@@ -445,38 +434,36 @@ export default function ReportesPage() {
         <div className="p-4 space-y-2">
           <div className="flex justify-between items-center py-2 border-b-[2px] border-dashed border-black/20">
             <span className="text-xs font-black uppercase text-black/60">Dinero cobrado</span>
-            <span className="text-sm font-black text-black">+S/ {totalCobrado.toFixed(2)}</span>
+            <span className="text-sm font-black text-black">+{formatMoney(totalCobrado)}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b-[2px] border-dashed border-black/20">
             <span className="text-xs font-black uppercase text-black/60">
               Por cobrar (pendiente)
             </span>
-            <span className="text-sm font-black text-black/50">S/ {totalPorCobrar.toFixed(2)}</span>
+            <span className="text-sm font-black text-black/50">{formatMoney(totalPorCobrar)}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b-[2px] border-dashed border-black/20">
             <span className="text-xs font-black uppercase text-black/60">
               Gastos (transacciones)
             </span>
-            <span className="text-sm font-black text-black">-S/ {totalGastos.toFixed(2)}</span>
+            <span className="text-sm font-black text-black">-{formatMoney(totalGastos)}</span>
           </div>
           {totalTransferencias > 0 && (
             <div className="flex justify-between items-center py-2 border-b-[2px] border-dashed border-black/20">
               <span className="text-xs font-black uppercase text-black/60">Transferencias</span>
               <span className="text-sm font-black text-black">
-                S/ {totalTransferencias.toFixed(2)}
+                {formatMoney(totalTransferencias)}
               </span>
             </div>
           )}
           <div className="flex justify-between items-center py-2 border-b-[2px] border-dashed border-black/20">
             <span className="text-xs font-black uppercase text-black/60">Pagos realizados</span>
-            <span className="text-sm font-black text-black">
-              -S/ {totalPagosPagados.toFixed(2)}
-            </span>
+            <span className="text-sm font-black text-black">-{formatMoney(totalPagosPagados)}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b-[2px] border-dashed border-black/20">
             <span className="text-xs font-black uppercase text-black/60">Pagos pendientes</span>
             <span className="text-sm font-black text-black">
-              S/ {totalPagosPendientes.toFixed(2)}
+              {formatMoney(totalPagosPendientes)}
             </span>
           </div>
           <div className="flex justify-between items-center py-2 border-b-[2px] border-dashed border-black/20">
@@ -484,13 +471,14 @@ export default function ReportesPage() {
               Suscripciones activas/mes
             </span>
             <span className="text-sm font-black text-black">
-              -S/ {totalSuscripciones.toFixed(2)}
+              -{formatMoney(totalSuscripciones)}
             </span>
           </div>
           <div className="flex justify-between items-center pt-3">
             <span className="text-sm font-black uppercase text-black">BALANCE NETO</span>
             <span className="text-base font-black text-black">
-              {balance >= 0 ? '+' : ''}S/ {balance.toFixed(2)}
+              {balance >= 0 ? '+' : ''}
+              {formatMoney(balance)}
             </span>
           </div>
         </div>
@@ -566,7 +554,7 @@ export default function ReportesPage() {
                     <span className="font-black uppercase text-black">
                       {cat.icon} {cat.name}
                     </span>
-                    <span className="font-black text-black">S/ {cat.amount.toFixed(2)}</span>
+                    <span className="font-black text-black">{formatMoney(cat.amount)}</span>
                   </div>
                   <div className="h-3 rounded-full border-[2px] border-black bg-white overflow-hidden">
                     <div
@@ -600,7 +588,7 @@ export default function ReportesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-black">S/ {p.amount.toFixed(2)}</span>
+                  <span className="text-sm font-black text-black">{formatMoney(p.amount)}</span>
                   <span
                     className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border-[2px] border-black ${
                       p.status === 'pagado'
@@ -671,7 +659,7 @@ export default function ReportesPage() {
                 {subscriptions.filter((s) => s.active).length} suscripción(es) activa(s)
               </span>
               <span className="text-sm font-black text-black">
-                -S/ {totalSuscripciones.toFixed(2)}/mes
+                -{formatMoney(totalSuscripciones)}/mes
               </span>
             </div>
             <div className="space-y-2">
@@ -683,9 +671,7 @@ export default function ReportesPage() {
                     <span className="text-xs font-bold text-black/70">
                       {sub.icon} {sub.name}
                     </span>
-                    <span className="text-xs font-black text-black">
-                      S/ {sub.amount.toFixed(2)}
-                    </span>
+                    <span className="text-xs font-black text-black">{formatMoney(sub.amount)}</span>
                   </div>
                 ))}
               {subscriptions.filter((s) => s.active).length > 4 && (

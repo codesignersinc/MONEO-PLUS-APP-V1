@@ -8,6 +8,7 @@ import {
   FormWrapper,
   type QuickFormProps,
 } from '@/components/finance/quickForms/shared';
+import { currencySymbol } from '@/lib/format';
 
 export default function AhorroForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
@@ -54,10 +55,14 @@ export default function AhorroForm({ onClose, onSuccess }: QuickFormProps) {
         />
         <div className="flex gap-2">
           <div className="flex-1">
-            <AmountField label="Meta (S/)" value={target} onChange={setTarget} />
+            <AmountField label={`Meta (${currencySymbol()})`} value={target} onChange={setTarget} />
           </div>
           <div className="flex-1">
-            <AmountField label="Ya tengo (S/)" value={current} onChange={setCurrent} />
+            <AmountField
+              label={`Ya tengo (${currencySymbol()})`}
+              value={current}
+              onChange={setCurrent}
+            />
           </div>
         </div>
         <DateField label="Fecha objetivo" value={targetDate} onChange={setTargetDate} />

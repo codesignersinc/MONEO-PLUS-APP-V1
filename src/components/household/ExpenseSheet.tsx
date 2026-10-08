@@ -34,6 +34,7 @@ import {
   recordOwnMovement,
 } from '@/lib/supabaseHousehold';
 import { Choice, ErrorNote, SectionLabel, Sheet } from '@/components/household/ui';
+import { formatMoney } from '@/lib/format';
 
 const CATEGORIES = CATEGORY_PRESETS.filter((c) => c.id !== 'ingreso').map((c) => ({
   label: c.label,
@@ -122,7 +123,6 @@ export default function ExpenseSheet({
   const amountNum = parseFloat(amount) || 0;
   const baseAmount = Math.round(amountNum * rate * 100) / 100;
   const sym = getCurrencyInfo(effCurrency).symbol;
-  const baseSym = getCurrencyInfo(household.baseCurrency).symbol;
 
   const two = active.length === 2;
   const householdDefault = householdShares(household.splitMethod, members);
@@ -274,8 +274,8 @@ export default function ExpenseSheet({
       </div>
       {effCurrency !== household.baseCurrency && amountNum > 0 && (
         <p className="-mt-2 text-xs font-bold text-gray-600">
-          ≈ {baseSym} {baseAmount.toFixed(2)} para el hogar (1 {effCurrency} = {rate.toFixed(4)}{' '}
-          {household.baseCurrency})
+          ≈ {formatMoney(baseAmount, household.baseCurrency)} para el hogar (1 {effCurrency} ={' '}
+          {rate.toFixed(4)} {household.baseCurrency})
         </p>
       )}
       <TextField
@@ -346,7 +346,7 @@ export default function ExpenseSheet({
             <li key={p.memberId} className="flex justify-between py-0.5">
               <span>{nameOf(p.memberId)}</span>
               <span>
-                {baseSym} {p.amount.toFixed(2)}{' '}
+                {formatMoney(p.amount, household.baseCurrency)}{' '}
                 <span className="text-gray-500">({Math.round(p.percentage * 10) / 10}%)</span>
               </span>
             </li>

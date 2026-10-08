@@ -34,6 +34,7 @@ import { notifyDataChanged, useAutoSuggestion, useDataChanged } from '@/lib/data
 import { CATEGORY_PRESETS, type Account } from '@/lib/financeStore';
 import { looksLikeHouseholdExpense } from '@/lib/household';
 import { householdService, shareOwnMovement } from '@/lib/supabaseHousehold';
+import { monthNames } from '@/lib/format';
 
 const BANK_LABEL: Record<string, string> = {
   bcp: 'BCP',
@@ -45,7 +46,7 @@ const BANK_LABEL: Record<string, string> = {
   otro: 'Manual',
 };
 
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MONTHS = monthNames('short');
 const fmtDate = (d: string) => {
   const [y, m, day] = d.split('-').map(Number);
   return `${day} ${MONTHS[m - 1]} ${y}`;

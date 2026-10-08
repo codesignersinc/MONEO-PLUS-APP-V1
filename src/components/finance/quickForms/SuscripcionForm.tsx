@@ -4,6 +4,7 @@ import { subscriptionsService } from '@/lib/supabaseFinance';
 import { getErrorMessage } from '@/lib/dataError';
 import { AmountField, DateField, TextField } from '@/components/finance/formKit';
 import { FormWrapper, type QuickFormProps } from '@/components/finance/quickForms/shared';
+import { currencySymbol } from '@/lib/format';
 
 export default function SuscripcionForm({ onClose, onSuccess }: QuickFormProps) {
   const [name, setName] = useState('');
@@ -47,7 +48,11 @@ export default function SuscripcionForm({ onClose, onSuccess }: QuickFormProps) 
     <FormWrapper title="Nueva Suscripción" emoji="📺" accentBg="bg-[#bfdbfe]" onClose={onClose}>
       <div className="space-y-5">
         <TextField label="Nombre" value={name} onChange={setName} placeholder="Ej. Netflix" />
-        <AmountField label="Monto mensual (S/)" value={amount} onChange={setAmount} />
+        <AmountField
+          label={`Monto mensual (${currencySymbol()})`}
+          value={amount}
+          onChange={setAmount}
+        />
         <DateField label="Próximo pago" value={nextPaymentDate} onChange={setNextPaymentDate} />
         <div>
           <span className="sr-only">Ícono</span>

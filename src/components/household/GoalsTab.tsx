@@ -27,6 +27,7 @@ import {
   type HouseholdGoal,
 } from '@/lib/supabaseHousehold';
 import { Avatar, Choice, ErrorNote, Sheet, memberColor } from '@/components/household/ui';
+import { APP_LOCALE } from '@/lib/locale';
 
 const KINDS: { value: GoalKind; label: string; emoji: string }[] = [
   { value: 'emergency', label: 'Fondo de emergencia', emoji: '🛟' },
@@ -200,7 +201,7 @@ export default function GoalsTab({
                       <p className="text-[13px] font-semibold text-gray-600">
                         {money(g.saved)} de {money(g.targetAmount)}
                         {g.targetDate &&
-                          ` · para el ${new Date(g.targetDate + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                          ` · para el ${new Date(g.targetDate + 'T00:00:00').toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'short', year: 'numeric' })}`}
                       </p>
                     </div>
                     <span className="text-[20px] font-black">{pct}%</span>

@@ -13,6 +13,7 @@ import {
   type PayResult,
 } from '@/lib/billing';
 import { track } from '@/lib/analytics';
+import { formatMoney } from '@/lib/format';
 
 // Checkout inside MONEO with the official Mercado Pago SDK: the card is typed in Mercado
 // Pago's secure fields (Card Payment Brick) and Yape in its own form; both only hand us a
@@ -71,8 +72,7 @@ async function getMp(): Promise<MercadoPagoSdk> {
   return mpInstance.mp;
 }
 
-const money = (n: number) =>
-  `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const money = (n: number) => formatMoney(n);
 
 const TAB =
   'flex flex-1 items-center justify-center gap-1.5 rounded-xl border-2 px-2 py-2.5 text-sm font-black transition-colors';

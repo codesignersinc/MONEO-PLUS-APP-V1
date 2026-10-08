@@ -34,6 +34,8 @@ import {
   Filter,
 } from 'lucide-react';
 import { useDataChanged } from '@/lib/dataSync';
+import { APP_LOCALE } from '@/lib/locale';
+import { monthNames } from '@/lib/format';
 
 type FilterType = 'todos' | 'pagos' | 'ingresos';
 
@@ -226,7 +228,7 @@ export default function MovimientosPage() {
     let label: string;
     if (d.toDateString() === today.toDateString()) label = 'Hoy';
     else if (d.toDateString() === yesterday.toDateString()) label = 'Ayer';
-    else label = d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long' });
+    else label = d.toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'long' });
     if (!acc[label]) acc[label] = [];
     acc[label].push(tx);
     return acc;
@@ -253,20 +255,7 @@ export default function MovimientosPage() {
   const formatCollectionDate = (dateStr: string) => {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-');
-    const months = [
-      'ene',
-      'feb',
-      'mar',
-      'abr',
-      'may',
-      'jun',
-      'jul',
-      'ago',
-      'sep',
-      'oct',
-      'nov',
-      'dic',
-    ];
+    const months = monthNames('short');
     return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
   };
 

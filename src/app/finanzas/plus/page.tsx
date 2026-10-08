@@ -20,16 +20,17 @@ import {
 } from '@/lib/billing';
 import { track } from '@/lib/analytics';
 import { useIsAndroidApp } from '@/lib/appShell';
+import { formatMoney } from '@/lib/format';
+import { APP_LOCALE } from '@/lib/locale';
 
 // MONEO PLUS plans and checkout inside the app (from the trial countdown, locked features,
 // the sidebar card). Subscriptions renew on a card; passes and lifetime are paid once with
 // card, Yape or PagoEfectivo.
 
-const money = (n: number) =>
-  `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const money = (n: number) => formatMoney(n);
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' });
+  new Date(iso).toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'long', year: 'numeric' });
 
 function priceLine(p: BillingPlan): string {
   if (p.kind === 'subscription')

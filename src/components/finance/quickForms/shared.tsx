@@ -10,6 +10,7 @@ import {
   SubmitButton,
   TextField,
 } from '@/components/finance/formKit';
+import { currencySymbol } from '@/lib/format';
 
 export const EXPENSE_CATEGORIES = [
   { label: 'Comida', icon: '🍽️' },
@@ -145,7 +146,7 @@ export function FormFields({
         icon={categories.find((c) => c.label === category)?.icon}
       />
       <div className="grid grid-cols-2 gap-3">
-        <AmountField label="Monto (S/)" value={amount} onChange={setAmount} />
+        <AmountField label={`Monto (${currencySymbol()})`} value={amount} onChange={setAmount} />
         <DateField label="Fecha" value={date} onChange={setDate} />
       </div>
       {!hideCategories && categories.length > 0 && (

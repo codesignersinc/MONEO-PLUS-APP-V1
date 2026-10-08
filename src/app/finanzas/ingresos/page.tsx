@@ -8,6 +8,7 @@ import { AccountPickerModal } from '@/components/finance/AccountAmountPicker';
 import { todayLocal } from '@/lib/dates';
 import { Plus, X, Pencil, Trash2, Clock, CheckCircle2, Calendar } from 'lucide-react';
 import { useDataChanged } from '@/lib/dataSync';
+import { currencySymbol, formatMoney, monthNames } from '@/lib/format';
 
 interface IncomeForm {
   name: string;
@@ -183,20 +184,7 @@ export default function IngresosPage() {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
     const [year, month, day] = dateStr.split('-');
-    const months = [
-      'ene',
-      'feb',
-      'mar',
-      'abr',
-      'may',
-      'jun',
-      'jul',
-      'ago',
-      'sep',
-      'oct',
-      'nov',
-      'dic',
-    ];
+    const months = monthNames('short');
     return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
   };
 
@@ -239,7 +227,7 @@ export default function IngresosPage() {
             <p className="text-xs text-gray-500 font-medium">Por cobrar</p>
           </div>
           <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-amber-600">
-            S/ {totalPendiente.toFixed(2)}
+            {formatMoney(totalPendiente)}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {entries.filter((e) => e.status === 'pendiente').length} ingresos
@@ -251,7 +239,7 @@ export default function IngresosPage() {
             <p className="text-xs text-gray-500 font-medium">Cobrado</p>
           </div>
           <p className="text-[2rem] leading-tight font-black tabular-nums break-words text-green-700">
-            S/ {totalCobrado.toFixed(2)}
+            {formatMoney(totalCobrado)}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {entries.filter((e) => e.status === 'cobrado').length} ingresos
@@ -339,7 +327,7 @@ export default function IngresosPage() {
                 <p
                   className={`text-sm font-black ${entry.status === 'cobrado' ? 'text-gray-400' : 'text-fin-green'}`}
                 >
-                  +S/ {entry.amount.toFixed(2)}
+                  +{formatMoney(entry.amount)}
                 </p>
                 <div className="hidden group-hover:flex items-center gap-1 ml-1">
                   <button
@@ -405,7 +393,7 @@ export default function IngresosPage() {
               {/* Amount */}
               <div>
                 <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wide">
-                  Monto (S/)
+                  Monto ({currencySymbol()})
                 </label>
                 <input
                   type="number"

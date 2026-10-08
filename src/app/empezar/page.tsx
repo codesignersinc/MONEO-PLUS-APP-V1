@@ -49,6 +49,8 @@ import {
   Title,
 } from '@/components/onboarding/ui';
 import type { Account } from '@/lib/financeStore';
+import { APP_LOCALE } from '@/lib/locale';
+import { formatMoney } from '@/lib/format';
 
 // New onboarding, "subscription first": a few questions → personalised preview → MONEO
 // PLUS plans → account → Mercado Pago (trial or payment) → first real account → quick
@@ -151,7 +153,7 @@ const KIND_ICON: Record<AccountKind, string> = {
 };
 
 function fmtDate(d: Date): string {
-  return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function toggle<T>(list: T[], item: T, max: number): T[] {
@@ -1408,13 +1410,7 @@ function MoneySteps({
                 {a.institution || 'Efectivo'}
               </span>
             </span>
-            <span className="font-black tabular-nums">
-              {CURRENCIES.find((c) => c.code === a.currency)?.symbol ?? a.currency}{' '}
-              {a.balance.toLocaleString('es-PE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </span>
+            <span className="font-black tabular-nums">{formatMoney(a.balance, a.currency)}</span>
           </li>
         ))}
       </ul>
