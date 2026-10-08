@@ -23,8 +23,15 @@ import {
 import { userSettingsService } from '@/lib/supabaseCurrency';
 import { nextPayDate } from '@/lib/business';
 
-// Equipo (fase 3, decision 3): employees are contacts with their usual pay; each one has a
-// monthly recurring payment. No payroll, taxes or benefits — just cash flow and projection.
+// Equipo (fase 3, decision 3): employees are contacts with their usual pay and recurring
+// payments: monthly (one, on a day) or quincenal (half on the 15th, half on the last day).
+// No payroll, taxes or benefits — just cash flow and projection.
+
+const FREQ_LABEL: Record<string, string> = {
+  mensual: 'Mensual',
+  quincenal: 'Quincenal',
+  semanal: 'Semanal',
+};
 
 const COLORS = ['#45D98B', '#75B8FF', '#B99CFF', '#FFD83D', '#FF806E'];
 
@@ -43,7 +50,12 @@ export default function BusinessTeamPage() {
   const [currency, setCurrency] = useState('PEN');
   const [error, setError] = useState<unknown>(null);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ name: '', amount: '', day: '15' });
+  const [form, setForm] = useState({
+    name: '',
+    amount: '',
+    day: '15',
+    freq: 'mensual' as 'mensual' | 'quincenal',
+  });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [settling, setSettling] = useState<BizObligation | null>(null);
@@ -84,21 +96,31 @@ export default function BusinessTeamPage() {
         kind: 'empleado',
         name: form.name,
         usualAmount: amount,
-        frequency: 'mensual',
+        frequency: form.freq,
       });
-      await bizObligationsService.create(id, {
-        type: 'pago',
-        name: `Sueldo ${p.name}`,
-        amount,
-        category: 'Planilla',
-        icon: 'users',
-        due: nextPayDate(day),
-        partyId: p.id,
-        recurringDay: day,
-      });
+      const half = Math.round((amount / 2) * 100) / 100;
+      const payments =
+        form.freq === 'quincenal'
+          ? [
+              { name: `Sueldo ${p.name} (1.ª quincena)`, amount: half, day: 15 },
+              { name: `Sueldo ${p.name} (2.ª quincena)`, amount: amount - half, day: 31 },
+            ]
+          : [{ name: `Sueldo ${p.name}`, amount, day }];
+      for (const pay of payments) {
+        await bizObligationsService.create(id, {
+          type: 'pago',
+          name: pay.name,
+          amount: pay.amount,
+          category: 'Planilla',
+          icon: 'users',
+          due: nextPayDate(pay.day),
+          partyId: p.id,
+          recurringDay: pay.day,
+        });
+      }
       notifyDataChanged();
       setAdding(false);
-      setForm({ name: '', amount: '', day: '15' });
+      setForm({ name: '', amount: '', day: '15', freq: 'mensual' });
       load();
     } catch (e) {
       setFormError(getErrorMessage(e));
@@ -186,7 +208,8 @@ export default function BusinessTeamPage() {
                     {p.name}
                   </Link>
                   <p className="text-xs font-semibold text-[#111]/60">
-                    Mensual{next ? ` · próximo ${shortDate(next.due)}` : ''}
+                    {FREQ_LABEL[p.frequency ?? 'mensual'] ?? 'Mensual'}
+                    {next ? ` · próximo ${shortDate(next.due)}` : ''}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
@@ -229,8 +252,26 @@ export default function BusinessTeamPage() {
                 className={field}
               />
             </label>
+            <div>
+              <span className={label}>Frecuencia de pago</span>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {(['mensual', 'quincenal'] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    aria-pressed={form.freq === f}
+                    onClick={() => setForm({ ...form, freq: f })}
+                    className={`rounded-xl border-2 border-[#111] py-2 text-sm font-black ${
+                      form.freq === f ? 'paper-opaque bg-[#111] text-white' : 'bg-white'
+                    }`}
+                  >
+                    {FREQ_LABEL[f]}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
-              <label className="block">
+              <label className={`block ${form.freq === 'quincenal' ? 'col-span-2' : ''}`}>
                 <span className={label}>Sueldo mensual</span>
                 <input
                   inputMode="decimal"
@@ -240,7 +281,7 @@ export default function BusinessTeamPage() {
                   className={field}
                 />
               </label>
-              <label className="block">
+              <label className={`block ${form.freq === 'quincenal' ? 'hidden' : ''}`}>
                 <span className={label}>Día de pago</span>
                 <input
                   inputMode="numeric"
@@ -252,6 +293,11 @@ export default function BusinessTeamPage() {
                 />
               </label>
             </div>
+            {form.freq === 'quincenal' && (
+              <p className="text-xs font-semibold text-[#111]/70">
+                Se paga la mitad el 15 y la otra mitad el último día de cada mes.
+              </p>
+            )}
           </div>
           {formError && (
             <p

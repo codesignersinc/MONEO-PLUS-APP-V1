@@ -29,6 +29,9 @@ interface PlusState {
   // The Duo / Familiar the user pays or belongs to (null while loading or without one).
   pack: MyPack | null;
   viaPack: boolean;
+  // MONEO NEGOCIO: paid PLUS (own plan or a Duo / Familiar seat); the free trial does not
+  // include it. True while loading or where the plans are not live.
+  business: boolean;
   plansLive: boolean;
   refresh: () => Promise<void>;
 }
@@ -39,6 +42,7 @@ const PlusContext = createContext<PlusState>({
   paid: false,
   pack: null,
   viaPack: false,
+  business: true,
   plansLive: false,
   refresh: async () => {},
 });
@@ -131,10 +135,20 @@ export function PlusProvider({ children }: { children: React.ReactNode }) {
         paid: hasPaidPlusNow(ent ?? null),
         pack,
         viaPack: !!fromPack,
+        business: ent === undefined ? true : hasPaidPlusNow(ent) || !!fromPack,
         plansLive: true,
         refresh,
       }
-    : { ent: null, plus: true, paid: false, pack: null, viaPack: false, plansLive: false, refresh };
+    : {
+        ent: null,
+        plus: true,
+        paid: false,
+        pack: null,
+        viaPack: false,
+        business: true,
+        plansLive: false,
+        refresh,
+      };
 
   return <PlusContext.Provider value={value}>{children}</PlusContext.Provider>;
 }

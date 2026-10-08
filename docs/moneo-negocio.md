@@ -92,10 +92,10 @@ moneda principal. Cada supuesto se muestra al usuario para que el número sea ve
 
 ## 7. Pendientes para la fase 2
 
-- Un retiro o aporte muestra su pata personal en Movimientos: editarlo desde Personal debe ser
-  de solo lectura (la otra cuenta es del negocio) o abrir la edición desde el negocio.
-- Selectores de cuenta de Hogar, Juntas y Deudas: solo cuentas personales (la base de datos
-  ya rechaza movimientos del negocio en Hogar y Deudas).
+- ~~Un retiro o aporte muestra su pata personal en Movimientos~~ (hecho, §11).
+- ~~Selectores de cuenta de Hogar, Juntas y Deudas: solo cuentas personales~~: todos usan
+  `accountsService.getAll()` (`business_id IS NULL`); la base de datos además rechaza
+  movimientos del negocio en Hogar y Deudas. Juntas no enlaza movimientos en la base.
 - Configuración → «Tus datos» cuenta todos los registros, también los del negocio (es un
   total de la cuenta, no una vista personal).
 
@@ -140,3 +140,19 @@ moneda principal. Cada supuesto se muestra al usuario para que el número sea ve
   financiero ni un servicio contable.
 - `bizMovementsService.list(id, { from, to, partyId })`: los límites del periodo se envían como
   días locales (antes `from` se comparaba en UTC).
+
+## 11. Cierre de la beta (hecho)
+
+- **Precio (decisión del titular)**: MONEO NEGOCIO está incluido en MONEO PLUS **pagado** (plan
+  propio —mensual, anual, pase, de por vida— o un lugar en Duo/Familiar); la prueba gratis sin
+  tarjeta no lo incluye. `usePlus().business` y `src/app/finanzas/negocio/layout.tsx` muestran el
+  candado; los datos se conservan. Donde los planes no están activos (`ONBOARDING_V2` apagado) no
+  se bloquea nada, como el resto de PLUS. «MONEO NEGOCIO» figura en `PLUS_BENEFITS`.
+- **Beta abierta**: `NEXT_PUBLIC_NEGOCIO=true` en Vercel (lo activó el titular).
+- **Retiro / aporte en Personal**: al editar se avisa que la descripción, fecha y nota cambian en
+  ambos lados; al eliminar se pide confirmación (también desaparece del negocio).
+- **Equipo quincenal**: dos pagos mensuales recurrentes (mitad el 15 y mitad el último día). El
+  pago semanal llega con la migración de la fase 6.
+- **Legal**: Términos §6 «MONEO NEGOCIO» (no es servicio contable, tributario ni laboral; datos de
+  terceros) y §4 (solo con plan pagado); Privacidad: datos del negocio y de contactos, MONEO+
+  como encargado, conservación al eliminar contactos y solicitudes de terceros.

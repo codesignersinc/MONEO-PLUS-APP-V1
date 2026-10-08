@@ -123,6 +123,8 @@ export default function MovimientosPage() {
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  // The transfer being edited moves money between Personal and a business (MONEO NEGOCIO).
+  const [withBusiness, setWithBusiness] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState('PEN');
@@ -280,8 +282,19 @@ export default function MovimientosPage() {
     setShowForm(true);
   };
 
+  // A withdrawal from / contribution to a business: one of its accounts is not personal.
+  const crossesBusiness = async (tx: Transaction): Promise<boolean> => {
+    if (tx.type !== 'transferencia' || !tx.transferId) return false;
+    const t = await transfersService.get(tx.transferId);
+    return [t.fromAccountId, t.toAccountId].some((id) => id && !accounts.some((a) => a.id === id));
+  };
+
   const openEdit = (tx: Transaction) => {
     setEditingTx(tx);
+    setWithBusiness(false);
+    crossesBusiness(tx)
+      .then(setWithBusiness)
+      .catch(() => setWithBusiness(false));
     setForm({
       name: tx.name,
       type: tx.type as 'gasto' | 'ingreso' | 'transferencia',
@@ -444,8 +457,17 @@ export default function MovimientosPage() {
   };
 
   // A transfer leg is never deleted alone: deleting it deletes the whole transfer.
-  const handleDelete = (tx: Transaction) => {
+  const handleDelete = async (tx: Transaction) => {
     const transferId = tx.transferId;
+    if (
+      transferId &&
+      (await crossesBusiness(tx).catch(() => false)) &&
+      !window.confirm(
+        'Es un retiro o aporte de tu negocio: al eliminarlo también desaparece del negocio y ambos saldos vuelven atrás. ¿Eliminarlo?'
+      )
+    ) {
+      return;
+    }
     const op = transferId ? transfersService.delete(transferId) : transactionsService.delete(tx.id);
     op.then(() => {
       setTransactions((prev) =>
@@ -798,8 +820,9 @@ export default function MovimientosPage() {
             <div className="px-5 py-4 space-y-3 sheet-max overflow-y-auto">
               {isTransferEdit && (
                 <div className="px-4 py-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-blue-700">
-                  Transferencia: aquí puedes cambiar la descripción, la fecha y la nota. Para
-                  cambiar el monto o las cuentas, elimínala y vuelve a crearla.
+                  {withBusiness
+                    ? 'Retiro o aporte entre Personal y tu negocio: la descripción, la fecha y la nota cambian en ambos lados. Para cambiar el monto o las cuentas, elimínalo y vuelve a registrarlo desde el negocio.'
+                    : 'Transferencia: aquí puedes cambiar la descripción, la fecha y la nota. Para cambiar el monto o las cuentas, elimínala y vuelve a crearla.'}
                 </div>
               )}
               {/* Type tabs */}
