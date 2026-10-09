@@ -117,7 +117,7 @@ PLUS se cobran fuera de la app de Android (la app oculta el cobro: `?source=andr
 - ¿Tu app recopila o comparte alguno de los tipos de datos del usuario requeridos? **Sí**
 - ¿Todos los datos se encriptan en tránsito? **Sí** (HTTPS)
 - ¿Ofreces una forma de que los usuarios soliciten la eliminación de sus datos? **Sí**
-  - URL: `https://moneo.plus/privacidad` (sección 7) — y dentro de la app: Configuración →
+  - URL: `https://moneo.plus/eliminar-cuenta` — y dentro de la app: Configuración →
     Eliminar cuenta.
 
 **Tipos de datos** (para cada uno: Recopilado **Sí** · Compartido **No** · Procesado de forma

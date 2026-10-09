@@ -17,5 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
     { url: `${SITE.url}/privacidad`, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${SITE.url}/terminos`, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${SITE.url}/eliminar-cuenta`, changeFrequency: 'yearly', priority: 0.2 },
   ];
 }
