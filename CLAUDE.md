@@ -71,6 +71,10 @@ ejecuta en cada pull request (`.github/workflows/ci.yml`). Las pruebas SQL
   (`pg-functions://postgres/public/hook_before_user_created`, se activa por proyecto en la
   configuración de Auth). En staging, `app_settings('allow_test_signups','on')` deja pasar
   `@test.local` para las pruebas E2E.
+- **Coronas** (gamificación): solo las otorga la base (`coronas_sync()`, ledger con `award_key`
+  único); el cliente solo lee. No confíes en `created_at` de tablas que escribe el cliente: las
+  reglas premian lo que el servidor ve «hoy». Las Coronas no son dinero y vencen a los 12 meses.
+  Textos y niveles en `src/lib/coronas.ts`; servicio en `supabaseCoronas.ts`.
 - **Privacidad**: no guardar texto bruto de notificaciones/correos; los logs no llevan montos,
   comercios, cuentas, ids ni contenido.
 

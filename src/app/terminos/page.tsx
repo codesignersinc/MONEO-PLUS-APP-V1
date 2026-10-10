@@ -4,7 +4,8 @@ import { LEGAL } from '@/lib/legal';
 
 export const metadata: Metadata = {
   title: 'Términos y condiciones · MONEO+',
-  description: 'Condiciones de uso de MONEO+, de MONEO NEGOCIO y de los planes MONEO PLUS.',
+  description:
+    'Condiciones de uso de MONEO+, de MONEO NEGOCIO, de los planes MONEO PLUS y de las Coronas.',
 };
 
 const SECTIONS: LegalSection[] = [
@@ -60,20 +61,29 @@ const SECTIONS: LegalSection[] = [
     ],
   },
   {
-    title: '7. Uso aceptable',
+    title: '7. Coronas y logros',
+    paragraphs: [
+      'Las Coronas son puntos de recompensa que MONEO+ otorga gratis por hábitos con tu dinero (por ejemplo, registrar tus movimientos del día, pagar a tiempo o cumplir tu presupuesto). Las reglas para ganarlas y sus topes diarios están en la pantalla Coronas de la app; las calcula y otorga MONEO+, no se compran.',
+      'Las Coronas no son dinero ni un medio de pago: no tienen valor en efectivo, no se cambian por dinero, no se transfieren a otras personas ni se heredan, y no generan intereses. Vencen a los 12 meses de ganarlas y se pierden si eliminas tu cuenta. Tu nivel y tus logros no bajan cuando vencen.',
+      'Cuando haya canjes con negocios aliados, el beneficio lo da el aliado bajo sus propias condiciones, que verás antes de canjear. MONEO+ no comparte tus datos personales ni financieros con los aliados.',
+      'Podemos cambiar las reglas, los topes o los beneficios, o terminar el programa, avisándote en la app con anticipación; las Coronas ya ganadas se respetan hasta su vencimiento. Podemos anular Coronas obtenidas con datos falsos o con un uso indebido de la app.',
+    ],
+  },
+  {
+    title: '8. Uso aceptable',
     paragraphs: [
       'No debes usar MONEO+ para actividades ilícitas, para acceder a datos de otras personas, para reenviar a MONEO AUTO correos que no sean tuyos ni para afectar el funcionamiento del servicio. Podemos suspender cuentas que incumplan estos términos.',
     ],
   },
   {
-    title: '8. Disponibilidad y responsabilidad',
+    title: '9. Disponibilidad y responsabilidad',
     paragraphs: [
       'Trabajamos para que el servicio esté disponible y funcione correctamente, pero puede tener interrupciones o errores. En la medida permitida por la ley, MONEO+ no responde por decisiones tomadas con base en la información de la app.',
       'Nada de lo indicado en estos términos limita los derechos que te reconoce el Código de Protección y Defensa del Consumidor (Ley N.º 29571).',
     ],
   },
   {
-    title: '9. Cambios, contacto y ley aplicable',
+    title: '10. Cambios, contacto y ley aplicable',
     paragraphs: [
       'Podemos actualizar estos términos; te avisaremos en la app antes de que los cambios entren en vigor.',
       `Para consultas, reclamos o solicitudes escríbenos a ${LEGAL.email}.`,
