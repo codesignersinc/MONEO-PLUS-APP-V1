@@ -1,4 +1,5 @@
 'use client';
+import CoronasChip from '@/components/coronas/CoronasChip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -503,11 +504,14 @@ export default function DashboardPage() {
             />
             <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(300px,350px)]">
               <div className="min-w-0 space-y-5">
-                <div>
-                  <h1 className="text-[34px] font-black leading-tight tracking-tight">
-                    Hola, {displayName}
-                  </h1>
-                  <p className="text-[17px] font-medium text-[#111]/80">Tu dinero, más simple.</p>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <h1 className="text-[34px] font-black leading-tight tracking-tight">
+                      Hola, {displayName}
+                    </h1>
+                    <p className="text-[17px] font-medium text-[#111]/80">Tu dinero, más simple.</p>
+                  </div>
+                  <CoronasChip />
                 </div>
                 <RegionConfirm />
                 {hero}
@@ -546,6 +550,7 @@ export default function DashboardPage() {
                 </h1>
                 <p className="text-xs font-medium text-[#111]/70">Tu dinero, más simple.</p>
               </div>
+              <CoronasChip />
               <Link
                 href="/finanzas/movimientos"
                 aria-label="Buscar movimientos"

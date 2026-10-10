@@ -11,6 +11,7 @@ import TrialEndedModal from '@/components/billing/TrialEndedModal';
 import { PlusProvider } from '@/contexts/PlusContext';
 import PendingInvite from '@/components/household/PendingInvite';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
+import CoronasSync from '@/components/coronas/CoronasSync';
 
 export default function FinanzasLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -51,6 +52,7 @@ export default function FinanzasLayout({ children }: { children: React.ReactNode
           {user && <TrialEndedModal />}
           {user && <PendingInvite />}
           {user && <InstallPrompt />}
+          {user && <CoronasSync />}
         </div>
       </PlusProvider>
     </ToastProvider>
