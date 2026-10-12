@@ -5,7 +5,9 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
+  BellRing,
   Camera,
+  ChevronRight,
   ClipboardPaste,
   RotateCcw,
   ShieldCheck,
@@ -360,6 +362,23 @@ function MoneoAuto() {
       {/* Gmail conectado por OAuth. El reenvío de correos (AutoEmailCard) sigue oculto:
           casi nadie lo configuraba. */}
       <AutoGmailCard />
+
+      {/* Android: the app reads the bank notifications on the phone. */}
+      <Link
+        href="/finanzas/auto/celular"
+        className="mb-6 flex items-center gap-3 rounded-2xl border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_#000] transition-all hover:-translate-y-0.5"
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-[3px] border-black bg-[#FFD43B]">
+          <BellRing className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-black text-black">Activar en mi celular</span>
+          <span className="block text-xs font-semibold text-gray-600">
+            Android: MONEO detecta los avisos de Yape, BCP, Interbank y BBVA.
+          </span>
+        </span>
+        <ChevronRight className="h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden />
+      </Link>
 
       {/* Inbox */}
       <h2 className="mb-3 text-lg font-black text-black">

@@ -75,6 +75,10 @@ ejecuta en cada pull request (`.github/workflows/ci.yml`). Las pruebas SQL
   único); el cliente solo lee. No confíes en `created_at` de tablas que escribe el cliente: las
   reglas premian lo que el servidor ve «hoy». Las Coronas no son dinero y vencen a los 12 meses.
   Textos y niveles en `src/lib/coronas.ts`; servicio en `supabaseCoronas.ts`.
+- **MONEO AUTO en Android**: `AutoListener` (android/…/auto) lee solo las notificaciones de los
+  paquetes de Yape, BCP, Interbank y BBVA y las envía a la Edge Function `auto-notify`
+  (autenticada con un token de `companion_devices` con `can_auto`; el del widget no sirve). La
+  lista de paquetes vive en los dos lados. El intérprete se regenera con `npm run build:edge`.
 - **Privacidad**: no guardar texto bruto de notificaciones/correos; los logs no llevan montos,
   comercios, cuentas, ids ni contenido.
 

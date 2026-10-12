@@ -130,6 +130,7 @@ efímera **No** salvo donde se indica · Obligatorio u opcional · Finalidad)
 | Información financiera              | **Otra información financiera** (cuentas, saldos, movimientos, pagos, metas, deudas y datos del negocio que la persona registra) | Obligatorio    | Funcionalidad de la app                                              |
 | Información financiera              | **Historial de compras** (plan de MONEO PLUS comprado)                                                                           | Opcional       | Funcionalidad de la app, Gestión de la cuenta                        |
 | Mensajes                            | **Correos electrónicos** (solo los avisos del banco, si conecta Gmail o reenvía correos; se guarda solo el movimiento detectado) | Opcional       | Funcionalidad de la app — marca **«Procesado de forma efímera: Sí»** |
+| Mensajes                            | **Otros mensajes en la app** (solo las notificaciones de Yape, BCP, Interbank y BBVA, si activa MONEO AUTO en el celular; se guarda solo el movimiento detectado) | Opcional | Funcionalidad de la app — **efímera: Sí** |
 | Ubicación                           | **Ubicación aproximada** (país de la conexión, solo para sugerir país y moneda)                                                  | Obligatorio    | Funcionalidad de la app — **efímera: Sí**                            |
 | Información y rendimiento de la app | —                                                                                                                                | No se recopila | —                                                                    |
 | Identificadores del dispositivo     | —                                                                                                                                | No se recopila | —                                                                    |
@@ -144,9 +145,23 @@ considera «compartir».
 
 ### Permisos
 
-La app de Android usa **Internet** y **Notificaciones** (`POST_NOTIFICATIONS`, Android 13+:
-avisos de la web como pagos por vencer; Android pregunta antes). No pide ubicación, cámara,
-micrófono ni contactos (la cámara y el micrófono los pide Chrome cuando usas SCAN o VOZ).
+La app de Android usa **Internet**, **Notificaciones** (`POST_NOTIFICATIONS`, Android 13+:
+avisos como pagos por vencer o «Gasto detectado»; Android pregunta antes) y, solo si la persona
+activa MONEO AUTO en el celular, **Acceso a notificaciones** (ver abajo). No pide ubicación,
+cámara, micrófono ni contactos (la cámara y el micrófono los pide Chrome cuando usas SCAN o VOZ).
+
+### MONEO AUTO en el celular (Acceso a notificaciones)
+
+- La app declara un `NotificationListenerService` (`plus.moneo.app.auto.AutoListener`). Solo
+  procesa las notificaciones de `com.bcp.innovacxion.yapeapp`, `com.bcp.bank.bcp`,
+  `pe.com.interbank.mobilebanking` y `com.bbva.nxt_peru`; las demás se descartan sin leerlas.
+- **Divulgación destacada**: antes de pedir el permiso, la pantalla `/finanzas/auto/celular`
+  explica qué se lee, qué se envía y qué se guarda, con el botón «Aceptar y activar». Android
+  muestra después su propia pantalla para conceder el acceso.
+- Si Play pregunta por el uso: «Registro de gastos personales: la app detecta en las
+  notificaciones de la app del banco del usuario el monto y el comercio de cada movimiento y
+  le sugiere registrarlo. El texto no se guarda.» Video sugerido: activar en MONEO AUTO → permiso
+  → recibir un Yape → «Gasto detectado» → registrar.
 
 ---
 
