@@ -1,5 +1,5 @@
 // Bundles src/lib/auto (pure TypeScript, no dependencies) into a single ES module for
-// the auto-inbound and mail-oauth Edge Functions. The output is committed; a unit test fails if it is
+// the auto-inbound, mail-oauth and auto-notify Edge Functions. The output is committed; a unit test fails if it is
 // out of date with the source.
 import { build } from 'esbuild';
 import { writeFileSync } from 'node:fs';
@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const OUTFILES = ['auto-inbound', 'mail-oauth'].map((fn) =>
+export const OUTFILES = ['auto-inbound', 'mail-oauth', 'auto-notify'].map((fn) =>
   join(root, `supabase/functions/${fn}/interpreter.js`)
 );
 export const BANNER =
