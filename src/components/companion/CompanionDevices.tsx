@@ -34,7 +34,10 @@ export default function CompanionDevices() {
   useEffect(load, [load]);
 
   const revoke = async (d: CompanionDevice) => {
-    if (!window.confirm(`¿Desvincular «${d.name}»? Su widget dejará de mostrar tus datos.`)) return;
+    const effect = d.canAuto
+      ? 'MONEO AUTO dejará de leer las notificaciones de tu banco en ese celular.'
+      : 'Su widget dejará de mostrar tus datos.';
+    if (!window.confirm(`¿Desvincular «${d.name}»? ${effect}`)) return;
     setBusy(d.id);
     try {
       await companionDevicesService.revoke(d.id);
@@ -58,7 +61,8 @@ export default function CompanionDevices() {
         </p>
       </div>
       <p className="mb-4 text-xs font-semibold text-gray-600">
-        Equipos con el widget de MONEO. Solo pueden ver tu resumen, nunca tus movimientos.
+        Equipos con el widget de MONEO (solo ven tu resumen) y celulares con MONEO AUTO (solo envían
+        los avisos de tu banco).
       </p>
       {error ? (
         <p className="rounded-xl bg-[#FFE1DB] px-3 py-2 text-sm font-bold text-[#B42318]">
@@ -78,7 +82,14 @@ export default function CompanionDevices() {
               className="flex items-center gap-3 rounded-xl border-[3px] border-black bg-[#FFF9EC] px-3 py-2.5"
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-black text-black">{d.name}</span>
+                <span className="block truncate text-sm font-black text-black">
+                  {d.name}
+                  {d.canAuto && (
+                    <span className="ml-2 rounded-md border-2 border-black bg-[#FFD83D] px-1.5 text-[10px]">
+                      MONEO AUTO
+                    </span>
+                  )}
+                </span>
                 <span className="block text-[11px] font-semibold text-gray-600">
                   {ago(d.lastSeenAt)}
                 </span>

@@ -99,6 +99,8 @@ export interface CompanionDevice {
   platform: 'android' | 'ios' | 'windows' | 'mac';
   createdAt: string;
   lastSeenAt: string | null;
+  /** Linked for MONEO AUTO (reads the bank notifications on the phone), not the widget. */
+  canAuto: boolean;
 }
 
 export const companionDevicesService = {
@@ -106,7 +108,7 @@ export const companionDevicesService = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('companion_devices')
-      .select('id, name, platform, created_at, last_seen_at, revoked_at')
+      .select('id, name, platform, created_at, last_seen_at, revoked_at, can_auto')
       .is('revoked_at', null)
       .order('created_at', { ascending: false });
     if (error) throw toDataError(error);
@@ -116,6 +118,7 @@ export const companionDevicesService = {
       platform: r.platform,
       createdAt: r.created_at,
       lastSeenAt: r.last_seen_at,
+      canAuto: !!r.can_auto,
     }));
   },
 
@@ -130,6 +133,20 @@ export const companionDevicesService = {
     });
     if (error) {
       // Keep the database's own Spanish message for the 10-device limit.
+      const e = error as { code?: string; message?: string };
+      if (e.code === '22023' && e.message) throw new DataError('validation', error, e.message);
+      throw toDataError(error);
+    }
+    return data as { id: string; token: string };
+  },
+
+  /** Links this phone for MONEO AUTO; the token goes straight to the app. */
+  async linkAuto(name: string): Promise<{ id: string; token: string }> {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('create_companion_auto_device', {
+      p_name: name,
+    });
+    if (error) {
       const e = error as { code?: string; message?: string };
       if (e.code === '22023' && e.message) throw new DataError('validation', error, e.message);
       throw toDataError(error);
@@ -156,3 +173,12 @@ export function androidDeviceName(ua: string): string {
 export function androidLinkIntent(token: string): string {
   return `intent://link?token=${encodeURIComponent(token)}#Intent;scheme=moneo-widget;package=plus.moneo.app;end`;
 }
+
+/** Link that turns MONEO AUTO on in the MONEO app (only our package can receive it). */
+export function androidAutoIntent(token: string): string {
+  return `intent://link?token=${encodeURIComponent(token)}#Intent;scheme=moneo-auto;package=plus.moneo.app;end`;
+}
+
+/** Link that turns MONEO AUTO off in the MONEO app on this phone. */
+export const ANDROID_AUTO_OFF_INTENT =
+  'intent://off#Intent;scheme=moneo-auto;package=plus.moneo.app;end';
