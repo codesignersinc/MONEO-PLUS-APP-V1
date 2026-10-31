@@ -68,7 +68,8 @@ BEGIN
                         'auto-notify sí puede');
   PERFORM moneo_test.ok(NOT has_function_privilege('anon', 'public.create_companion_auto_device(text)', 'EXECUTE'),
                         'sin sesión no se vincula');
-  PERFORM moneo_test.ok(moneo_test.run(ub, format('SELECT count(*) FROM public.companion_devices WHERE user_id = %L', ua)) = '0',
+  -- user_id is not readable by the client; B (with no devices) must see none of A's rows.
+  PERFORM moneo_test.ok(moneo_test.run(ub, 'SELECT count(*) FROM public.companion_devices') = '0',
                         'B no ve los dispositivos de A');
   PERFORM moneo_test.ok(moneo_test.run(ua, 'SELECT count(*) FILTER (WHERE can_auto) FROM public.companion_devices') = '2',
                         'A ve sus enlaces de MONEO AUTO');
